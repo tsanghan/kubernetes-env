@@ -44,8 +44,8 @@ echo \
 apt-get update
 apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
-KUBECTL_VER=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt) \
-  curl -sSL -o /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
+curl -sSL -o /usr/local/bin/kubectl \
+  "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x /usr/local/bin/kubectl
 
 curl -sSL -o /usr/local/bin/kind \
@@ -54,4 +54,4 @@ chmod +x /usr/local/bin/kind
 
 usermod -aG lxd,docker $SUDO_USER
 
-reboot
+echo "Please logout and relogin again for docker,lxd group member to take effect."

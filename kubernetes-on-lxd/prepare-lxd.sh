@@ -132,3 +132,7 @@ devices:
     type: disk
 name: k8s
 EOF
+
+curl -SLO https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64-lxd.tar.xz
+curl -SLO https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.squashfs
+lxc image import ubuntu-20.04-server-cloudimg-amd64-lxd.tar.xz ubuntu-20.04-server-cloudimg-amd64.squashfs
