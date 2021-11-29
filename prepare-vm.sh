@@ -30,11 +30,10 @@ sysctl net.ipv4.neigh.default.gc_thresh3=8192
 sysctl net.ipv6.neigh.default.gc_thresh3=8192
 sysctl vm.max_map_count=262144
 
-if ! [[ -x $(which snap) ]]; then
-do
+if ! [ -x $(which snap) ]; then
   apt install snapd
   snap install lxd
-done
+fi
 
 apt-get update
 apt-get install ca-certificates curl gnupg lsb-release
