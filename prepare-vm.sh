@@ -48,8 +48,8 @@ KUBECTL_VER=$(curl -s https://storage.googleapis.com/kubernetes-release/release/
   curl -sSL -o /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
 chmod +x /usr/local/bin/kubectl
 
-KIND_LINUX_AMD64_URL=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux) \
-  curl -sSL -o /usr/local/bin/kind $KIND_LINUX_AMD64_URL
+curl -sSL -o /usr/local/bin/kind \
+  $(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')
 chmod +x /usr/local/bin/kind
 
 usermod -aG lxd,docker $SUDO_USER
