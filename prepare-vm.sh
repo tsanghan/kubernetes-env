@@ -52,3 +52,6 @@ KIND_LINUX_AMD64_URL=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind
   curl -sSL -o /usr/local/bin/kind $KIND_LINUX_AMD64_URL
 chmod +x /usr/local/bin/kind
 
+usermod -aG lxd,docker $SUDO_USER
+
+reboot
