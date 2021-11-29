@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
+echo -e "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
 modprobe overlay
 modprobe br_netfilter
 
@@ -15,6 +15,7 @@ kernel.keys.maxkeys = 2000
 net.core.bpf_jit_limit = 3000000000
 net.ipv4.neigh.default.gc_thresh3 = 8192
 net.ipv6.neigh.default.gc_thresh3 = 8192
+net.netfilter.nf_conntrack_max = 131072
 vm.max_map_count = 262144
 EOF
 
