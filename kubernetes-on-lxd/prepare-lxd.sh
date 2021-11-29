@@ -2,32 +2,32 @@
 
 cat <<EOF | tee lxd-preseed.yaml | sudo lxd init --preseed
 config: {}
-  networks:
-  - config:
-      ipv4.address: auto
-      ipv6.address: none
-    description: ""
-    name: lxdbr0
-    type: ""
-  storage_pools:
-  - config:
-    description: ""
-    name: default
-    driver: dir
-  profiles:
-  - config: {}
-    description: ""
-    devices:
-      eth0:
-        name: eth0
-        network: lxdbr0
-        type: nic
-      root:
-        path: /
-        pool: default
-        type: disk
-    name: default
-  cluster: null
+networks:
+- config:
+    ipv4.address: auto
+    ipv6.address: none
+  description: ""
+  name: lxdbr0
+  type: ""
+storage_pools:
+- config:
+  description: ""
+  name: default
+  driver: dir
+profiles:
+- config: {}
+  description: ""
+  devices:
+    eth0:
+      name: eth0
+      network: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+  name: default
+cluster: null
 EOF
 
 sudo lxc profile create k8s
