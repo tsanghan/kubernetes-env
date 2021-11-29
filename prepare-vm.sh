@@ -45,4 +45,12 @@ echo \
 apt-get update
 apt-get install docker-ce docker-ce-cli containerd.io
 
-usermod -aG lxd,docker "$USER"
+KUBECTL_VER=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt) \
+  curl -sSL -o /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
+chmod +x /usr/local/bin/kubectl
+
+KIND_LINUX_AMD64_URL=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -C ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"'
+) \
+  curl -sSL -o /usr/local/bin/kind $KIND_LINUX_AMD64_URL
+chmod +x /usr/local/bin/kind
+
