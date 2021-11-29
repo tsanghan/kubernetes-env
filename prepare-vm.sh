@@ -3,6 +3,7 @@
 echo -e "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
 modprobe overlay
 modprobe br_netfilter
+modprobe nf_conntrack
 
 cat <<EOF > /etc/sysctl.d/99-lxd.conf
 fs.aio-max-nr = 524288
