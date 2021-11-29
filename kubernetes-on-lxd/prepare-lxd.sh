@@ -1,37 +1,5 @@
 #!/bin/bash
 
-cat <<EOF > /etc/sysctl.d/99-lxd.conf
-fs.aio-max-nr = 524288
-fs.inotify.max_queued_events = 1048576
-fs.inotify.max_user_instances = 1048576
-fs.inotify.max_user_watches = 1048576
-kernel.dmesg_restrict = 1
-kernel.keys.maxbytes = 2000000
-kernel.keys.maxkeys = 2000
-net.core.bpf_jit_limit = 3000000000 
-net.ipv4.neigh.default.gc_thresh3 = 8192
-net.ipv6.neigh.default.gc_thresh3 = 8192
-vm.max_map_count = 262144
-EOF
-
-sudo sysctl fs.aio-max-nr=524288
-sudo sysctl fs.inotify.max_queued_events=1048576
-sudo sysctl fs.inotify.max_user_instances=1048576
-sudo sysctl fs.inotify.max_user_watches=1048576
-sudo sysctl kernel.dmesg_restrict=1
-sudo sysctl kernel.keys.maxbytes=2000000
-sudo sysctl kernel.keys.maxkeys=2000
-sudo sysctl net.core.bpf_jit_limit=3000000000 
-sudo sysctl net.ipv4.neigh.default.gc_thresh3=8192
-sudo sysctl net.ipv6.neigh.default.gc_thresh3=8192
-sudo sysctl vm.max_map_count=262144
-
-if ! [[ -x $(which snap) ]]; then
-  do
-    sudo apt install snap
-    sudo snap install lxd
-  done
-
 cat <<EOF | tee lxd-preseed.yaml | sudo lxd init --preseed
 config: {}
   networks:
@@ -64,7 +32,7 @@ EOF
 
 sudo lxc profile create k8s
 
-cat <<EOF | tee lxd-kubernetes-profile.yaml | sudo lxc profile edit k8s
+cat <<EOF | tee lxd-kubernetes-profile.yaml | lxc profile edit k8s
 config:
   linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
   raw.lxc: |-
@@ -164,5 +132,3 @@ devices:
     type: disk
 name: k8s
 EOF
-
-sudo usermod -aG "$USER"
