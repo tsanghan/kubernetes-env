@@ -56,5 +56,9 @@ curl -sSL -o /usr/local/bin/kind \
 chmod +x /usr/local/bin/kind
 
 usermod -aG lxd,docker $SUDO_USER
-
-echo "Please logout and relogin again for docker,lxd group member to take effect."
+echo -e "\n"
+echo "*************************************************************************************"
+echo "*                                                                                   *"
+echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
+echo "*                                                                                   *"
+echo "*************************************************************************************"
