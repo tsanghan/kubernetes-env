@@ -62,3 +62,4 @@ echo "*                                                                         
 echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
 echo "*                                                                                   *"
 echo "*************************************************************************************"
+echo -e "\n\n"
