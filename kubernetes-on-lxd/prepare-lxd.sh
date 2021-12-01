@@ -133,8 +133,8 @@ devices:
 name: k8s
 EOF
 
-curl -SLO https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64-lxd.tar.xz
-curl -SLO https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.squashfs
-lxc image import ubuntu-20.04-server-cloudimg-amd64-lxd.tar.xz ubuntu-20.04-server-cloudimg-amd64.squashfs
-lxc image alias create f $(lxc image list | grep "20.04" | awk '{print $3}')
-rm ubuntu-20.04-server-cloudimg-amd64*
+VERSION=$(curl -sSL https://uk.lxd.images.canonical.com/streams/v1/images.json | jq -C '.products."ubuntu:focal:amd64:cloud".versions | keys[]' | sort -r | head -1 | tr -d '"')
+curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
+curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
+lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
+rm lxd.tar.xz rootfs.squashfs
