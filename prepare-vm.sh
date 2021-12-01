@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# echo -e "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
-echo -e "overlay\nnr_netfilter\noptions nf_conntrack hashsize=32768" >> /etc/modprobe.d/containerd.conf
+echo -e "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
+echo -e "options nf_conntrack hashsize=32768" >> /etc/modprobe.d/containerd.conf
 modprobe overlay
 modprobe br_netfilter
 modprobe nf_conntrack hashsize=32768
