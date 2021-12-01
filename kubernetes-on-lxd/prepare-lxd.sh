@@ -133,7 +133,7 @@ devices:
 name: k8s
 EOF
 
-VERSION=$(curl -sSL https://uk.lxd.images.canonical.com/streams/v1/images.json | jq -C '.products."ubuntu:focal:amd64:cloud".versions | keys[]' | sort -r | head -1 | tr -d '"')
+VERSION=$(curl -sSL https://uk.lxd.images.canonical.com/streams/v1/images.json | jq '.products."ubuntu:focal:amd64:cloud".versions | keys[]' | sort -r | head -1 | tr -d '"')
 curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
 curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
 lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
