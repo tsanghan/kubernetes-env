@@ -36,10 +36,10 @@ echo 32768 | tee -a /sys/module/nf_conntrack/parameters/hashsize
 
 cat <<EOF > /etc/systemd/system/increase-hashsize.service
 [Unit]
-Description=Mount Make Rshare
+Description=Increase /sys/module/nf_conntrack/parameters/hashsize
 
 [Service]
-ExecStart=/bin/mount --make-rshare /
+ExecStart=/usr/bin/echo 32768 | tee -a /sys/module/nf_conntrack/parameters/hashsize
 
 [Install]
 WantedBy=multi-user.target
