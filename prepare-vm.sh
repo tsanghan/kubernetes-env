@@ -1,6 +1,7 @@
 #!/bin/bash
 
-echo -e "overlay\nbr_netfilter\nnf_conntrack hashsize=32768" >> /etc/modules-load.d/containerd.conf
+echo -e "overlay\nbr_netfilter" >> /etc/modules-load.d/containerd.conf
+echo -e "options nf_conntrack hashsize=32768" >> /etc/modprobe.d/containerd.conf
 modprobe overlay
 modprobe br_netfilter
 modprobe nf_conntrack hashsize=32768
@@ -32,22 +33,6 @@ sysctl net.ipv4.neigh.default.gc_thresh3=8192
 sysctl net.ipv6.neigh.default.gc_thresh3=8192
 sysctl net.netfilter.nf_conntrack_max=131072
 sysctl vm.max_map_count=262144
-
-# echo 32768 | tee -a /sys/module/nf_conntrack/parameters/hashsize
-
-# cat <<EOF > /etc/systemd/system/increase-hashsize.service
-# [Unit]
-# Description=Increase /sys/module/nf_conntrack/parameters/hashsize
-
-# [Service]
-# ExecStart=/usr/bin/echo 32768 | tee -a /sys/module/nf_conntrack/parameters/hashsize
-
-# [Install]
-# WantedBy=multi-user.target
-# EOF
-
-# systemctl daemon-reload
-# systemctl enable increase-hashsize
 
 if ! [ -x $(which snap) ]; then
   apt install -y --no-install-recommends snapd
