@@ -92,7 +92,7 @@ config:
       - apt-get -y purge nano
       - apt-get -y autoremove
       - systemctl enable mount-make-rshare
-      - kubeadm config image pull
+      - kubeadm config images pull
     default: none
     power_state:
       delay: "+1"
