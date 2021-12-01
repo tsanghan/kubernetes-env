@@ -31,7 +31,7 @@ sysctl kernel.keys.maxkeys=2000
 sysctl net.core.bpf_jit_limit=3000000000
 sysctl net.ipv4.neigh.default.gc_thresh3=8192
 sysctl net.ipv6.neigh.default.gc_thresh3=8192
-sysctl net.netfilter.nf_conntrack_max=262144
+sysctl net.netfilter.nf_conntrack_max=131072
 sysctl vm.max_map_count=262144
 
 if ! [ -x $(which snap) ]; then
