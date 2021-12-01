@@ -32,6 +32,21 @@ sysctl net.ipv4.neigh.default.gc_thresh3=8192
 sysctl net.ipv6.neigh.default.gc_thresh3=8192
 sysctl net.netfilter.nf_conntrack_max=131072
 sysctl vm.max_map_count=262144
+echo 32768 | tee -a /sys/module/nf_conntrack/parameters/hashsize
+
+cat <<EOF > /etc/systemd/system/increase-hashsize.service
+[Unit]
+Description=Mount Make Rshare
+
+[Service]
+ExecStart=/bin/mount --make-rshare /
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable increase-hashsize
 
 if ! [ -x $(which snap) ]; then
   apt install -y --no-install-recommends snapd
