@@ -52,7 +52,7 @@
 35. `k get no` again
 36. Wait till all you nodes are ready
 37. There is a `k-apply.sh` script in the current directory.
-38. If you run it it will install metrics server amoung other services
+38. If you run it, it will install metrics server amoung other services
 39. Explore and enjoy your *1x Control-Plane, 2x Workers* Kubernetes cluster
 
 # How to stop the cluster?
