@@ -1,6 +1,6 @@
 # Kubernetes-env
 
-## Hello and welcome to Kubenetes-Env
+## Hello and welcome to Kubenetes-env
 
 * This is a Kubernetes *self-learning education aids*.
 * For education/learning purpose, *1x Control-Plane, 2x Workers* will be more then enough.
@@ -42,12 +42,12 @@
 23. Wait till kubeadm finish initializing control-plane node
 24. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
 25. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
-26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube first
+26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
 27. Activate `kubectl` auto-completion
 28. `source <(kubectl completion bash)` assuming you are using bash
 29. `alias k=kubectl`
 30. `completion -F __start_kubectl k`
-31. Now you can access you cluster with `kubectl` command, alised to `k`
+31. Now you can access you cluster with `kubectl` command, alised with `k`
 32. `k get no`
 33. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
