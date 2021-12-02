@@ -47,16 +47,69 @@
 30. Now you can access you cluster with `kubectl` command, alised to `k`
 31. `k get no`
 32. All your nodes are not ready, becasue we have yet to instal a CNI plugin
-33. We will use calico as it support Network Policy
-34. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
-35. `k get no` again
-36. Wait till all you nodes are ready
-37. There is a `k-apply.sh` script in the current directory.
-38. If you run it, it will install metrics server amoung other services
-39. Explore and enjoy your *1x Control-Plane, 2x Workers* Kubernetes cluster
+```
+NAME          STATUS     ROLES                  AGE     VERSION
+lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
+lxd-wrker-1   NotReady   <none>                 15s     v1.22.4
+lxd-wrker-2   NotReady   <none>                 5s      v1.22.4
+```
+35. We will use calico as it support Network Policy
+36. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
+37. `k get no` again
+38. Wait till all your nodes are ready
+```
+NAME          STATUS   ROLES                  AGE     VERSION
+lxd-ctrlp-1   Ready    control-plane,master   5m42s   v1.22.4
+lxd-wrker-1   Ready    <none>                 3m2s    v1.22.4
+lxd-wrker-2   Ready    <none>                 2m52s   v1.22.4
+```
+39. Type `k get all -A` to see all your pods
+```
+NAMESPACE     NAME                                           READY   STATUS    RESTARTS   AGE
+kube-system   pod/calico-kube-controllers-56b8f699d9-vwvvc   1/1     Running   0          85s
+kube-system   pod/calico-node-4nvzn                          1/1     Running   0          85s
+kube-system   pod/calico-node-j7sw4                          1/1     Running   0          85s
+kube-system   pod/calico-node-qvqwx                          1/1     Running   0          85s
+kube-system   pod/coredns-78fcd69978-jg7nt                   1/1     Running   0          6m14s
+kube-system   pod/coredns-78fcd69978-nnzzt                   1/1     Running   0          6m14s
+kube-system   pod/etcd-lxd-ctrlp-1                           1/1     Running   0          6m21s
+kube-system   pod/kube-apiserver-lxd-ctrlp-1                 1/1     Running   0          6m15s
+kube-system   pod/kube-controller-manager-lxd-ctrlp-1        1/1     Running   0          6m15s
+kube-system   pod/kube-proxy-5mthj                           1/1     Running   0          3m43s
+kube-system   pod/kube-proxy-999t4                           1/1     Running   0          3m32s
+kube-system   pod/kube-proxy-lwb4r                           1/1     Running   0          6m15s
+kube-system   pod/kube-scheduler-lxd-ctrlp-1                 1/1     Running   0          6m15s
 
-# How to stop the cluster?
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  6m22s
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   6m20s
+
+NAMESPACE     NAME                         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/calico-node   3         3         3       3            3           kubernetes.io/os=linux   85s
+kube-system   daemonset.apps/kube-proxy    3         3         3       3            3           kubernetes.io/os=linux   6m20s
+
+NAMESPACE     NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/calico-kube-controllers   1/1     1            1           85s
+kube-system   deployment.apps/coredns                   2/2     2            2           6m20s
+
+NAMESPACE     NAME                                                 DESIRED   CURRENT   READY   AGE
+kube-system   replicaset.apps/calico-kube-controllers-56b8f699d9   1         1         1       85s
+kube-system   replicaset.apps/coredns-78fcd69978                   2         2         2       6m15s
+```
+41. There is a `k-apply.sh` script in the current directory.
+42. If you run it, the following services will be installed
+```
+metrics server
+local path provisioner
+NGINX ingress controller
+metallb
+```
+43. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
+44. However, a `Deployment` and a `Service` is missing, waiting for you to create. :-)
+45. Explore and enjoy your *1x Control-Plane, 2x Workers* Kubernetes cluster
+
+## How to stop the cluster?
 1. `lxc stop --all`
 2. To start again `lxc start --all`
-3. You can purge/delete the cluster and start again, but you will need to delete individual nodes after they are stopped.
+3. You can purge/delete the cluster and start installation again, but you will need to delete individual nodes after they are stopped.
 4. `lxc delete <node name>` 
