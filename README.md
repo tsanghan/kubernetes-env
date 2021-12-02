@@ -23,7 +23,7 @@
 6. `sudo ./prepare-vm.sh`
 7. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 8. Log back into your VM
-9. You have 2 choices to deploy a kubernetes cluster, using KIND and LXD
+9. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
 
