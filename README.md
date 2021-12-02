@@ -130,7 +130,7 @@ kube-system     metrics-server                       ClusterIP      10.107.154.2
 6. `kind create cluster --config kind.yaml`
 7. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disable default CNI
 8. `kind` automatically merge `kind` cluster config into your `~/.kube/config`
-9. if you `k config get-contexts` you can see you will have 2 contexts for clusters (if you have not deleted LXD cluster)
+9. if you `k config get-contexts` you can see you will have 2 contexts for 2 clusters (if you have not deleted LXD cluster)
 ```
 CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
 *         kind-kind                     kind-kind    kind-kind
