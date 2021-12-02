@@ -4,7 +4,7 @@
 
 * This is a Kubernetes *self-learning education aids*.
 * For education/learning purpose, *1x Control-Plane, 2x Workers* will be more then enough.
-* This 1x Control-Plane, 2x Workers Kubernetes Cluster can all reside in 1 single VM.
+* This *1x Control-Plane, 2x Workers* Kubernetes Cluster can all reside in 1 single VM.
 * You will need a base VM with the folloing specification
 
 | Resources | Specifications     |
@@ -17,7 +17,7 @@
 
 1. Create a base VM with above specification
 2. Bootup and login to your VM
-3. Create a Projects directory and `cd` into it
+3. Create a `Projects` directory and `cd` into it
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
 5. `cd` into `kubernetes-env`
 6. `sudo ./prepare-vm.sh`
@@ -32,7 +32,7 @@
 13. Run `./prepare-lxd.sh`
 14. Wait untill script finish
 15. `lxc launch -p k8s focal-cloud <your lxc node name>`
-16. Instruction below will use the node name of *lxd-ctrlp-1*
+16. Instructions below will use the node name of *lxd-ctrlp-1*
 17. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
 18. `watch lxc ls`
 19. All 3 lxc nodes will power down after being prepared
