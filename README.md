@@ -54,3 +54,9 @@
 37. There is a `k-apply.sh` script in the current directory.
 38. If you run it it will install metrics server amoung other services
 39. Explore and enjoy your *1x Control-Plane, 2x Workers* Kubernetes cluster
+
+# How to stop the cluster?
+1. 'lxc stop --all`
+2. To start again `lxc start --all`
+3. You can purge/delete the cluster and start again, but you will need to delete individual nodes after they are stopped.
+4. `lxc delete <node name>` 
