@@ -103,6 +103,14 @@ metrics server
 local path provisioner
 NGINX ingress controller
 metallb (you can now create a Service of Type Loadbalancer)
+
+NAMESPACE       NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
+default         kubernetes                           ClusterIP      10.96.0.1        <none>           443/TCP                      23m
+default         svc-deploy-nginx                     LoadBalancer   10.104.3.132     10.127.202.241   80:31880/TCP                 3m41s
+ingress-nginx   ingress-nginx-controller             LoadBalancer   10.102.143.1     10.127.202.240   80:30116/TCP,443:30765/TCP   13m
+ingress-nginx   ingress-nginx-controller-admission   ClusterIP      10.110.81.97     <none>           443/TCP                      13m
+kube-system     kube-dns                             ClusterIP      10.96.0.10       <none>           53/UDP,53/TCP,9153/TCP       23m
+kube-system     metrics-server                       ClusterIP      10.107.154.234   <none>           443/TCP                      13m
 ```
 43. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
 44. However, a `Deployment` and a `Service` is missing, waiting for you to create. :-)
