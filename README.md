@@ -24,29 +24,32 @@
 7. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 8. Log back into your VM
 9. You have 2 choices to deploy a kubernetes cluster, using KIND and LXD
-10. We will explore LXD method first
-11. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
-12. Run `./prepare-lxd.sh`
-13. Wait untill script finish
-14. `lxc launch -p k8s focal-cloud <your lxc node name>`
-15. Instruction below will use the node name of *lxd-ctrlp-1*
-16. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
-17. `watch lxc ls`
-18. All 3 lxc nodes will power down after being prepared
-19. Start all nodes `lxc start --all`
-20. Run `kubeadm init` on control-plane node with the following long command
-21. `lxc exec lxd-ctrlp-1 -- kubeadm init --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,SystemVerification,Swap --upload-certs | tee kubeadm-init.out`  
-22. Wait till kubeadm finish initializing control-plane node
-23. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
-24. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
-25. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube first
-26. Activate auto-completion
-27. `source <(kubectl completion bash)` assuming you are using bash
-28. `alias k=kubectl`
-29. `completion -F __start_kubectl k`
-30. Now you can access you cluster with `kubectl` command, alised to `k`
-31. `k get no`
-32. All your nodes are not ready, becasue we have yet to instal a CNI plugin
+
+### Kubernetes on LXD
+
+11. We will explore LXD method first
+12. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
+13. Run `./prepare-lxd.sh`
+14. Wait untill script finish
+15. `lxc launch -p k8s focal-cloud <your lxc node name>`
+16. Instruction below will use the node name of *lxd-ctrlp-1*
+17. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
+18. `watch lxc ls`
+19. All 3 lxc nodes will power down after being prepared
+20. Start all nodes `lxc start --all`
+21. Run `kubeadm init` on control-plane node with the following long command
+22. `lxc exec lxd-ctrlp-1 -- kubeadm init --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,SystemVerification,Swap --upload-certs | tee kubeadm-init.out`  
+23. Wait till kubeadm finish initializing control-plane node
+24. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
+25. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
+26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube first
+27. Activate `kubectl` auto-completion
+28. `source <(kubectl completion bash)` assuming you are using bash
+29. `alias k=kubectl`
+30. `completion -F __start_kubectl k`
+31. Now you can access you cluster with `kubectl` command, alised to `k`
+32. `k get no`
+33. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
 lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
@@ -115,9 +118,90 @@ kube-system     metrics-server                       ClusterIP      10.107.154.2
 43. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
 44. However, a `Deployment` and a `Service` is missing, waiting for you to create. :-)
 45. Explore and enjoy your *1x Control-Plane, 2x Workers* Kubernetes cluster
+46. What is your memory usage out of 8GB? Check with `htop`
+
+### Kubernetes with KIND
+
+1. `cd ../kind`
+2. Activate `kind` auto-completion
+3. `source <(kind completion bash)` assuming you are using bash
+4. `completion -F __start_kind kind`
+5. Start the `kind` cluster
+6. `kind create cluster --config kind.yaml`
+7. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disable default CNI
+8. `kind` automatically merge `kind` cluster config into your `~/.kube/config`
+9. if you `k config get-contexts` you can see you will have 2 contexts for clusters (if you have not deleted LXD cluster)
+```
+CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
+*         kind-kind                     kind-kind    kind-kind
+          kubernetes-admin@kubernetes   kubernetes   kubernetes-admin
+```
+10. The current context is `kind-kind`
+11. `k get no`
+12. All your nodes are not ready, becasue we have yet to instal a CNI plugin (we disabled default CNI in `kind.yaml`)
+```
+NAME                 STATUS     ROLES                  AGE     VERSION
+kind-control-plane   NotReady   control-plane,master   6m46s   v1.22.0
+kind-worker          NotReady   <none>                 6m15s   v1.22.0
+kind-worker2         NotReady   <none>                 6m15s   v1.22.0
+```
+13. We will use calico as it support Network Policy
+14. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
+15. `k get no` again
+16. Wait till all your nodes are ready
+```
+
+NAME                 STATUS   ROLES                  AGE     VERSION
+kind-control-plane   Ready    control-plane,master   9m      v1.22.0
+kind-worker          Ready    <none>                 8m29s   v1.22.0
+kind-worker2         Ready    <none>                 8m29s   v1.22.0
+```
+17. Type `k get all -A` to see all your pods
+```
+NAMESPACE            NAME                                             READY   STATUS    RESTARTS   AGE
+kube-system          pod/calico-kube-controllers-56b8f699d9-f9jxp     1/1     Running   0          2m9s
+kube-system          pod/calico-node-79vcm                            1/1     Running   0          2m9s
+kube-system          pod/calico-node-lp9md                            1/1     Running   0          2m9s
+kube-system          pod/calico-node-t9h7f                            1/1     Running   0          2m9s
+kube-system          pod/coredns-78fcd69978-q5vw4                     1/1     Running   0          9m42s
+kube-system          pod/coredns-78fcd69978-zxk77                     1/1     Running   0          9m42s
+kube-system          pod/etcd-kind-control-plane                      1/1     Running   0          9m56s
+kube-system          pod/kube-apiserver-kind-control-plane            1/1     Running   0          9m56s
+kube-system          pod/kube-controller-manager-kind-control-plane   1/1     Running   0          9m58s
+kube-system          pod/kube-proxy-b75hl                             1/1     Running   0          9m28s
+kube-system          pod/kube-proxy-d6858                             1/1     Running   0          9m43s
+kube-system          pod/kube-proxy-k654c                             1/1     Running   0          9m28s
+kube-system          pod/kube-scheduler-kind-control-plane            1/1     Running   0          9m56s
+local-path-storage   pod/local-path-provisioner-85494db59d-8bq57      1/1     Running   0          9m42s
+
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  9m58s
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   9m56s
+
+NAMESPACE     NAME                         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/calico-node   3         3         3       3            3           kubernetes.io/os=linux   2m9s
+kube-system   daemonset.apps/kube-proxy    3         3         3       3            3           kubernetes.io/os=linux   9m56s
+
+NAMESPACE            NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system          deployment.apps/calico-kube-controllers   1/1     1            1           2m9s
+kube-system          deployment.apps/coredns                   2/2     2            2           9m56s
+local-path-storage   deployment.apps/local-path-provisioner    1/1     1            1           9m55s
+
+NAMESPACE            NAME                                                 DESIRED   CURRENT   READY   AGE
+kube-system          replicaset.apps/calico-kube-controllers-56b8f699d9   1         1         1       2m9s
+kube-system          replicaset.apps/coredns-78fcd69978                   2         2         2       9m43s
+local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1         1         1       9m43s
+```
+18. From here onwards, you can follow step 41. from `Kubernetes on LXD` to proceed
+19. Explore and enjoy your 2 Kubernetes clusters
+20. What is your memory usage out of 8GB? Check with `htop`
 
 ## How to stop the cluster?
+### Kubernetes on LXD
 1. `lxc stop --all`
 2. To start again `lxc start --all`
 3. You can purge/delete the cluster and start installation again, but you will need to delete individual nodes after they are stopped.
-4. `lxc delete <node name>` 
+4. `lxc delete <node name>`
+### Kubernetes with KIND
+1. You cannot stop a `kind` cluster. You can only `create` and `delete`
+2. `kind delete cluster`
