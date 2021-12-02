@@ -102,7 +102,7 @@ kube-system   replicaset.apps/coredns-78fcd69978                   2         2  
 metrics server
 local path provisioner
 NGINX ingress controller
-metallb
+metallb (you can now create a Service of Type Loadbalancer)
 ```
 43. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
 44. However, a `Deployment` and a `Service` is missing, waiting for you to create. :-)
