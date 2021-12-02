@@ -30,7 +30,7 @@
 13. Wait untill script finish
 14. `lxc launch -p k8s focal-cloud <your lxc node name>`
 15. Instruction below will use the node name of *lxd-ctrlp-1*
-16. Launch 2 more worker nodes with above command
+16. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
 17. `watch lxc ls`
 18. All 3 lxc nodes will power down after being prepared
 19. Start all nodes `lxc start --all`
