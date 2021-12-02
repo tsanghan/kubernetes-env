@@ -196,7 +196,7 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 19. Explore and enjoy your 2 Kubernetes clusters
 20. What is your memory usage out of 8GB? Check with `htop`
 
-## How to stop the cluster?
+## How to stop the clusters?
 ### Kubernetes on LXD
 1. `lxc stop --all`
 2. To start again `lxc start --all`
