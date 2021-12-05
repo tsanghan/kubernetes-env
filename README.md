@@ -203,5 +203,14 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 3. You can purge/delete the cluster and start installation again, but you will need to delete individual nodes after they are stopped.
 4. `lxc delete <node name>`
 ### Kubernetes with KIND
-1. You cannot stop a `kind` cluster. You can only `create` and `delete`
+1. You cannot stop a `kind` cluster with `kind`. You can only `create` and `delete` with `kind`
 2. `kind delete cluster`
+3. If you really want to stop a `kind` cluster, you will need to use `docker` command
+4. `docker container ls`
+```
+CONTAINER ID   IMAGE                  COMMAND                  CREATED             STATUS              PORTS                       NAMES
+20ffab3b00a3   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute   127.0.0.1:44651->6443/tcp   kind-control-plane
+38f750fd85cb   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker2
+26e00165cc2c   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker
+```
+5. `docker stop <NAMES/CONTAINER ID>`
