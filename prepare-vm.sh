@@ -98,7 +98,10 @@ do
 done
 EOF
 
+chown $SUDO_USER.$SUDO_USER /home/$SUDO_USER/.bash_complete
+
 usermod -aG lxd,docker $SUDO_USER
+
 echo -e "\n"
 echo "*************************************************************************************"
 echo "*                                                                                   *"
