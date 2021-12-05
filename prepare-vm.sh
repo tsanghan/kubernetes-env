@@ -56,6 +56,12 @@ curl -sSL -o /usr/local/bin/kind \
   $(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')
 chmod +x /usr/local/bin/kind
 
+KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
+for friend in $KUBE_FRIENDS
+do
+  curl -SL $friend | sudo tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
+done
+
 usermod -aG lxd,docker $SUDO_USER
 echo -e "\n"
 echo "*************************************************************************************"
