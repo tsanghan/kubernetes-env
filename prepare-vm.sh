@@ -84,18 +84,18 @@ done
 cat <<'EOF' > /home/$SUDO_USER/.bash_complete
 # For kubeernetes-env
 
-if [ -x /usr/local/bin/kubectl ]; then
-do
+if [ -x /usr/local/bin/kubectl ]
+then
   source <(kubectl complete bash)
   alias k=kubectl
   complete -F __start_kubectl k
-done
+fi
 
-if [ -x /usr/local/bin/kind ]; then
-do
+if [ -x /usr/local/bin/kind ]
+then
   source <(kind complete bash)
   complete -F __start_kind kind
-done
+fi
 EOF
 
 chown $SUDO_USER.$SUDO_USER /home/$SUDO_USER/.bash_complete
