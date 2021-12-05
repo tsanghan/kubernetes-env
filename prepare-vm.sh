@@ -81,6 +81,23 @@ do
   curl -SL $friend | sudo tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
 done
 
+cat <<'EOF' > /home/$SUDO_USER/.bash_complete
+# For kubeernetes-env
+
+if [ -x /usr/local/bin/kubectl ]; then
+do
+  source <(kubectl complete bash)
+  alias k=kubectl
+  complete -F __start_kubectl k
+done
+
+if [ -x /usr/local/bin/kind ]; then
+do
+  source <(kind complete bash)
+  complete -F __start_kind kind
+done
+EOF
+
 usermod -aG lxd,docker $SUDO_USER
 echo -e "\n"
 echo "*************************************************************************************"
