@@ -213,4 +213,4 @@ CONTAINER ID   IMAGE                  COMMAND                  CREATED          
 38f750fd85cb   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker2
 26e00165cc2c   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker
 ```
-5. `docker stop <NAMES/CONTAINER ID>`
+5. `docker stop <NAME/CONTAINER ID> <NAME/CONTAINER ID> ...`
