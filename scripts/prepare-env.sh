@@ -1,6 +1,6 @@
-#!usr/bin/env bash
+#!/usr/bin/env bash
 
-mkdir ~/.local/bin
+mkdir -p ~/.local/bin
 
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
@@ -131,7 +131,7 @@ echo "**************************************************************************
 echo -e "\n\n"
 MYEOF
 
-cat <<'MYEOF" > ~/.local/bin/prepare-lxd.sh
+cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/bin/bash
 
 cat <<EOF | tee lxd-preseed.yaml | sudo lxd init --preseed
@@ -278,3 +278,5 @@ curl -SLO https://cloud-images.ubuntu.com/server/focal/"$VERSION"/focal-server-c
 lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
 rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 MYEOF
+
+chmod +x ~/.local/bin/*
