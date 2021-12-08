@@ -20,7 +20,7 @@ EOF
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/bin/bash
 
-cat <<EOF | tee lxd-preseed.yaml | sudo lxd init --preseed
+cat <<EOF | sudo lxd init --preseed
 config: {}
 networks:
 - config:
@@ -52,7 +52,7 @@ EOF
 
 sudo lxc profile create k8s
 
-cat <<EOF | tee lxd-kubernetes-profile.yaml | lxc profile edit k8s
+cat <<EOF | lxc profile edit k8s
 config:
   linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
   raw.lxc: |-
