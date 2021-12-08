@@ -1,1 +1,0 @@
-../scripts/k-apply.sh
