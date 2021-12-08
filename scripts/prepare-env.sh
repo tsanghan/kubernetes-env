@@ -165,4 +165,14 @@ lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-am
 rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 MYEOF
 
+cat <<'EOF; > ~/.local/bin/get-cilium.sh
+#!/usr/bin/env bash
+
+# Ref: https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/
+curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
+sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
+sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+rm cilium-linux-amd64.tar.gz{,.sha256sum}
+EOF
+
 chmod +x ~/.local/bin/*
