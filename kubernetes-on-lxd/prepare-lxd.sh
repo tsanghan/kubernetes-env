@@ -64,9 +64,9 @@ config:
       - apt-transport-https
       - ca-certificates
       - curl
-      - kubectl=1.22.4-00
-      - kubelet=1.22.4-00
-      - kubeadm=1.22.4-00
+      - kubectl=1.23.0-00
+      - kubelet=1.23.0-00
+      - kubeadm=1.23.0-00
       - containerd
       - jq
     package_update: true
