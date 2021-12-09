@@ -83,7 +83,7 @@ chmod +x /usr/local/bin/k9s
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
 do
-  curl -SL $friend | sudo tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
+  curl -sSL $friend | sudo tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
 done
 
 cat <<'EOF' > /home/$SUDO_USER/.bash_complete
