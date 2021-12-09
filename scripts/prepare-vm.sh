@@ -75,8 +75,8 @@ curl -sSL -o /usr/local/bin/kind \
 chmod +x /usr/local/bin/kind
 
 # Install k9s
-curl -sSL -o /usr/local/bin/k9s \
-  $(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+curl -sSL $K9S_FRIEND | sudo tar -C /usr/local/bin -zxvf - $(basename $K9S_FRIEND | sed 's/\(.*\)_Linux_.*/\1/')
 chmod +x /usr/local/bin/k9s
 
 # Install kubectx & kubens
