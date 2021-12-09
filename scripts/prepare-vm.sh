@@ -74,6 +74,11 @@ curl -sSL -o /usr/local/bin/kind \
   $(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')
 chmod +x /usr/local/bin/kind
 
+# Install k9s
+curl -sSL -o /usr/local/bin/k9s \
+  $(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+chmod +x /usr/local/bin/k9s
+
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
