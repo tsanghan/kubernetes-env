@@ -16,14 +16,15 @@
 | Base OS   | Ubuntu 20.04 Focal |
 
 1. Create a base VM with above specification
-2. Bootup and login to your VM
-3. Create a `Projects` directory and `cd` into it
-4. `git clone https://github.com/tsanghan/kubernetes-env.git`
-5. `cd` into `kubernetes-env`
-6. `sudo ./prepare-vm.sh`
-7. Follow the instruction at the end of the completion of `prepare-vm.sh` script
-8. Log back into your VM
-9. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
+2. ***Disable swap on your VM***
+3. Bootup and login to your VM
+4. Create a `Projects` directory and `cd` into it
+5. `git clone https://github.com/tsanghan/kubernetes-env.git`
+6. `cd` into `kubernetes-env`
+7. `sudo ./prepare-vm.sh`
+8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
+9. Log back into your VM
+10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
 
