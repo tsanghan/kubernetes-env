@@ -165,7 +165,7 @@ lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-am
 rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 MYEOF
 
-cat <<'EOF; > ~/.local/bin/get-cilium.sh
+cat <<'EOF' > ~/.local/bin/get-cilium.sh
 #!/usr/bin/env bash
 
 # Ref: https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/
