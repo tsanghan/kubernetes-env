@@ -2,7 +2,7 @@
 
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
-curl -SL -o ~/.config/k9s/skin.kml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
+curl -sSL -o ~/.config/k9s/skin.kml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
