@@ -20,7 +20,7 @@
 3. Create a `Projects` directory and `cd` into it
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
 5. `cd` into `kubernetes-env`
-6. `./prepare-ebv.sh`
+6. `./prepare-env.sh`
 7. `sudo ./prepare-vm.sh`
 8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 9. Log back into your VM
