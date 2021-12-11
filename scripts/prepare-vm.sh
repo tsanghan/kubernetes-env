@@ -79,6 +79,11 @@ K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest |
 curl -sSL $K9S_FRIEND | sudo tar -C /usr/local/bin -zxvf - $(basename $K9S_FRIEND | sed 's/\(.*\)_Linux_.*/\1/')
 chmod +x /usr/local/bin/k9s
 
+# Install yq
+curl -sSL -o /usr/local/bin/yq \
+  $(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')
+chmod +x /usr/local/bin/yq
+
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
