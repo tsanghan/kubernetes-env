@@ -88,14 +88,14 @@ chmod +x /usr/local/bin/yq
 SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 SHELLCHECK_DIR=$(basename $SHELLCHECK | sed 's/\(^.*v.*\).linux.*/\1/')
 SHELLCHECK_BIN=$(basename $SHELLCHECK | sed 's/\(.*\)-v.*/\1/')
-curl -sSL $SHELLCHECK | sudo tar -C /tmp -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
+curl -sSL $SHELLCHECK | sudo tar -C /tmp --xz -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
 mv /tmp/$SHELLCHECK_BIN /usr/local/bin
 
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
 do
-  curl -sSL $friend | sudo tar -C /usr/local/bin --xz -xvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
+  curl -sSL $friend | sudo tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
 done
 
 chown $SUDO_USER.$SUDO_USER /home/$SUDO_USER/.bash_complete
