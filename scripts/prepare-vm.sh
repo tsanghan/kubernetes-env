@@ -89,7 +89,8 @@ SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/l
 SHELLCHECK_DIR=$(basename $SHELLCHECK | sed 's/\(^.*v.*\).linux.*/\1/')
 SHELLCHECK_BIN=$(basename $SHELLCHECK | sed 's/\(.*\)-v.*/\1/')
 curl -sSL $SHELLCHECK | tar -C /tmp --xz -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
-mv /tmp/$SHELLCHECK_BIN /usr/local/bin
+mv /tmp/$SHELLCHECK_DIR/$SHELLCHECK_BIN /usr/local/bin
+rm -rf /tmp/$SHELLCHECK_DIR
 
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
