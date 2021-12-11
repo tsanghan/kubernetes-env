@@ -20,8 +20,7 @@
 3. Create a `Projects` directory and `cd` into it
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
 5. `cd` into `kubernetes-env`
-6. `sudo ./prepare-vm.sh`
-7. `./prepare-env.sh`
+6. `sudo ./prepare-vm.sh; ./prepare-env.sh`
 8. Follow the instruction at the end of the completion of `prepare-env.sh` script
 9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
