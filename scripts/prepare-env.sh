@@ -210,4 +210,39 @@ nnoremap <Left> <Nop>
 nnoremap <Right> <Nop>
 EOF
 
+# Install kubectl
+curl -sSL -o /.local/bin/kubectl \
+  "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x /.local/bin/kubectl
+
+# Install kind
+curl -sSL -o /.local/bin/kind \
+  "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
+chmod +x /.local/bin/kind
+
+# Install k9s
+K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+curl -sSL "$K9S_FRIEND" | tar -C /.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
+chmod +x /.local/bin/k9s
+
+# Install yq
+curl -sSL -o /.local/bin/yq \
+  "$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')"
+chmod +x /.local/bin/yq
+
+# Install shellcheck
+SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
+SHELLCHECK_DIR=$(basename "$SHELLCHECK" | sed 's/\(^.*v.*\).linux.*/\1/')
+SHELLCHECK_BIN=$(basename "$SHELLCHECK" | sed 's/\(.*\)-v.*/\1/')
+curl -sSL "$SHELLCHECK" | tar -C /tmp --xz -xvf - "$SHELLCHECK_DIR"/"$SHELLCHECK_BIN"
+mv /tmp/"$SHELLCHECK_DIR"/"$SHELLCHECK_BIN" /.local/bin
+rm -rf /tmp/"$SHELLCHECK_DIR"
+
+# Install kubectx & kubens
+KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
+for friend in $KUBE_FRIENDS
+do
+  curl -sSL "$friend" | tar -C /.local/bin -zxvf - "$(basename \""$friend\"" | sed 's/\(.*\)_v.*/\1/')"
+done
+
 chmod +x ~/.local/bin/*
