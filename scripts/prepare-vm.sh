@@ -64,7 +64,7 @@ echo \
 apt-get update
 apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
-# Install kubelet
+# Install kubectl
 curl -sSL -o /usr/local/bin/kubectl \
   "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x /usr/local/bin/kubectl
