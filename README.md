@@ -29,8 +29,8 @@
 ### Kubernetes on LXD
 
 11. We will explore LXD method first
-12. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
-13. Run `prepare-lxd.sh`
+12. Run `prepare-lxd.sh`
+13. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
 14. Wait untill script finish
 15. `lxc launch -p k8s focal-cloud <your lxc node name>`
 16. Instructions below will use the node name of *lxd-ctrlp-1*
