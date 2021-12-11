@@ -99,8 +99,6 @@ apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
   # curl -sSL "$friend" | tar -C /usr/local/bin -zxvf - "$(basename \""$friend\"" | sed 's/\(.*\)_v.*/\1/')"
 # done
 
-chown "$SUDO_USER"."$SUDO_USER" /home/"$SUDO_USER"/.bash_complete
-
 usermod -aG lxd,docker "$SUDO_USER"
 
 echo -e "\n"
