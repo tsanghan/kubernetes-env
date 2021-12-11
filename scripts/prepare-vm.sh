@@ -88,7 +88,7 @@ chmod +x /usr/local/bin/yq
 SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 SHELLCHECK_DIR=$(basename "$SHELLCHECK" | sed 's/\(^.*v.*\).linux.*/\1/')
 SHELLCHECK_BIN=$(basename "$SHELLCHECK" | sed 's/\(.*\)-v.*/\1/')
-curl -sSL "$SHELLCHECK" | tar -C /tmp --xz -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
+curl -sSL "$SHELLCHECK" | tar -C /tmp --xz -xvf - "$SHELLCHECK_DIR"/"$SHELLCHECK_BIN"
 mv /tmp/"$SHELLCHECK_DIR"/"$SHELLCHECK_BIN" /usr/local/bin
 rm -rf /tmp/"$SHELLCHECK_DIR"
 
