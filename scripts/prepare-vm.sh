@@ -100,11 +100,3 @@ apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 # done
 
 usermod -aG lxd,docker "$SUDO_USER"
-
-echo -e "\n"
-echo "*************************************************************************************"
-echo "*                                                                                   *"
-echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
-echo "*                                                                                   *"
-echo "*************************************************************************************"
-echo -e "\n\n"

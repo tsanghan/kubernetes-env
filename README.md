@@ -21,9 +21,9 @@
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
 5. `cd` into `kubernetes-env`
 6. `sudo ./prepare-vm.sh`
-7. Follow the instruction at the end of the completion of `prepare-vm.sh` script
-8. Log back into your VM
-9. `./prepare-env.sh`
+7. `./prepare-env.sh`
+8. Follow the instruction at the end of the completion of `prepare-env.sh` script
+9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
@@ -39,7 +39,7 @@
 19. All 3 lxc nodes will power down after being prepared
 20. Start all nodes `lxc start --all`
 21. Run `kubeadm init` on control-plane node with the following long command
-22. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`  
+22. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`
 23. Wait till kubeadm finish initializing control-plane node
 24. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
 25. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command

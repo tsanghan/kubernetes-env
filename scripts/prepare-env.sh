@@ -242,3 +242,11 @@ do
 done
 
 chmod +x ~/.local/bin/*
+
+echo -e "\n"
+echo "*************************************************************************************"
+echo "*                                                                                   *"
+echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
+echo "*                                                                                   *"
+echo "*************************************************************************************"
+echo -e "\n\n"
