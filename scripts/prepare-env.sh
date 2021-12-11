@@ -220,7 +220,7 @@ curl -sSL -o ~/.local/bin/kind \
 
 # Install k9s
 K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
-curl -sSL "$K9S_FRIEND" | tar -C /.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
+curl -sSL "$K9S_FRIEND" | tar -C ~/.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
 
 # Install yq
 curl -sSL -o ~/.local/bin/yq \
