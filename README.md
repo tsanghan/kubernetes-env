@@ -40,7 +40,7 @@
 8. All 3 lxc nodes will power down after being prepared
 9. Start all nodes `lxc start --all`
 10. Run `kubeadm init` on control-plane node with the following long command
-11. `lxc exec lxd-ctrlp-1 -- kubeadm init --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,SystemVerification,Swap --upload-certs | tee kubeadm-init.out`  
+11. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`  
 12. Wait till kubeadm finish initializing control-plane node
 13. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
 14. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
