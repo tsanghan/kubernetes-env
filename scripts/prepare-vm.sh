@@ -50,7 +50,7 @@ sysctl net.bridge.bridge-nf-call-iptables=1
 sysctl net.ipv4.ip_forward=1
 sysctl net.bridge.bridge-nf-call-ip6tables=1
 
-if ! [ -x $(which snap) ]; then
+if ! [ -x "$(which snap)" ]; then
   apt install -y --no-install-recommends snapd
   snap install lxd
 fi
@@ -71,37 +71,37 @@ chmod +x /usr/local/bin/kubectl
 
 # Install kind
 curl -sSL -o /usr/local/bin/kind \
-  $(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')
+  "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
 chmod +x /usr/local/bin/kind
 
 # Install k9s
 K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
-curl -sSL $K9S_FRIEND | tar -C /usr/local/bin -zxvf - $(basename $K9S_FRIEND | sed 's/\(.*\)_Linux_.*/\1/')
+curl -sSL "$K9S_FRIEND" | tar -C /usr/local/bin -zxvf - "$(basename '$K9S_FRIEND' | sed 's/\(.*\)_Linux_.*/\1/')"
 chmod +x /usr/local/bin/k9s
 
 # Install yq
 curl -sSL -o /usr/local/bin/yq \
-  $(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')
+  "$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')"
 chmod +x /usr/local/bin/yq
 
 # Install shellcheck
 SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
-SHELLCHECK_DIR=$(basename $SHELLCHECK | sed 's/\(^.*v.*\).linux.*/\1/')
-SHELLCHECK_BIN=$(basename $SHELLCHECK | sed 's/\(.*\)-v.*/\1/')
-curl -sSL $SHELLCHECK | tar -C /tmp --xz -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
-mv /tmp/$SHELLCHECK_DIR/$SHELLCHECK_BIN /usr/local/bin
-rm -rf /tmp/$SHELLCHECK_DIR
+SHELLCHECK_DIR=$(basename "$SHELLCHECK" | sed 's/\(^.*v.*\).linux.*/\1/')
+SHELLCHECK_BIN=$(basename "$SHELLCHECK" | sed 's/\(.*\)-v.*/\1/')
+curl -sSL "$SHELLCHECK" | tar -C /tmp --xz -xvf - $SHELLCHECK_DIR/$SHELLCHECK_BIN
+mv /tmp/"$SHELLCHECK_DIR"/"$SHELLCHECK_BIN" /usr/local/bin
+rm -rf /tmp/"$SHELLCHECK_DIR"
 
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
 do
-  curl -sSL $friend | tar -C /usr/local/bin -zxvf - $(basename $friend | sed 's/\(.*\)_v.*/\1/')
+  curl -sSL "$friend" | tar -C /usr/local/bin -zxvf - $(basename "$friend" | sed 's/\(.*\)_v.*/\1/')
 done
 
-chown $SUDO_USER.$SUDO_USER /home/$SUDO_USER/.bash_complete
+chown "$SUDO_USER"."$SUDO_USER" /home/"$SUDO_USER"/.bash_complete
 
-usermod -aG lxd,docker $SUDO_USER
+usermod -aG lxd,docker "$SUDO_USER"
 
 echo -e "\n"
 echo "*************************************************************************************"
