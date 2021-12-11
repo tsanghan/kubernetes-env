@@ -57,10 +57,10 @@ fi
 
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release jq xz-utils
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
@@ -76,7 +76,7 @@ chmod +x /usr/local/bin/kind
 
 # Install k9s
 K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
-curl -sSL $K9S_FRIEND | sudo tar -C /usr/local/bin -zxvf - $(basename $K9S_FRIEND | sed 's/\(.*\)_Linux_.*/\1/')
+curl -sSL $K9S_FRIEND | tar -C /usr/local/bin -zxvf - $(basename $K9S_FRIEND | sed 's/\(.*\)_Linux_.*/\1/')
 chmod +x /usr/local/bin/k9s
 
 # Install yq
