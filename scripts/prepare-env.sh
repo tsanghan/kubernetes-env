@@ -27,7 +27,10 @@ cat <<EOF | sudo lxd init --preseed
 config: {}
 networks:
 - config:
-    ipv4.address: auto
+    ipv4.address: 10.254.254.254/24
+    ipv4.dhcp.gateway: 10.254.254.254
+    ipv4.dhcp.ranges: 10.254.254.1-10.254.254.239
+    ipv4.nat: "true"
     ipv6.address: none
   description: ""
   name: lxdbr0
