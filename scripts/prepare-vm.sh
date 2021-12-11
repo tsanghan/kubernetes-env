@@ -76,7 +76,7 @@ chmod +x /usr/local/bin/kind
 
 # Install k9s
 K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
-curl -sSL "$K9S_FRIEND" | tar -C /usr/local/bin -zxvf - "$(basename '$K9S_FRIEND' | sed 's/\(.*\)_Linux_.*/\1/')"
+curl -sSL "$K9S_FRIEND" | tar -C /usr/local/bin -zxvf - "$(basename \"$K9S_FRIEND\" | sed 's/\(.*\)_Linux_.*/\1/')"
 chmod +x /usr/local/bin/k9s
 
 # Install yq
@@ -96,7 +96,7 @@ rm -rf /tmp/"$SHELLCHECK_DIR"
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
 do
-  curl -sSL "$friend" | tar -C /usr/local/bin -zxvf - $(basename "$friend" | sed 's/\(.*\)_v.*/\1/')
+  curl -sSL "$friend" | tar -C /usr/local/bin -zxvf - "$(basename \"$friend\" | sed 's/\(.*\)_v.*/\1/')"
 done
 
 chown "$SUDO_USER"."$SUDO_USER" /home/"$SUDO_USER"/.bash_complete
