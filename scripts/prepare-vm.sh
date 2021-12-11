@@ -84,6 +84,10 @@ curl -sSL -o /usr/local/bin/yq \
   $(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')
 chmod +x /usr/local/bin/yq
 
+# Install shellcheck
+SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
+curl -sSL $SHELLCHECK | sudo tar -C /usr/local/bin -zxvf - $(basename $SHELLCHECK | sed 's/\(.*\)-v.*/\1/')
+
 # Install kubectx & kubens
 KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
 for friend in $KUBE_FRIENDS
