@@ -20,16 +20,17 @@
 3. Create a `Projects` directory and `cd` into it
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
 5. `cd` into `kubernetes-env`
-6. `sudo ./prepare-vm.sh`
-7. Follow the instruction at the end of the completion of `prepare-vm.sh` script
-8. Log back into your VM
-9. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
+6. `./prepare-ebv.sh`
+7. `sudo ./prepare-vm.sh`
+8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
+9. Log back into your VM
+10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
 
 11. We will explore LXD method first
 12. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
-13. Run `./prepare-lxd.sh`
+13. Run `prepare-lxd.sh`
 14. Wait untill script finish
 15. `lxc launch -p k8s focal-cloud <your lxc node name>`
 16. Instructions below will use the node name of *lxd-ctrlp-1*
@@ -38,15 +39,13 @@
 19. All 3 lxc nodes will power down after being prepared
 20. Start all nodes `lxc start --all`
 21. Run `kubeadm init` on control-plane node with the following long command
-22. `lxc exec lxd-ctrlp-1 -- kubeadm init --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables,SystemVerification,Swap --upload-certs | tee kubeadm-init.out`  
+22. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`  
 23. Wait till kubeadm finish initializing control-plane node
 24. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
 25. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
 26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
 27. Activate `kubectl` auto-completion
-28. `source <(kubectl completion bash)` assuming you are using bash
-29. `alias k=kubectl`
-30. `completion -F __start_kubectl k`
+28. `source ~/.bash_complete` assuming you are using bash
 31. Now you can access you cluster with `kubectl` command, alised with `k`
 32. `k get no`
 33. All your nodes are not ready, becasue we have yet to instal a CNI plugin
@@ -99,7 +98,7 @@ NAMESPACE     NAME                                                 DESIRED   CUR
 kube-system   replicaset.apps/calico-kube-controllers-56b8f699d9   1         1         1       85s
 kube-system   replicaset.apps/coredns-78fcd69978                   2         2         2       6m15s
 ```
-41. There is a `k-apply.sh` script in the current directory.
+41. Run `k-apply.sh`
 42. If you run it, the following services will be installed
 ```
 metrics server
