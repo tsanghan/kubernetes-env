@@ -90,7 +90,6 @@ config:
       - apt-transport-https
       - ca-certificates
       - curl
-      - kubectl=1.23.0-00
       - kubelet=1.23.0-00
       - kubeadm=1.23.0-00
       - containerd
