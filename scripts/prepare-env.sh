@@ -213,8 +213,19 @@ nnoremap <Right> <Nop>
 EOF
 
 # Install kubectl
-curl -sSL -o ~/.local/bin/kubectl \
-  "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$KUBECTL_VER/bin/linux/amd64/kubectl"
+KUBECTL_SHA256=$(curl -sSL https://dl.k8s.io/"$KUBECTL_VER"/bin/linux/amd64/kubectl.sha256)
+OK=$(echo "$KUBECTL_SHA256" /tmp/kubectl | sha256sum --check)
+if [[ ! "$OK" =~ .*OK$ ]]; then
+  echo "kubectl binary does not match sha256 checksum, aborting!!"
+  rm /tmp/kubectl
+  exit $?
+else
+  echo "Installing kubectl verion=$KUBECTL_VER"
+  mv /tmp/kubectl ~/.local/bin/kubectl
+  chmod +x ~/.local/bin/kubectl
+fi
 
 # Install kind
 curl -sSL -o ~/.local/bin/kind \
