@@ -69,7 +69,6 @@ config:
     lxc.seccomp.profile=
   security.nesting: "true"
   security.privileged: "true"
-  user.k8s.version: "0.5"
   user.user-data: |
     #cloud-config
     apt:
