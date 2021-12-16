@@ -48,7 +48,7 @@
 16. Activate `kubectl` auto-completion
 17. `source <(kubectl completion bash)` assuming you are using bash
 18. `alias k=kubectl`
-19. `completion -F __start_kubectl k`
+19. `complete -F __start_kubectl k`
 20. Access the cluster with `kubectl` command, alised with `k`
 21. `k get no`
 22. All the nodes are not ready, becasue a CNI plugin has yet to be installed
@@ -127,10 +127,10 @@ kube-system     metrics-server                       ClusterIP      10.107.154.2
 1. `cd ../kind`
 2. Activate `kind` auto-completion
 3. `source <(kind completion bash)`
-4. `completion -F __start_kind kind`
+4. `complete -F __start_kind kind`
 5. Start the `kind` cluster
 6. `kind create cluster --config kind.yaml`
-7. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disable default CNI
+7. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disabled default CNI
 8. `kind` automatically merge `kind` cluster config into `~/.kube/config`
 9. `k config get-contexts` will show that there are 2 contexts for 2 clusters
 ```
@@ -140,7 +140,7 @@ CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPAC
 ```
 10. The current context is `kind-kind`
 11. `k get no`
-12. All the nodes are not ready, a CNI plugin as yet to be installed (default CNI hin `kind.yaml` is disabled)
+12. All the nodes are not ready, a CNI plugin as yet to be installed (default CNI in `kind.yaml` is disabled)
 ```
 NAME                 STATUS     ROLES                  AGE     VERSION
 kind-control-plane   NotReady   control-plane,master   6m46s   v1.22.0
