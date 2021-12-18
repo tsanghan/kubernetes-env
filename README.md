@@ -19,11 +19,11 @@
 
 1. Create a base VM with above specification
 2. Remember to turn off swap
-2. Bootup and login to your VM
-3. Create a `Projects` directory and `cd` into it
-4. `git clone https://github.com/tsanghan/kubernetes-env.git`
-5. `cd` into `kubernetes-env`
-6. `sudo ./prepare-vm.sh; ./prepare-env.sh`
+3. Bootup and login to your VM
+4. Create a `Projects` directory and `cd` into it
+5. `git clone https://github.com/tsanghan/kubernetes-env.git`
+6. `cd` into `kubernetes-env`
+7. `sudo ./prepare-vm.sh; ./prepare-env.sh`
 8. Follow the instruction at the end of the completion of `prepare-env.sh` script
 9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
@@ -48,26 +48,26 @@
 26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
 27. Activate `kubectl` auto-completion
 28. `source ~/.bash_complete` assuming you are using bash
-31. Now you can access you cluster with `kubectl` command, alised with `k`
-32. `k get no`
-33. All your nodes are not ready, becasue we have yet to instal a CNI plugin
+29. Now you can access you cluster with `kubectl` command, alised with `k`
+30. `k get no`
+31. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
 lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
 lxd-wrker-1   NotReady   <none>                 15s     v1.22.4
 lxd-wrker-2   NotReady   <none>                 5s      v1.22.4
 ```
-23. Install calico as it support Network Policy
-24. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
-25. `k get no` again
-26. Wait till all nodes are ready
+32. Install calico as it support Network Policy
+33. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
+34. `k get no` again
+35. Wait till all nodes are ready
 ```
 NAME          STATUS   ROLES                  AGE     VERSION
 lxd-ctrlp-1   Ready    control-plane,master   5m42s   v1.22.4
 lxd-wrker-1   Ready    <none>                 3m2s    v1.22.4
 lxd-wrker-2   Ready    <none>                 2m52s   v1.22.4
 ```
-27. Type `k get all -A` to see all pods
+36. Type `k get all -A` to see all pods
 ```
 NAMESPACE     NAME                                           READY   STATUS    RESTARTS   AGE
 kube-system   pod/calico-kube-controllers-56b8f699d9-vwvvc   1/1     Running   0          85s
@@ -100,8 +100,8 @@ NAMESPACE     NAME                                                 DESIRED   CUR
 kube-system   replicaset.apps/calico-kube-controllers-56b8f699d9   1         1         1       85s
 kube-system   replicaset.apps/coredns-78fcd69978                   2         2         2       6m15s
 ```
-41. Run `k-apply.sh`
-42. If you run it, the following services will be installed
+37. Run `k-apply.sh`
+38. If you run it, the following services will be installed
 ```
 metrics server
 local path provisioner
@@ -116,10 +116,10 @@ ingress-nginx   ingress-nginx-controller-admission   ClusterIP      10.110.81.97
 kube-system     kube-dns                             ClusterIP      10.96.0.10       <none>           53/UDP,53/TCP,9153/TCP       23m
 kube-system     metrics-server                       ClusterIP      10.107.154.234   <none>           443/TCP                      13m
 ```
-30. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
-31. However, a `Deployment` and a `Service` is missing, waiting to be create.
-32. Explore and enjoy the *1x Control-Plane, 2x Workers* Kubernetes cluster
-33. Check the memory usage with `htop`
+39. There is also a `ingress.yaml` manifest that will deploy an `ingressClass` and a *ingress resource*
+40. However, a `Deployment` and a `Service` is missing, waiting to be create.
+41. Explore and enjoy the *1x Control-Plane, 2x Workers* Kubernetes cluster
+42. Check the memory usage with `htop`
 
 ### Kubernetes with KIND
 
@@ -193,7 +193,7 @@ kube-system          replicaset.apps/calico-kube-controllers-56b8f699d9   1     
 kube-system          replicaset.apps/coredns-78fcd69978                   2         2         2       9m43s
 local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1         1         1       9m43s
 ```
-18. Follow step 28. from `Kubernetes on LXD` to proceed
+18. Follow step 37. from `Kubernetes on LXD` to proceed
 19. Explore and enjoy the 2 Kubernetes clusters
 20. Check memory usage with `htop`
 
