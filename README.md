@@ -18,40 +18,38 @@
 | Base OS   | Ubuntu 20.04 Focal |
 
 1. Create a base VM with above specification
-2. ***Disable swap on the base VM***
-3. Bootup and login to the VM
-4. Create a `Projects` directory and `cd` into it
-5. `git clone https://github.com/tsanghan/kubernetes-env.git`
-6. `cd` into `kubernetes-env`
-7. `sudo ./prepare-vm.sh`
-8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
-9. Log back into the VM
-10. There are 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
+2. Bootup and login to your VM
+3. Create a `Projects` directory and `cd` into it
+4. `git clone https://github.com/tsanghan/kubernetes-env.git`
+5. `cd` into `kubernetes-env`
+6. `sudo ./prepare-vm.sh; ./prepare-env.sh`
+8. Follow the instruction at the end of the completion of `prepare-env.sh` script
+9. Log back into your VM
+10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
 
-1. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
-2. Run `./prepare-lxd.sh`
-3. Wait untill script finish
-4. `lxc launch -p k8s focal-cloud <lxc node name>`
-5. Instructions below will use the node name of *lxd-ctrlp-1*
-6. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
-7. `watch lxc ls`
-8. All 3 lxc nodes will power down after being prepared
-9. Start all nodes `lxc start --all`
-10. Run `kubeadm init` on control-plane node with the following long command
-11. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`  
-12. Wait till kubeadm finish initializing control-plane node
-13. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
-14. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
-15. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
-16. Activate `kubectl` auto-completion
-17. `source <(kubectl completion bash)` assuming you are using bash
-18. `alias k=kubectl`
-19. `complete -F __start_kubectl k`
-20. Access the cluster with `kubectl` command, alised with `k`
-21. `k get no`
-22. All the nodes are not ready, becasue a CNI plugin has yet to be installed
+11. We will explore LXD method first
+12. Run `prepare-lxd.sh`
+13. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
+14. Wait untill script finish
+15. `lxc launch -p k8s focal-cloud <your lxc node name>`
+16. Instructions below will use the node name of *lxd-ctrlp-1*
+17. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
+18. `watch lxc ls`
+19. All 3 lxc nodes will power down after being prepared
+20. Start all nodes `lxc start --all`
+21. Run `kubeadm init` on control-plane node with the following long command
+22. `lxc exec lxd-ctrlp-1 -- kubeadm init --upload-certs | tee kubeadm-init.out`
+23. Wait till kubeadm finish initializing control-plane node
+24. Perform `kubeadm join` command from `kubeadm init` output on 2 worker nodes. Please refer to last 2 lines of local `kubeadm-init.out` file for the full `kubeadm join` command.
+25. Pull `/etc/kubernetes/admin.conf` from within `lxd-ctrlp-1` node into your local `~/.kube` directory with the following command
+26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
+27. Activate `kubectl` auto-completion
+28. `source ~/.bash_complete` assuming you are using bash
+31. Now you can access you cluster with `kubectl` command, alised with `k`
+32. `k get no`
+33. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
 lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
@@ -101,8 +99,8 @@ NAMESPACE     NAME                                                 DESIRED   CUR
 kube-system   replicaset.apps/calico-kube-controllers-56b8f699d9   1         1         1       85s
 kube-system   replicaset.apps/coredns-78fcd69978                   2         2         2       6m15s
 ```
-28. Run `k-apply.sh` script in the current directory.
-29. The following services will be installed
+41. Run `k-apply.sh`
+42. If you run it, the following services will be installed
 ```
 metrics server
 local path provisioner
