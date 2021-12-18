@@ -306,7 +306,7 @@ update_local_etc_hosts "$IPADDR"
 ln -sf ~/.k/config-lxd-v1231 ~/.k/config
 kubectl get no -owide
 k-apply.sh
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallb-configmap.yaml.tmpl | kubectl -f -
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 MYEOF
 
 # Install kubectl
