@@ -18,6 +18,7 @@
 | Base OS   | Ubuntu 20.04 Focal |
 
 1. Create a base VM with above specification
+2. Remember to turn off swap
 2. Bootup and login to your VM
 3. Create a `Projects` directory and `cd` into it
 4. `git clone https://github.com/tsanghan/kubernetes-env.git`
