@@ -211,6 +211,50 @@ nnoremap <Left> <Nop>
 nnoremap <Right> <Nop>
 EOF
 
+cat <<'MYEOF' >
+#!/usr/bin/env bash
+
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+if [ ! -x ~/.local/bin/kubectl ]; then
+  echo "kubeclt not found or not executanle!!"
+  exit
+fi
+
+OLD_KUBECTL_VER=$(kubectl version --short --client | sed 's/.*v\(.*\)/\1/')
+NEW_KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/.*v\(.*\)/\1/')
+
+verlt "$OLD_KUBECTL_VER" "$NEW_KUBECTL_VER"
+if [ "$?"  = 1 ]; then
+  echo "No upgrade required!!"
+  exit
+else
+  KUBECTL_VER=v"$NEW_KUBECTL_VER"
+  curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$KUBECTL_VER/bin/linux/amd64/kubectl"
+  KUBECTL_SHA256=$(curl -sSL https://dl.k8s.io/"$KUBECTL_VER"/bin/linux/amd64/kubectl.sha256)
+  OK=$(echo "$KUBECTL_SHA256" /tmp/kubectl | sha256sum --check)
+  if [[ ! "$OK" =~ .*OK$ ]]; then
+    echo "kubectl binary does not match sha256 checksum, aborting!!"
+    rm /tmp/kubectl
+    exit $?
+  else
+    echo "Installing kubectl verion=$KUBECTL_VER"
+    mv /tmp/kubectl ~/.local/bin/kubectl
+    chmod +x ~/.local/bin/kubectl
+  fi
+fi
+MYEOF
+
 # Install kubectl
 KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$KUBECTL_VER/bin/linux/amd64/kubectl"
