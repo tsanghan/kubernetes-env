@@ -211,7 +211,7 @@ nnoremap <Left> <Nop>
 nnoremap <Right> <Nop>
 EOF
 
-cat <<'MYEOF' >
+cat <<'MYEOF' > ~/.local/bin/update_kubectl.sh
 #!/usr/bin/env bash
 
 verlte() {
@@ -253,6 +253,60 @@ else
     chmod +x ~/.local/bin/kubectl
   fi
 fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/start-cluster.sh
+#!/usr/bin/env bash
+
+check_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep -c "$1")
+    if [ "$STATUS" = "$2" ]; then
+      break
+    fi
+    echo -n "$3"
+    sleep 2
+  done
+  sleep 2
+}
+
+update_local_etc_hosts () {
+  OUT=$(grep lxd-ctrlp-1 /etc/hosts)
+  if [[ $OUT == "" ]]; then
+    echo 1
+    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-ctrlp-1/" /etc/hosts
+  elif [[ "$OUT" =~ lxd-ctrlp-1 ]]; then
+    echo 2
+    sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
+  else
+    echo "Error!!"
+  fi
+}
+
+lxc launch -p k8s focal-cloud lxd-ctrlp-1
+lxc launch -p k8s focal-cloud lxd-wrker-1
+lxc launch -p k8s focal-cloud lxd-wrker-2
+
+check_status STOP 3 .
+lxc start --all
+check_status eth0 3 \#
+IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
+echo
+lxc exec lxd-ctrlp-1 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
+sleep 10
+lxc exec lxd-wrker-1 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
+lxc exec lxd-wrker-1 -- "$(tail -2 kubeadm-init.out | tr -d '\\\n')"
+sleep 10
+lxc exec lxd-wrker-2 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
+lxc exec lxd-wrker-2 -- "$(tail -2 kubeadm-init.out | tr -d '\\\n')"
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd-v1231
+update_local_etc_hosts "$IPADDR"
+ln -sf ~/.k/config-lxd-v1231 ~/.k/config
+kubectl get no -owide
+k-apply.sh
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallb-configmap.yaml.tmpl | kubectl -f -
 MYEOF
 
 # Install kubectl
