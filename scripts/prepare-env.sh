@@ -269,6 +269,7 @@ check_status () {
     sleep 2
   done
   sleep 2
+  echo
 }
 
 update_local_etc_hosts () {
