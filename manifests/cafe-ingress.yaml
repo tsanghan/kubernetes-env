@@ -2,6 +2,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
+  annotations:
+    appprotect.f5.com/app-protect-policy: "default/nginxstrict"
+    appprotect.f5.com/app-protect-enable: "True"
 spec:
   ingressClassName: nginx # use only with k8s version >= 1.18.0
   tls:
