@@ -14,10 +14,19 @@ EOF
 cat <<'EOF' > ~/.local/bin/k-apply.sh
 #!/usr/bin/env bash
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/cloud/deploy.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+EOF
+
+cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
+#!/usr/bin/env bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/cloud/deploy.yaml
+EOF
+
+cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
+#!/usr/bin/env bash
+kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/2d4febb2455fc5f26c26106c98d11b2e5c8765a8/nginx-ap-ingress.yaml
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
