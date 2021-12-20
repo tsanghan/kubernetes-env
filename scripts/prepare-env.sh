@@ -308,6 +308,10 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd-v1231
 update_local_etc_hosts "$IPADDR"
 ln -sf ~/.k/config-lxd-v1231 ~/.k/config
 kubectl get no -owide
+if ! command  -v cilium &> /dev/null; then
+  get-cilium.sh
+fi
+cilium install
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 MYEOF
