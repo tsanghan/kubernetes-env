@@ -322,14 +322,11 @@ lxc start --all
 check_status eth0 3 \#
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 echo
-lxc exec lxd-ctrlp-1 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 sleep 10
-lxc exec lxd-wrker-1 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
 lxc exec lxd-wrker-1 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 sleep 10
-lxc exec lxd-wrker-2 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
 lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
