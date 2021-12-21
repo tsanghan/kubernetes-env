@@ -187,8 +187,12 @@ cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
 # lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
 # rm lxd.tar.xz rootfs.squashfs
 VERSION=$(curl -sSL https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:download.json | jq '.products."com.ubuntu.cloud.daily:server:20.04:amd64".versions | keys[]' | sort -r | head -1 | tr -d '"')
-curl -SLO https://cloud-images.ubuntu.com/server/focal/"$VERSION"/focal-server-cloudimg-amd64-lxd.tar.xz
-curl -SLO https://cloud-images.ubuntu.com/server/focal/"$VERSION"/focal-server-cloudimg-amd64.squashfs
+PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';' | tr -s '"')
+if [ "$PROXY" != "" ]; then
+  SERVER=$PROXY
+fi
+curl -SLO https://$SERVER/server/focal/"$VERSION"/focal-server-cloudimg-amd64-lxd.tar.xz
+curl -SLO https://$SERVER/server/focal/"$VERSION"/focal-server-cloudimg-amd64.squashfs
 lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
 rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 MYEOF
