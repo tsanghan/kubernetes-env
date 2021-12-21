@@ -3,7 +3,6 @@
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
-KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
 
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
@@ -94,7 +93,8 @@ config:
           uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
-PROXY= $(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
 if [ "$PROXY" != "" ]; then
   echo "      proxy: $PROXY" >> /tmp/lxd-profile-k8s
 fi
