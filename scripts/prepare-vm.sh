@@ -101,4 +101,4 @@ apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
 usermod -aG lxd,docker "$SUDO_USER"
 
-sudo -u "$SUDO_USER" ./prepare-env.sh
+sudo -u "$SUDO_USER" ./scripts/prepare-env.sh
