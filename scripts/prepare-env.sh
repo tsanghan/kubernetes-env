@@ -191,7 +191,7 @@ rm cilium-linux-amd64.tar.gz{,.sha256sum}
 EOF
 
 cat <<'EOF' > ~/.bash_complete
-# For kubeernetes-env
+# For kubernetes-env
 
 if [ -x ~/.local/bin/kubectl ]
 then
