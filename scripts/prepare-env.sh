@@ -3,6 +3,7 @@
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
 
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
@@ -30,7 +31,7 @@ kubectl create secret docker-registry regcred --docker-server=private-registry.n
 kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/2d4febb2455fc5f26c26106c98d11b2e5c8765a8/nginx-ap-ingress.yaml
 EOF
 
-cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
+cat <<MYEOF > ~/.local/bin/prepare-lxd.sh
 #!/bin/bash
 
 cat <<EOF | sudo lxd init --preseed
@@ -100,8 +101,8 @@ config:
       - ca-certificates
       - containerd
       - curl
-      - kubeadm=1.23.1-00
-      - kubelet=1.23.1-00
+      - kubeadm="$KUBE_VER"-00
+      - kubelet="$KUBE_VER"-00
       - jq
     package_update: true
     package_upgrade: true
