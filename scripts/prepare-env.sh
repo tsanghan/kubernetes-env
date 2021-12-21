@@ -26,6 +26,7 @@ EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
+kubectl create namespace nginx-ingress
 kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) --docker-password=none -n nginx-ingress
 kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/2d4febb2455fc5f26c26106c98d11b2e5c8765a8/nginx-ap-ingress.yaml
 EOF
