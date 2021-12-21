@@ -305,10 +305,8 @@ check_status () {
 update_local_etc_hosts () {
   OUT=$(grep lxd-ctrlp-1 /etc/hosts)
   if [[ $OUT == "" ]]; then
-    echo 1
     sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-ctrlp-1/" /etc/hosts
   elif [[ "$OUT" =~ lxd-ctrlp-1 ]]; then
-    echo 2
     sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
   else
     echo "Error!!"
@@ -334,14 +332,18 @@ sleep 10
 lxc exec lxd-wrker-2 -- sed -i "/localhost/s/localhost/localhost\n$IPADDR lxd-ctrlp-1/" /etc/hosts
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
 lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd-v1231
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 update_local_etc_hosts "$IPADDR"
-ln -sf ~/.k/config-lxd-v1231 ~/.k/config
+ln -sf ~/.k/config-lxd ~/.k/config
 kubectl get no -owide
+echo
 if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
+echo
+kubectl get no -owide
+echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 MYEOF
