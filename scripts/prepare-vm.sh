@@ -57,47 +57,19 @@ fi
 
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release jq xz-utils
+#
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+#
+curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo \
+  "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" \
+  | tee /etc/apt/sources.list.d/kubernetes.list
+#
 apt-get update
-apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
-
-# Install kubectl
-# curl -sSL -o /usr/local/bin/kubectl \
-  # "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-# chmod +x /usr/local/bin/kubectl
-
-# Install kind
-# curl -sSL -o /usr/local/bin/kind \
-  # "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
-# chmod +x /usr/local/bin/kind
-
-# Install k9s
-# K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
-# curl -sSL "$K9S_FRIEND" | tar -C /usr/local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
-# chmod +x /usr/local/bin/k9s
-
-# Install yq
-# curl -sSL -o /usr/local/bin/yq \
-  # "$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')"
-# chmod +x /usr/local/bin/yq
-
-# Install shellcheck
-# SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
-# SHELLCHECK_DIR=$(basename "$SHELLCHECK" | sed 's/\(^.*v.*\).linux.*/\1/')
-# SHELLCHECK_BIN=$(basename "$SHELLCHECK" | sed 's/\(.*\)-v.*/\1/')
-# curl -sSL "$SHELLCHECK" | tar -C /tmp --xz -xvf - "$SHELLCHECK_DIR"/"$SHELLCHECK_BIN"
-# mv /tmp/"$SHELLCHECK_DIR"/"$SHELLCHECK_BIN" /usr/local/bin
-# rm -rf /tmp/"$SHELLCHECK_DIR"
-
-# Install kubectx & kubens
-# KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
-# for friend in $KUBE_FRIENDS
-# do
-  # curl -sSL "$friend" | tar -C /usr/local/bin -zxvf - "$(basename \""$friend\"" | sed 's/\(.*\)_v.*/\1/')"
-# done
+apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl
 
 usermod -aG lxd,docker "$SUDO_USER"
 

@@ -145,7 +145,6 @@ cat <<EOF >> /tmp/lxd-profile-k8s
       owner: root:root
       path: /etc/systemd/system/mount-make-rshare.service
       permissions: '0644'
-    write_files:
     - content: |
         runtime-endpoint: unix:///run/containerd/containerd.sock
         image-endpoint: unix:///run/containerd/containerd.sock
