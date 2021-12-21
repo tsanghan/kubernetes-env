@@ -145,6 +145,14 @@ cat <<EOF >> /tmp/lxd-profile-k8s
       owner: root:root
       path: /etc/systemd/system/mount-make-rshare.service
       permissions: '0644'
+        write_files:
+    - content: |
+        runtime-endpoint: unix:///run/containerd/containerd.sock
+        image-endpoint: unix:///run/containerd/containerd.sock
+        timeout: 10
+      owner: root:root
+      path: /etc/crictl.yaml
+      permissions: '0644'
     runcmd:
       - apt-get -y purge nano
       - apt-get -y autoremove
@@ -348,14 +356,14 @@ lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 update_local_etc_hosts "$IPADDR"
 ln -sf ~/.k/config-lxd ~/.k/config
-kubectl get no -owide | grep Notready
+kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
 echo
-kubectl get no -owide | grep Ready
+kubectl get no -owide | grep --color Ready
 echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
