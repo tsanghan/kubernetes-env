@@ -69,7 +69,7 @@ EOF
 
 sudo lxc profile create k8s
 
-cat <<EOF | lxc profile edit k8s
+cat <<EOF > /tmp/lxd-profile-k8s
 config:
   linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
   raw.lxc: |-
@@ -92,6 +92,14 @@ config:
         - arches:
           - amd64
           uri: "http://security.ubuntu.com/ubuntu"
+EOF
+
+PROXY= $(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+if [ "$PROXY" != "" ]; then
+  echo "      proxy: $PROXY" >> /tmp/lxd-profile-k8s
+fi
+
+cat <<EOF >> /tmp/lxd-profile-k8s
       sources:
         kubernetes.list:
           source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
@@ -168,6 +176,8 @@ devices:
 name: k8s
 EOF
 
+/usr/bin/cat /tmp/lxd-profile-k8s | lxc profile edit k8s
+rm /tmp/lxd-profile-k8s
 MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
