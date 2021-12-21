@@ -1,1 +1,0 @@
-scripts/prepare-env.sh
