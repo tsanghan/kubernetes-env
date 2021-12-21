@@ -40,7 +40,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_globalconfigurations.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
-kubectl apply -f https://github.com/nginxinc/kubernetes-ingress/blob/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
 kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/14f48314dd500fe75ed1a7d0df65ba7919d12e33/nginx-ap-ingress.yaml
 EOF
 
@@ -348,17 +348,18 @@ lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 update_local_etc_hosts "$IPADDR"
 ln -sf ~/.k/config-lxd ~/.k/config
-kubectl get no -owide
+kubectl get no -owide | grep Notready
 echo
 if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
 echo
-kubectl get no -owide
+kubectl get no -owide | grep Ready
 echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+nginx-ap-ingress.sh
 MYEOF
 
 # Install kubectl
