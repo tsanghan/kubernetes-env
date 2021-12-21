@@ -101,8 +101,8 @@ config:
       - ca-certificates
       - containerd
       - curl
-      - kubeadm="$KUBE_VER"-00
-      - kubelet="$KUBE_VER"-00
+      - kubeadm=$KUBE_VER-00
+      - kubelet=$KUBE_VER-00
       - jq
     package_update: true
     package_upgrade: true
