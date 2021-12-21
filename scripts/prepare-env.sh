@@ -193,8 +193,8 @@ if [ "$PROXY" != "" ]; then
 else
   SERVER="https://cloud-images.ubuntu.com"
 fi
-curl -SLO https://$SERVER/server/focal/"$VERSION"/focal-server-cloudimg-amd64-lxd.tar.xz
-curl -SLO https://$SERVER/server/focal/"$VERSION"/focal-server-cloudimg-amd64.squashfs
+curl -SLO "$SERVER"/server/focal/"$VERSION"/focal-server-cloudimg-amd64-lxd.tar.xz
+curl -SLO "$SERVER"/server/focal/"$VERSION"/focal-server-cloudimg-amd64.squashfs
 lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
 rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 MYEOF
