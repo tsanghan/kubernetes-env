@@ -194,10 +194,9 @@ devices:
     path: /
     pool: default
     type: disk
-name: k8s
 EOF
 
-/usr/bin/cat /tmp/lxd-profile-k8s | lxc profile edit k8s
+cat /tmp/lxd-profile-k8s | lxc profile edit k8s
 rm /tmp/lxd-profile-k8s
 
 sudo lxc profile create lb
@@ -249,27 +248,20 @@ cat <<EOF >> /tmp/lxd-profile-lb
     timezone: Asia/Singapore
     write_files:
     - content: |
-        upstream lxd-ctrlp {
+        stream {
+            upstream lxd-ctrlp {
                 server lxd-ctrlp-1:6443;
                 server lxd-ctrlp-2:6443;
                 server lxd-ctrlp-3:6443;
-        }
-
-        server {
+            }
+            server {
                 listen 6443;
                 proxy_pass lxd-ctrlp;
+            }
         }
-      owner: root:root
-      path: /etc/nginx/stream/lxd-lb.conf
-      permissions: '0644'
-    - content: |
-
-        stream {
-                include /etc/nginx/stream/*.conf;
-        }
-      owner: root:root
       path: /etc/nginx/nginx.conf
-      append: true 
+      append: true
+      defer: true
     runcmd:
       - apt-get -y purge nano
       - apt-get -y autoremove
@@ -311,10 +303,9 @@ devices:
     path: /
     pool: default
     type: disk
-name: k8s
 EOF
 
-/usr/bin/cat /tmp/lxd-profile-lb | lxc profile edit lb
+cat /tmp/lxd-profile-lb | lxc profile edit lb
 rm /tmp/lxd-profile-lb
 
 MYEOF
@@ -519,6 +510,7 @@ lxc launch -p lb focal-cloud lxd-lb
 lxc launch -p k8s focal-cloud lxd-ctrlp-1
 lxc launch -p k8s focal-cloud lxd-ctrlp-2
 lxc launch -p k8s focal-cloud lxd-ctrlp-3
+lxc launch -p lb focal-cloud lxd-lb
 lxc launch -p k8s focal-cloud lxd-wrker-1
 lxc launch -p k8s focal-cloud lxd-wrker-2
 lxc launch -p k8s focal-cloud lxd-wrker-3
