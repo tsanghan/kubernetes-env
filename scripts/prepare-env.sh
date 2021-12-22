@@ -199,6 +199,124 @@ EOF
 
 /usr/bin/cat /tmp/lxd-profile-k8s | lxc profile edit k8s
 rm /tmp/lxd-profile-k8s
+
+sudo lxc profile create lb
+
+cat <<EOF > /tmp/lxd-profile-lb
+config:
+  linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+  raw.lxc: |-
+    lxc.apparmor.profile=unconfined
+    lxc.cap.drop=
+    lxc.cgroup.devices.allow=a
+    lxc.mount.auto=proc:rw sys:rw cgroup:rw
+    lxc.seccomp.profile=
+  security.nesting: "true"
+  security.privileged: "true"
+  user.user-data: |
+    #cloud-config
+    apt:
+      preserve_sources_list: false
+      primary:
+        - arches:
+          - amd64
+          uri: "http://archive.ubuntu.com/ubuntu/"
+      security:
+        - arches:
+          - amd64
+          uri: "http://security.ubuntu.com/ubuntu"
+EOF
+
+PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+if [ "$PROXY" != "" ]; then
+  echo "      proxy: $PROXY" >> /tmp/lxd-profile-lb
+fi
+
+cat <<EOF >> /tmp/lxd-profile-lb
+      sources:
+        kubernetes.list:
+          source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+          keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+    packages:
+      - apt-transport-https
+      - ca-certificates
+      - nginx
+    package_update: true
+    package_upgrade: true
+    package_reboot_if_required: true
+    locale: en_SG.UTF-8
+    locale_configfile: /etc/default/locale
+    timezone: Asia/Singapore
+    write_files:
+    - content: |
+        upstream lxd-ctrlp {
+                server lxd-ctrlp-1:6443;
+                server lxd-ctrlp-2:6443;
+                server lxd-ctrlp-3:6443;
+        }
+
+        server {
+                listen 6443;
+                proxy_pass lxd-ctrlp;
+        }
+      owner: root:root
+      path: /etc/nginx/stream/lxd-lb.conf
+      permissions: '0644'
+    - content: |
+
+        stream {
+                include /etc/nginx/stream/*.conf;
+        }
+      owner: root:root
+      path: /etc/nginx/stream/lxd-lb.conf
+      append: true 
+    runcmd:
+      - apt-get -y purge nano
+      - apt-get -y autoremove
+    default: none
+    power_state:
+      delay: "+1"
+      mode: poweroff
+      message: Bye Bye
+      timeout: 10
+      condition: True
+description: ""
+devices:
+  _dev_sda1:
+    path: /dev/sda1
+    source: /dev/sda1
+    type: unix-block
+  aadisable:
+    path: /sys/module/nf_conntrack/parameters/hashsize
+    source: /dev/null
+    type: disk
+  aadisable1:
+    path: /sys/module/apparmor/parameters/enabled
+    source: /dev/null
+    type: disk
+  boot_dir:
+    path: /boot
+    source: /boot
+    type: disk
+  dev_kmsg:
+    path: /dev/kmsg
+    source: /dev/kmsg
+    type: unix-char
+  eth0:
+    name: eth0
+    nictype: bridged
+    parent: lxdbr0
+    type: nic
+  root:
+    path: /
+    pool: default
+    type: disk
+name: k8s
+EOF
+
+/usr/bin/cat /tmp/lxd-profile-lb | lxc profile edit lb
+rm /tmp/lxd-profile-lb
+
 MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
@@ -353,8 +471,87 @@ echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
 lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
-update_local_etc_hosts "$IPADDR"
 ln -sf ~/.k/config-lxd ~/.k/config
+update_local_etc_hosts "$IPADDR"
+kubectl get no -owide | grep --color NotReady
+echo
+if ! command  -v cilium &> /dev/null; then
+  get-cilium.sh
+fi
+cilium install
+echo
+kubectl get no -owide | grep --color Ready
+echo
+k-apply.sh
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+nginx-ap-ingress.sh
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/start-cluster-mm.sh
+#!/usr/bin/env bash
+
+check_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep -c "$1")
+    if [ "$STATUS" = "$2" ]; then
+      break
+    fi
+    echo -n "$3"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+update_local_etc_hosts () {
+  OUT=$(grep lxd-ctrlp-1 /etc/hosts)
+  if [[ $OUT == "" ]]; then
+    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-ctrlp-1/" /etc/hosts
+  elif [[ "$OUT" =~ lxd-ctrlp-1 ]]; then
+    sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
+  else
+    echo "Error!!"
+  fi
+}
+
+lxc launch -p lb focel-cloud lxd-lb
+lxc launch -p k8s focal-cloud lxd-ctrlp-1
+lxc launch -p k8s focal-cloud lxd-ctrlp-2
+lxc launch -p k8s focal-cloud lxd-ctrlp-3
+lxc launch -p k8s focal-cloud lxd-wrker-1
+lxc launch -p k8s focal-cloud lxd-wrker-2
+lxc launch -p k8s focal-cloud lxd-wrker-3
+
+check_status STOP 3 .
+lxc start --all
+check_status eth0 3 \!
+IPADDR=$(lxc ls | grep lb | awk '{print $6}')
+echo
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
+sleep 8
+echo
+# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+lxc exec lxd-ctrl-2 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+sleep 8
+echo
+# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+lxc exec lxd-ctrl-3 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+sleep 8
+echo
+# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+lxc exec lxd-wrker-1 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+sleep 8
+echo
+# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+sleep 8
+echo
+# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
+ln -sf ~/.k/config-lxd ~/.k/config
+update_local_etc_hosts "$IPADDR"
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
