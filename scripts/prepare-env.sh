@@ -268,7 +268,7 @@ cat <<EOF >> /tmp/lxd-profile-lb
                 include /etc/nginx/stream/*.conf;
         }
       owner: root:root
-      path: /etc/nginx/stream/lxd-lb.conf
+      path: /etc/nginx/nginx.conf
       append: true 
     runcmd:
       - apt-get -y purge nano
@@ -507,15 +507,15 @@ check_status () {
 update_local_etc_hosts () {
   OUT=$(grep lxd-ctrlp-1 /etc/hosts)
   if [[ $OUT == "" ]]; then
-    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-ctrlp-1/" /etc/hosts
-  elif [[ "$OUT" =~ lxd-ctrlp-1 ]]; then
+    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-lb/" /etc/hosts
+  elif [[ "$OUT" =~ lxd-lb ]]; then
     sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
   else
     echo "Error!!"
   fi
 }
 
-lxc launch -p lb focel-cloud lxd-lb
+lxc launch -p lb focal-cloud lxd-lb
 lxc launch -p k8s focal-cloud lxd-ctrlp-1
 lxc launch -p k8s focal-cloud lxd-ctrlp-2
 lxc launch -p k8s focal-cloud lxd-ctrlp-3
@@ -523,10 +523,11 @@ lxc launch -p k8s focal-cloud lxd-wrker-1
 lxc launch -p k8s focal-cloud lxd-wrker-2
 lxc launch -p k8s focal-cloud lxd-wrker-3
 
-check_status STOP 3 .
+check_status STOP 7 .
 lxc start --all
-check_status eth0 3 \!
+check_status eth0 7 \!
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
+sleep 8
 echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
 sleep 8
