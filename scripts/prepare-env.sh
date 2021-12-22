@@ -510,12 +510,13 @@ lxc launch -p lb focal-cloud lxd-lb
 lxc launch -p k8s focal-cloud lxd-ctrlp-1
 lxc launch -p k8s focal-cloud lxd-ctrlp-2
 lxc launch -p k8s focal-cloud lxd-ctrlp-3
-lxc launch -p lb focal-cloud lxd-lb
 lxc launch -p k8s focal-cloud lxd-wrker-1
 lxc launch -p k8s focal-cloud lxd-wrker-2
 lxc launch -p k8s focal-cloud lxd-wrker-3
 
 check_status STOP 7 .
+lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
+sleep 8
 lxc start --all
 check_status eth0 7 \!
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
@@ -525,11 +526,11 @@ lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --uplo
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-ctrl-2 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+lxc exec lxd-ctrlp-2 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-ctrl-3 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+lxc exec lxd-ctrlp-3 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
@@ -541,7 +542,9 @@ lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+lxc exec lxd-wrker-3 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+sleep 8
+echo
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 update_local_etc_hosts "$IPADDR"
