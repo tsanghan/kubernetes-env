@@ -451,8 +451,11 @@ check_status STOP 3 .
 lxc start --all
 check_status eth0 3 \!
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
+update_local_etc_hosts "$IPADDR"
 echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
+ln -sf ~/.k/config-lxd ~/.k/config
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
@@ -461,9 +464,8 @@ sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
 lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
-ln -sf ~/.k/config-lxd ~/.k/config
-update_local_etc_hosts "$IPADDR"
+sleep 8
+echo 
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
@@ -471,7 +473,7 @@ if ! command  -v cilium &> /dev/null; then
 fi
 cilium install
 echo
-kubectl get no -owide | grep --color Ready
+kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
@@ -520,9 +522,12 @@ sleep 8
 lxc start --all
 check_status eth0 7 \!
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
+update_local_etc_hosts "$IPADDR"
 sleep 8
 echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
+ln -sf ~/.k/config-lxd ~/.k/config
 sleep 8
 echo
 # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
@@ -545,9 +550,6 @@ echo
 lxc exec lxd-wrker-3 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
 sleep 8
 echo
-lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
-ln -sf ~/.k/config-lxd ~/.k/config
-update_local_etc_hosts "$IPADDR"
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
@@ -555,7 +557,7 @@ if ! command  -v cilium &> /dev/null; then
 fi
 cilium install
 echo
-kubectl get no -owide | grep --color Ready
+kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
