@@ -418,7 +418,7 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/start-cluster.sh
 #!/usr/bin/env bash
 
-check_status () {
+check_lxd_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(lxc ls | grep -c "$1")
@@ -426,6 +426,20 @@ check_status () {
       break
     fi
     echo -n "$3"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+check_cilium_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}')
+    if [ "$STATUS" = "OK" ]; then
+      break
+    fi
+    echo -n "$1"
     sleep 2
   done
   sleep 2
@@ -447,9 +461,9 @@ lxc launch -p k8s focal-cloud lxd-ctrlp-1
 lxc launch -p k8s focal-cloud lxd-wrker-1
 lxc launch -p k8s focal-cloud lxd-wrker-2
 
-check_status STOP 3 .
+check_lxd_status STOP 3 .
 lxc start --all
-check_status eth0 3 \!
+check_lxd_status eth0 3 \!
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 echo
@@ -472,6 +486,7 @@ if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
+check_lxd_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
@@ -483,7 +498,7 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/start-cluster-mm.sh
 #!/usr/bin/env bash
 
-check_status () {
+check_lxd_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(lxc ls | grep -c "$1")
@@ -491,6 +506,20 @@ check_status () {
       break
     fi
     echo -n "$3"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+check_cilium_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}')
+    if [ "$STATUS" = "OK" ]; then
+      break
+    fi
+    echo -n "$1"
     sleep 2
   done
   sleep 2
@@ -516,11 +545,11 @@ lxc launch -p k8s focal-cloud lxd-wrker-1
 lxc launch -p k8s focal-cloud lxd-wrker-2
 lxc launch -p k8s focal-cloud lxd-wrker-3
 
-check_status STOP 7 .
+check_lxd_status STOP 7 .
 lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
 sleep 8
 lxc start --all
-check_status eth0 7 \!
+check_lxd_status eth0 7 \!
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 sleep 8
@@ -556,6 +585,7 @@ if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
+check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
