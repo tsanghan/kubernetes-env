@@ -513,7 +513,7 @@ check_lxd_status () {
 check_cilium_status () {
   echo -n "Wait"
   while true; do
-    STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}')
+    STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}' | sed 's/\x1b\[[0-9;]*m//g')
     if [ "$STATUS" = "OK" ]; then
       break
     fi
