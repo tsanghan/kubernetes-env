@@ -594,6 +594,12 @@ sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | 
 nginx-ap-ingress.sh
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
+#!/usr/bin/env bash
+lxc stop --all --force
+for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
+MYEOF
+
 # Install kubectl
 KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$KUBECTL_VER/bin/linux/amd64/kubectl"
