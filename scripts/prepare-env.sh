@@ -457,9 +457,9 @@ update_local_etc_hosts () {
   fi
 }
 
-lxc launch -p k8s focal-cloud lxd-ctrlp-1
-lxc launch -p k8s focal-cloud lxd-wrker-1
-lxc launch -p k8s focal-cloud lxd-wrker-2
+for c in ctrlp-1 wrker-1 wrker-2; do
+  lxc launch -p k8s focal-cloud lxd-"$c"
+done
 
 check_lxd_status STOP 3 .
 lxc start --all
@@ -472,21 +472,19 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 sleep 8
 echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-1 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-sleep 8
-echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-sleep 8
-echo 
+for c in 1 2; do
+  # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+  sleep 8
+  echo
+done
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
   get-cilium.sh
 fi
 cilium install
-check_lxd_status @
+check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
@@ -537,13 +535,9 @@ update_local_etc_hosts () {
   fi
 }
 
-lxc launch -p lb focal-cloud lxd-lb
-lxc launch -p k8s focal-cloud lxd-ctrlp-1
-lxc launch -p k8s focal-cloud lxd-ctrlp-2
-lxc launch -p k8s focal-cloud lxd-ctrlp-3
-lxc launch -p k8s focal-cloud lxd-wrker-1
-lxc launch -p k8s focal-cloud lxd-wrker-2
-lxc launch -p k8s focal-cloud lxd-wrker-3
+for c in lb ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
+  lxc launch -p lb focal-cloud lxd-"$c"
+done
 
 check_lxd_status STOP 7 .
 lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
@@ -559,26 +553,18 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 sleep 8
 echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-ctrlp-2 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
-sleep 8
-echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-ctrlp-3 -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
-sleep 8
-echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-1 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-sleep 8
-echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-2 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-sleep 8
-echo
-# shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-lxc exec lxd-wrker-3 -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-sleep 8
-echo
+for c in 2 3; do
+  # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+  lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+  sleep 8
+  echo
+done
+for c in 1 2 3; do
+  # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
+  sleep 8
+  echo
+done
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
