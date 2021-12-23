@@ -535,8 +535,9 @@ update_local_etc_hosts () {
   fi
 }
 
-for c in lb ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
-  lxc launch -p lb focal-cloud lxd-"$c"
+lxc launch -p lb focal-cloud lxd-lb
+for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
+  lxc launch -p k8s focal-cloud lxd-"$c"
 done
 
 check_lxd_status STOP 7 .
