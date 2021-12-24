@@ -406,7 +406,26 @@ fi
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-common.sh
+#!/usr/bin/env bash
 
+check_lxd_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep -c "$1")
+    if [ "$STATUS" = "$2" ]; then
+      break
+    fi
+    echo -n "$3"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+lxc launch -p k8s focal-cloud lxd-common
+check_lxd_statuc STOP 1 .
+lxc publish lxd-common --alias lxd-common
+lxc delete lxd-common
 EOF
 
 cat <<'EOF' > ~/.bash_complete
@@ -512,8 +531,15 @@ update_local_etc_hosts () {
   fi
 }
 
+common=$(lxc image ls | grep lxd-common)
+if [ "common" == "" ]; then
+  image=focal-cloud
+else
+  image=lxd-common
+fi
+
 for c in ctrlp-1 wrker-1 wrker-2; do
-  lxc launch -p k8s focal-cloud lxd-"$c"
+  lxc launch -p k8s "$image" lxd-"$c"
 done
 
 check_lxd_status STOP 3 .
@@ -590,9 +616,16 @@ update_local_etc_hosts () {
   fi
 }
 
+common=$(lxc image ls | grep lxd-common)
+if [ "common" == "" ]; then
+  image=focal-cloud
+else
+  image=lxd-common
+fi
+
 lxc launch -p lb focal-cloud lxd-lb
 for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
-  lxc launch -p k8s focal-cloud lxd-"$c"
+  lxc launch -p k8s "$image" lxd-"$c"
 done
 
 check_lxd_status STOP 7 .
