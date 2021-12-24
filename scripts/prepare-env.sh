@@ -629,7 +629,7 @@ sleep 8
 echo
 for c in 1 2; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n') | egrep "^W[0-9]{4}"
+  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
   sleep 8
   echo
 done
@@ -745,7 +745,7 @@ for c in 2 3; do
 done
 for c in 1 2 3; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
-  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n') | egrep "^W[0-9]{4}"
+  lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
   sleep 4
   echo
 done
