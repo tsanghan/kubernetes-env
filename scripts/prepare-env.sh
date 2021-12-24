@@ -372,7 +372,7 @@ verlt() {
 }
 
 if [ ! -x ~/.local/bin/kubectl ]; then
-  echo "kubeclt not found or not executanle!!"
+  echo "kubeclt not found or not executable!!"
   exit
 fi
 
