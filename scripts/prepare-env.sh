@@ -697,7 +697,7 @@ update_local_etc_hosts () {
   if [[ $OUT == "" ]]; then
     sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-lb/" /etc/hosts
   elif [[ "$OUT" =~ lxd-lb ]]; then
-    sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
+    sudo sed -ri "/lxd-lb/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
   else
     echo "Error!!"
   fi
@@ -713,7 +713,6 @@ fi
 lxc launch -p lb focal-cloud lxd-lb
 check_lb_status
 IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
-echo $IPADDR
 update_local_etc_hosts "$IPADDR"
 
 for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
