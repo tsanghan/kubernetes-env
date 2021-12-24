@@ -195,8 +195,8 @@ if [ "$k8s"  == "" ]; then
 EOF
 fi
 
-k8s-cloud-init=$(lxc profile ls | grep k8s-cloud-init)
-if [ "$k8s-cloud-init"  == "" ]; then
+k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
+if [ "$k8s_cloud_init"  == "" ]; then
   lxc profile create k8s-cloud-init
 
   cat <<EOF > /tmp/lxd-profile-k8s-cloud-init
