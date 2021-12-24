@@ -392,12 +392,6 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
       default: none
-      power_state:
-        delay: "+1"
-        mode: poweroff
-        message: Bye Bye
-        timeout: 10
-        condition: True
   description: ""
   devices:
     _dev_sda1:
@@ -617,8 +611,9 @@ common=$(lxc image ls | grep lxd-common)
 if [ "common" == "" ]; then
   check_lxd_status STOP 3 .
   lxc start --all
-  check_lxd_status eth0 3 \!
 fi
+
+check_lxd_status eth0 3 \!
 
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
@@ -710,8 +705,8 @@ if [ "common" == "" ]; then
   lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
   sleep 8
   lxc start --all
-  check_lxd_status eth0 7 \!
 fi
+check_lxd_status eth0 7 \!
 
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
