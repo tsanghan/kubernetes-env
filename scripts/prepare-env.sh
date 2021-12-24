@@ -649,6 +649,124 @@ k-apply.sh
 nginx-ap-ingress.sh
 MYEOF
 
+# cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
+# #!/usr/bin/env bash
+
+# check_lxd_status () {
+#   echo -n "Wait"
+#   while true; do
+#     STATUS=$(lxc ls | grep -c "$1")
+#     if [ "$STATUS" = "$2" ]; then
+#       break
+#     fi
+#     echo -n "$3"
+#     sleep 2
+#   done
+#   sleep 2
+#   echo
+# }
+
+# check_lb_status () {
+#   echo -n "Wait"
+#   while true; do
+#     STATUS=$(lxc ls | grep lxd-lb | grep eth0)
+#     if [ ! "$STATUS" = "" ]; then
+#       break
+#     fi
+#     echo -n .
+#     sleep 2
+#   done
+#   sleep 2
+#   echo
+# }
+
+# check_cilium_status () {
+#   echo -n "Wait"
+#   while true; do
+#     STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}' | sed 's/\x1b\[[0-9;]*m//g')
+#     if [ "$STATUS" = "OK" ]; then
+#       break
+#     fi
+#     echo -n "$1"
+#     sleep 2
+#   done
+#   sleep 2
+#   echo
+# }
+
+# update_local_etc_hosts () {
+#   OUT=$(grep lxd-lb /etc/hosts)
+#   if [[ $OUT == "" ]]; then
+#     sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-lb/" /etc/hosts
+#   elif [[ "$OUT" =~ lxd-lb ]]; then
+#     sudo sed -ri "/lxd-lb/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
+#   else
+#     echo "Error!!"
+#   fi
+# }
+
+# common=$(lxc image ls | grep lxd-common)
+# if [ "$common" == "" ]; then
+#   image=focal-cloud
+#   profile=k8s-cloud-init
+# else
+#   image=lxd-common
+#   profile=k8s
+# fi
+
+# lxc launch -p lb focal-cloud lxd-lb
+# check_lb_status
+# IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
+# update_local_etc_hosts "$IPADDR"
+
+# for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
+#   lxc launch -p "$profile" "$image" lxd-"$c"
+# done
+
+# common=$(lxc image ls | grep lxd-common)
+# if [ "$common" == "" ]; then
+#   check_lxd_status STOP 6 .
+#   lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
+#   sleep 8
+#   lxc start --all
+# fi
+# check_lxd_status eth0 7 \!
+
+# sleep 8
+# echo
+# lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
+# lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
+# ln -sf ~/.k/config-lxd ~/.k/config
+# sleep 8
+# echo
+# for c in 2 3; do
+#   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+#   lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+#   sleep 8
+#   echo
+# done
+# for c in 1 2 3; do
+#   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+#   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n') | egrep "^W[0-9]{4}"
+#   sleep 8
+#   echo
+# done
+# kubectl get no -owide | grep --color NotReady
+# echo
+# if ! command  -v cilium &> /dev/null; then
+#   get-cilium.sh
+# fi
+# cilium install
+# check_cilium_status @
+# echo
+# kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
+# echo
+# kubectl create namespace metallb-system
+# sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+# k-apply.sh
+# nginx-ap-ingress.sh
+# MYEOF
+
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
 #!/usr/bin/env bash
 
