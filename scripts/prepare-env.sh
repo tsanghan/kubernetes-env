@@ -649,6 +649,18 @@ fi
 rm ~/.k/{config,config-lxd}
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
+#!/usr/bin/env bash
+
+while true;
+do
+  if [ -e ~/.k/config ]; then
+    break;
+  fi
+done
+k9s
+MYEOF
+
 # Install kubectl
 if [ ! -f ~/.local/bin/kubectl ]; then
   KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
