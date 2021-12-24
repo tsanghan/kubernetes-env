@@ -422,10 +422,15 @@ check_lxd_status () {
   echo
 }
 
-lxc launch -p k8s focal-cloud lxd-common
-check_lxd_statuc STOP 1 .
-lxc publish lxd-common --alias lxd-common
-lxc delete lxd-common
+common=$(lxc image ls | grep lxd-common)
+if [ "common" == "" ]; then
+  lxc launch -p k8s focal-cloud lxd-common
+  check_lxd_statuc STOP 1 .
+  lxc publish lxd-common --alias lxd-common
+  lxc delete lxd-common
+else
+  echo "lxd-common already created."
+fi
 EOF
 
 cat <<'EOF' > ~/.bash_complete
