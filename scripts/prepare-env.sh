@@ -7,12 +7,62 @@ curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
 
+echo
+echo "****************************"
+echo "*                          *"
+echo "* Download and Install fzf *"
+echo "*                          *"
+echo "****************************"
+echo
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 yes | ~/.fzf/install
 EOF
 
+cat <<'EOF' > ~/.local/bin/get-cilium.sh
+#!/usr/bin/env bash
+
+echo
+echo "*******************************"
+echo "*                             *"
+echo "* Download and Install Cilium *"
+echo "*                             *"
+echo "*******************************"
+echo
+# Ref: https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/
+curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
+sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
+tar xzvfC cilium-linux-amd64.tar.gz ~/.local/bin
+rm cilium-linux-amd64.tar.gz{,.sha256sum}
+EOF
+
+cat <<'EOF' > ~/.local/bin/get-hubble.sh
+#!/usr/bin/env bash
+
+echo
+echo "*******************************"
+echo "*                             *"
+echo "* Download and Install Hubble *"
+echo "*                             *"
+echo "*******************************"
+echo
+# Ref: https://docs.cilium.io/en/stable/gettingstarted/hubble_setup/
+export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz{,.sha256sum}
+sha256sum --check hubble-linux-amd64.tar.gz.sha256sum
+sudo tar xzvfC hubble-linux-amd64.tar.gz ~/.local/bin
+rm hubble-linux-amd64.tar.gz{,.sha256sum}
+EOF
+
 cat <<'EOF' > ~/.local/bin/k-apply.sh
 #!/usr/bin/env bash
+
+echo
+echo "*****************************************************************************************"
+echo "*                                                                                       *"
+echo "* Deploy Metrics Server (abridged version), MetalLB  & Local-Path-Provisioner (Rancher) *"
+echo "*                                                                                       *"
+echo "*****************************************************************************************"
+echo
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
@@ -21,11 +71,27 @@ EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
 #!/usr/bin/env bash
+
+echo
+echo "*****************************************************************************************"
+echo "*                                                                                       *"
+echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
+echo "*                                                                                       *"
+echo "*****************************************************************************************"
+echo
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/cloud/deploy.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
+
+echo
+echo "**************************************"
+echo "*                                    *"
+echo "* Deploy F5 NGINX Ingress Controller *"
+echo "*                                    *"
+echo "**************************************"
+echo
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ns-and-sa.yaml
 kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) --docker-password=none -n nginx-ingress
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/rbac.yaml
@@ -338,16 +404,6 @@ if [ "$image" == "" ]; then
 fi
 MYEOF
 
-cat <<'EOF' > ~/.local/bin/get-cilium.sh
-#!/usr/bin/env bash
-
-# Ref: https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/
-curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
-sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
-tar xzvfC cilium-linux-amd64.tar.gz ~/.local/bin
-rm cilium-linux-amd64.tar.gz{,.sha256sum}
-EOF
-
 cat <<'EOF' > ~/.bash_complete
 # For kubernetes-env
 
@@ -409,7 +465,7 @@ else
 fi
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/start-cluster.sh
+cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
 check_lxd_status () {
@@ -487,7 +543,7 @@ sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | 
 nginx-ap-ingress.sh
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/start-cluster-mm.sh
+cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
 #!/usr/bin/env bash
 
 check_lxd_status () {
@@ -577,6 +633,7 @@ MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
 #!/usr/bin/env bash
+
 lxc stop --all --force
 for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
 MYEOF
