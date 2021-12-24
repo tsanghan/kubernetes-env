@@ -391,7 +391,7 @@ EOF
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
-        - sleep 30
+        - sleep 10
         - nginx -s reload
       default: none
   description: ""
