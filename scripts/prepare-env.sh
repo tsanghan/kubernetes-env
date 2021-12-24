@@ -627,6 +627,7 @@ check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
+kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
 nginx-ap-ingress.sh
@@ -726,6 +727,7 @@ check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
+kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
 nginx-ap-ingress.sh
