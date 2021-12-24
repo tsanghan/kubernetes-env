@@ -634,8 +634,18 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
 #!/usr/bin/env bash
 
+while getopts "d" o; do
+    case "${o}" in
+        d)
+            delete="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 lxc stop --all --force
-for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
+if [ "$delete"  == "true" ]; then
+  for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
+fi
 MYEOF
 
 # Install kubectl
