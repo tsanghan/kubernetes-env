@@ -599,7 +599,7 @@ update_local_etc_hosts () {
 }
 
 common=$(lxc image ls | grep lxd-common)
-if [ "common" == "" ]; then
+if [ "$common" == "" ]; then
   image=focal-cloud
   profile=k8s-cloud-init
 else
