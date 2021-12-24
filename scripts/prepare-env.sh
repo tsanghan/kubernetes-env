@@ -80,234 +80,240 @@ profiles:
 cluster: null
 EOF
 
-sudo lxc profile create k8s
+k8s=$(lxc profile ls | grep k8s)
+if [ "$k8s"  == "" ]; then
+  sudo lxc profile create k8s
 
-cat <<EOF > /tmp/lxd-profile-k8s
-config:
-  linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-  raw.lxc: |-
-    lxc.apparmor.profile=unconfined
-    lxc.cap.drop=
-    lxc.cgroup.devices.allow=a
-    lxc.mount.auto=proc:rw sys:rw cgroup:rw
-    lxc.seccomp.profile=
-  security.nesting: "true"
-  security.privileged: "true"
-  user.user-data: |
-    #cloud-config
-    apt:
-      preserve_sources_list: false
-      primary:
-        - arches:
-          - amd64
-          uri: "http://archive.ubuntu.com/ubuntu/"
-      security:
-        - arches:
-          - amd64
-          uri: "http://security.ubuntu.com/ubuntu"
-EOF
+  cat <<EOF > /tmp/lxd-profile-k8s
+  config:
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |-
+      lxc.apparmor.profile=unconfined
+      lxc.cap.drop=
+      lxc.cgroup.devices.allow=a
+      lxc.mount.auto=proc:rw sys:rw cgroup:rw
+      lxc.seccomp.profile=
+    security.nesting: "true"
+    security.privileged: "true"
+    user.user-data: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches:
+            - amd64
+            uri: "http://archive.ubuntu.com/ubuntu/"
+        security:
+          - arches:
+            - amd64
+            uri: "http://security.ubuntu.com/ubuntu"
+  EOF
 
-KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-if [ "$PROXY" != "" ]; then
-  echo "      proxy: $PROXY" >> /tmp/lxd-profile-k8s
-fi
+  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+  if [ "$PROXY" != "" ]; then
+    echo "      proxy: $PROXY" >> /tmp/lxd-profile-k8s
+  fi
 
-cat <<EOF >> /tmp/lxd-profile-k8s
-      sources:
-        kubernetes.list:
-          source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-          keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-    packages:
-      - apt-transport-https
-      - ca-certificates
-      - containerd
-      - curl
-      - kubeadm=$KUBE_VER-00
-      - kubelet=$KUBE_VER-00
-      - jq
-    package_update: true
-    package_upgrade: true
-    package_reboot_if_required: true
-    locale: en_SG.UTF-8
-    locale_configfile: /etc/default/locale
-    timezone: Asia/Singapore
-    write_files:
-    - content: |
-        [Unit]
-        Description=Mount Make Rshare
+  cat <<EOF >> /tmp/lxd-profile-k8s
+        sources:
+          kubernetes.list:
+            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+      packages:
+        - apt-transport-https
+        - ca-certificates
+        - containerd
+        - curl
+        - kubeadm=$KUBE_VER-00
+        - kubelet=$KUBE_VER-00
+        - jq
+      package_update: true
+      package_upgrade: true
+      package_reboot_if_required: true
+      locale: en_SG.UTF-8
+      locale_configfile: /etc/default/locale
+      timezone: Asia/Singapore
+      write_files:
+      - content: |
+          [Unit]
+          Description=Mount Make Rshare
 
-        [Service]
-        ExecStart=/bin/mount --make-rshare /
+          [Service]
+          ExecStart=/bin/mount --make-rshare /
 
-        [Install]
-        WantedBy=multi-user.target
-      owner: root:root
-      path: /etc/systemd/system/mount-make-rshare.service
-      permissions: '0644'
-    - content: |
-        runtime-endpoint: unix:///run/containerd/containerd.sock
-        image-endpoint: unix:///run/containerd/containerd.sock
+          [Install]
+          WantedBy=multi-user.target
+        owner: root:root
+        path: /etc/systemd/system/mount-make-rshare.service
+        permissions: '0644'
+      - content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+          image-endpoint: unix:///run/containerd/containerd.sock
+          timeout: 10
+        owner: root:root
+        path: /etc/crictl.yaml
+        permissions: '0644'
+      runcmd:
+        - apt-get -y purge nano
+        - apt-get -y autoremove
+        - systemctl enable mount-make-rshare
+      default: none
+      power_state:
+        delay: "+1"
+        mode: poweroff
+        message: Bye Bye
         timeout: 10
-      owner: root:root
-      path: /etc/crictl.yaml
-      permissions: '0644'
-    runcmd:
-      - apt-get -y purge nano
-      - apt-get -y autoremove
-      - systemctl enable mount-make-rshare
-    default: none
-    power_state:
-      delay: "+1"
-      mode: poweroff
-      message: Bye Bye
-      timeout: 10
-      condition: True
-description: ""
-devices:
-  _dev_sda1:
-    path: /dev/sda1
-    source: /dev/sda1
-    type: unix-block
-  aadisable:
-    path: /sys/module/nf_conntrack/parameters/hashsize
-    source: /dev/null
-    type: disk
-  aadisable1:
-    path: /sys/module/apparmor/parameters/enabled
-    source: /dev/null
-    type: disk
-  boot_dir:
-    path: /boot
-    source: /boot
-    type: disk
-  dev_kmsg:
-    path: /dev/kmsg
-    source: /dev/kmsg
-    type: unix-char
-  eth0:
-    name: eth0
-    nictype: bridged
-    parent: lxdbr0
-    type: nic
-  root:
-    path: /
-    pool: default
-    type: disk
-EOF
+        condition: True
+  description: ""
+  devices:
+    _dev_sda1:
+      path: /dev/sda1
+      source: /dev/sda1
+      type: unix-block
+    aadisable:
+      path: /sys/module/nf_conntrack/parameters/hashsize
+      source: /dev/null
+      type: disk
+    aadisable1:
+      path: /sys/module/apparmor/parameters/enabled
+      source: /dev/null
+      type: disk
+    boot_dir:
+      path: /boot
+      source: /boot
+      type: disk
+    dev_kmsg:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+    eth0:
+      name: eth0
+      nictype: bridged
+      parent: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+  EOF
 
-cat /tmp/lxd-profile-k8s | lxc profile edit k8s
-rm /tmp/lxd-profile-k8s
-
-sudo lxc profile create lb
-
-cat <<EOF > /tmp/lxd-profile-lb
-config:
-  linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-  raw.lxc: |-
-    lxc.apparmor.profile=unconfined
-    lxc.cap.drop=
-    lxc.cgroup.devices.allow=a
-    lxc.mount.auto=proc:rw sys:rw cgroup:rw
-    lxc.seccomp.profile=
-  security.nesting: "true"
-  security.privileged: "true"
-  user.user-data: |
-    #cloud-config
-    apt:
-      preserve_sources_list: false
-      primary:
-        - arches:
-          - amd64
-          uri: "http://archive.ubuntu.com/ubuntu/"
-      security:
-        - arches:
-          - amd64
-          uri: "http://security.ubuntu.com/ubuntu"
-EOF
-
-PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-if [ "$PROXY" != "" ]; then
-  echo "      proxy: $PROXY" >> /tmp/lxd-profile-lb
+  cat /tmp/lxd-profile-k8s | lxc profile edit k8s
+  rm /tmp/lxd-profile-k8s
 fi
 
-cat <<EOF >> /tmp/lxd-profile-lb
-      sources:
-        kubernetes.list:
-          source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-          keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-    packages:
-      - apt-transport-https
-      - ca-certificates
-      - nginx
-    package_update: true
-    package_upgrade: true
-    package_reboot_if_required: true
-    locale: en_SG.UTF-8
-    locale_configfile: /etc/default/locale
-    timezone: Asia/Singapore
-    write_files:
-    - content: |
-        stream {
-            upstream lxd-ctrlp {
-                server lxd-ctrlp-1:6443;
-                server lxd-ctrlp-2:6443;
-                server lxd-ctrlp-3:6443;
-            }
-            server {
-                listen 6443;
-                proxy_pass lxd-ctrlp;
-            }
-        }
-      path: /etc/nginx/nginx.conf
-      append: true
-      defer: true
-    runcmd:
-      - apt-get -y purge nano
-      - apt-get -y autoremove
-    default: none
-    power_state:
-      delay: "+1"
-      mode: poweroff
-      message: Bye Bye
-      timeout: 10
-      condition: True
-description: ""
-devices:
-  _dev_sda1:
-    path: /dev/sda1
-    source: /dev/sda1
-    type: unix-block
-  aadisable:
-    path: /sys/module/nf_conntrack/parameters/hashsize
-    source: /dev/null
-    type: disk
-  aadisable1:
-    path: /sys/module/apparmor/parameters/enabled
-    source: /dev/null
-    type: disk
-  boot_dir:
-    path: /boot
-    source: /boot
-    type: disk
-  dev_kmsg:
-    path: /dev/kmsg
-    source: /dev/kmsg
-    type: unix-char
-  eth0:
-    name: eth0
-    nictype: bridged
-    parent: lxdbr0
-    type: nic
-  root:
-    path: /
-    pool: default
-    type: disk
-EOF
 
-cat /tmp/lxd-profile-lb | lxc profile edit lb
-rm /tmp/lxd-profile-lb
+lb=$(lxc profile ls | grep lb)
+  if [ "$lb"  == "" ]; then
+  sudo lxc profile create lb
 
+  cat <<EOF > /tmp/lxd-profile-lb
+  config:
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |-
+      lxc.apparmor.profile=unconfined
+      lxc.cap.drop=
+      lxc.cgroup.devices.allow=a
+      lxc.mount.auto=proc:rw sys:rw cgroup:rw
+      lxc.seccomp.profile=
+    security.nesting: "true"
+    security.privileged: "true"
+    user.user-data: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches:
+            - amd64
+            uri: "http://archive.ubuntu.com/ubuntu/"
+        security:
+          - arches:
+            - amd64
+            uri: "http://security.ubuntu.com/ubuntu"
+  EOF
+
+  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+  if [ "$PROXY" != "" ]; then
+    echo "      proxy: $PROXY" >> /tmp/lxd-profile-lb
+  fi
+
+  cat <<EOF >> /tmp/lxd-profile-lb
+        sources:
+          kubernetes.list:
+            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+      packages:
+        - apt-transport-https
+        - ca-certificates
+        - nginx
+      package_update: true
+      package_upgrade: true
+      package_reboot_if_required: true
+      locale: en_SG.UTF-8
+      locale_configfile: /etc/default/locale
+      timezone: Asia/Singapore
+      write_files:
+      - content: |
+          stream {
+              upstream lxd-ctrlp {
+                  server lxd-ctrlp-1:6443;
+                  server lxd-ctrlp-2:6443;
+                  server lxd-ctrlp-3:6443;
+              }
+              server {
+                  listen 6443;
+                  proxy_pass lxd-ctrlp;
+              }
+          }
+        path: /etc/nginx/nginx.conf
+        append: true
+        defer: true
+      runcmd:
+        - apt-get -y purge nano
+        - apt-get -y autoremove
+      default: none
+      power_state:
+        delay: "+1"
+        mode: poweroff
+        message: Bye Bye
+        timeout: 10
+        condition: True
+  description: ""
+  devices:
+    _dev_sda1:
+      path: /dev/sda1
+      source: /dev/sda1
+      type: unix-block
+    aadisable:
+      path: /sys/module/nf_conntrack/parameters/hashsize
+      source: /dev/null
+      type: disk
+    aadisable1:
+      path: /sys/module/apparmor/parameters/enabled
+      source: /dev/null
+      type: disk
+    boot_dir:
+      path: /boot
+      source: /boot
+      type: disk
+    dev_kmsg:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+    eth0:
+      name: eth0
+      nictype: bridged
+      parent: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+  EOF
+
+  cat /tmp/lxd-profile-lb | lxc profile edit lb
+  rm /tmp/lxd-profile-lb
+fi
 MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
