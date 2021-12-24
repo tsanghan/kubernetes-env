@@ -664,21 +664,23 @@ else
 fi
 
 # Install kind
-if [ ! -x ~/local/bin/kind ]
+if [ ! -x ~/local/bin/kind ]; then
   curl -sSL -o ~/.local/bin/kind \
     "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
 fi 
 # Install k9s
-if [ ! -x ~/local/bin/k9s ]
+if [ ! -x ~/local/bin/k9s ]; then
   K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
   curl -sSL "$K9S_FRIEND" | tar -C ~/.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
 fi
 # Install yq
+if [ ! -x ~/local/bin/yq ]; then
 curl -sSL -o ~/.local/bin/yq \
   "$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')"
+fi
 
 # Install shellcheck
-if [ ! -x ~/local/bin/shellcheck ]
+if [ ! -x ~/local/bin/shellcheck ]; then
   SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
   SHELLCHECK_DIR=$(basename "$SHELLCHECK" | sed 's/\(^.*v.*\).linux.*/\1/')
   SHELLCHECK_BIN=$(basename "$SHELLCHECK" | sed 's/\(.*\)-v.*/\1/')
@@ -688,7 +690,7 @@ if [ ! -x ~/local/bin/shellcheck ]
 fi
 
 # Install kubectx & kubens
-if ! [ -x ~/.local/bin/kubectx || -x ~/.local/bin/kubens ]
+if ! [ -x ~/.local/bin/kubectx || -x ~/.local/bin/kubens ]; then
   KUBE_FRIENDS=$(curl -s https://api.github.com/repos/ahmetb/kubectx/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
   for friend in $KUBE_FRIENDS
   do
