@@ -150,7 +150,7 @@ k8s=$(lxc profile ls | grep k8s)
 if [ "$k8s"  == "" ]; then
   lxc profile create k8s
 
-  cat <<EOF > | lxc profile edit k8s
+  cat <<EOF | lxc profile edit k8s
   config:
     linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
     raw.lxc: |-
