@@ -391,7 +391,7 @@ EOF
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
-        - sleep 5
+        - sleep 30
         - nginx -s reload
       default: none
   description: ""
@@ -697,6 +697,10 @@ else
 fi
 
 lxc launch -p lb focal-cloud lxd-lb
+sleep 2
+IPADDR=$(lxc ls | grep lb | awk '{print $6}')
+update_local_etc_hosts "$IPADDR"
+
 for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
   lxc launch -p k8s "$image" lxd-"$c"
 done
@@ -710,8 +714,6 @@ if [ "common" == "" ]; then
 fi
 check_lxd_status eth0 7 \!
 
-IPADDR=$(lxc ls | grep lb | awk '{print $6}')
-update_local_etc_hosts "$IPADDR"
 sleep 8
 echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
