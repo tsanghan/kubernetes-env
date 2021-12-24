@@ -148,9 +148,58 @@ EOF
 
 k8s=$(lxc profile ls | grep k8s)
 if [ "$k8s"  == "" ]; then
-  sudo lxc profile create k8s
+  lxc profile create k8s
 
-  cat <<EOF > /tmp/lxd-profile-k8s
+  cat <<EOF > | lxc profile edit k8s
+  config:
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |-
+      lxc.apparmor.profile=unconfined
+      lxc.cap.drop=
+      lxc.cgroup.devices.allow=a
+      lxc.mount.auto=proc:rw sys:rw cgroup:rw
+      lxc.seccomp.profile=
+    security.nesting: "true"
+    security.privileged: "true"
+  description: ""
+  devices:
+    _dev_sda1:
+      path: /dev/sda1
+      source: /dev/sda1
+      type: unix-block
+    aadisable:
+      path: /sys/module/nf_conntrack/parameters/hashsize
+      source: /dev/null
+      type: disk
+    aadisable1:
+      path: /sys/module/apparmor/parameters/enabled
+      source: /dev/null
+      type: disk
+    boot_dir:
+      path: /boot
+      source: /boot
+      type: disk
+    dev_kmsg:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+    eth0:
+      name: eth0
+      nictype: bridged
+      parent: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+EOF
+fi
+
+k8s-cloud-init=$(lxc profile ls | grep k8s-cloud-init)
+if [ "$k8s-cloud-init"  == "" ]; then
+  lxc profile create k8s-cloud-init
+
+  cat <<EOF > /tmp/lxd-profile-k8s-cloud-init
   config:
     linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
     raw.lxc: |-
@@ -178,10 +227,10 @@ EOF
   KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
-    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init
   fi
 
-  cat <<EOF >> /tmp/lxd-profile-k8s
+  cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init
         sources:
           kubernetes.list:
             source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
@@ -265,14 +314,14 @@ EOF
       type: disk
 EOF
 
-  cat /tmp/lxd-profile-k8s | lxc profile edit k8s
-  rm /tmp/lxd-profile-k8s
+  cat /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
+  rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
 
 lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
-  sudo lxc profile create lb
+  lxc profile create lb
 
   cat <<EOF > /tmp/lxd-profile-lb
   config:
@@ -424,7 +473,7 @@ check_lxd_status () {
 
 common=$(lxc image ls | grep lxd-common)
 if [ "common" == "" ]; then
-  lxc launch -p k8s focal-cloud lxd-common
+  lxc launch -p k8s-cloud-init focal-cloud lxd-common
   check_lxd_statuc STOP 1 .
   lxc publish lxd-common --alias lxd-common
   lxc delete lxd-common
@@ -547,12 +596,12 @@ for c in ctrlp-1 wrker-1 wrker-2; do
   lxc launch -p k8s "$image" lxd-"$c"
 done
 
-#common=$(lxc image ls | grep lxd-common)
-#if [ "common" == "" ]; then
+common=$(lxc image ls | grep lxd-common)
+if [ "common" == "" ]; then
   check_lxd_status STOP 3 .
   lxc start --all
   check_lxd_status eth0 3 \!
-#fi
+fi
 
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
@@ -578,8 +627,8 @@ check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
-k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+k-apply.sh
 nginx-ap-ingress.sh
 MYEOF
 
@@ -637,14 +686,14 @@ for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
   lxc launch -p k8s "$image" lxd-"$c"
 done
 
-#common=$(lxc image ls | grep lxd-common)
-#if [ "common" == "" ]; then
+common=$(lxc image ls | grep lxd-common)
+if [ "common" == "" ]; then
   check_lxd_status STOP 7 .
   lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
   sleep 8
   lxc start --all
   check_lxd_status eth0 7 \!
-#fi
+fi
 
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
@@ -677,8 +726,8 @@ check_cilium_status @
 echo
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
-k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+k-apply.sh
 nginx-ap-ingress.sh
 MYEOF
 
