@@ -601,12 +601,14 @@ update_local_etc_hosts () {
 common=$(lxc image ls | grep lxd-common)
 if [ "common" == "" ]; then
   image=focal-cloud
+  profile=k8s-cloud-init
 else
   image=lxd-common
+  profile=k8s
 fi
 
 for c in ctrlp-1 wrker-1 wrker-2; do
-  lxc launch -p k8s "$image" lxd-"$c"
+  lxc launch -p "$profile" "$image" lxd-"$c"
 done
 
 common=$(lxc image ls | grep lxd-common)
@@ -706,8 +708,10 @@ update_local_etc_hosts () {
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
+  profile=k8s-cloud-init
 else
   image=lxd-common
+  profile=k8s
 fi
 
 lxc launch -p lb focal-cloud lxd-lb
@@ -716,7 +720,7 @@ IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
 for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
-  lxc launch -p k8s "$image" lxd-"$c"
+  lxc launch -p "$profile" "$image" lxd-"$c"
 done
 
 common=$(lxc image ls | grep lxd-common)
