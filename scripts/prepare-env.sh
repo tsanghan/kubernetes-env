@@ -712,7 +712,8 @@ fi
 
 lxc launch -p lb focal-cloud lxd-lb
 check_lb_status
-IPADDR=$(lxc ls | grep lb | awk '{print $6}')
+IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
+echo $IPADDR
 update_local_etc_hosts "$IPADDR"
 
 for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
