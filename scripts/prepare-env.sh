@@ -112,7 +112,7 @@ EOF
   KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
-    echo "      proxy: $PROXY" >> /tmp/lxd-profile-k8s
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s
   fi
 
   cat <<EOF >> /tmp/lxd-profile-k8s
@@ -234,7 +234,7 @@ EOF
 
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
-    echo "      proxy: $PROXY" >> /tmp/lxd-profile-lb
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-lb
   fi
 
   cat <<EOF >> /tmp/lxd-profile-lb
