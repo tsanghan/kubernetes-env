@@ -111,7 +111,7 @@ kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
-#!/bin/bash
+#!/usr/bin/env bash
 
 cat <<EOF | sudo lxd init --preseed
 config: {}
@@ -224,6 +224,7 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
+        - kubeadm config images pull
       default: none
       power_state:
         delay: "+1"
@@ -403,6 +404,10 @@ if [ "$image" == "" ]; then
   rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
 fi
 MYEOF
+
+cat <<'EOF' > ~/.local/bin/create-common.sh
+
+EOF
 
 cat <<'EOF' > ~/.bash_complete
 # For kubernetes-env
