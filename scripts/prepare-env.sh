@@ -274,6 +274,10 @@ EOF
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
         - kubeadm config images pull
+        - ctr -n k8s.io image pull quay.io/cilium/cilium:v1.11.0
+        - ctr -n k8s.io image pull quay.io/cilium/operator-generic:v0.11.0
+        - ctr -n k8s.io image pull quay.io/metallb/controller:v0.11.0
+        - ctr -n k8s.io image pull quay.io/metallb/speaker:v0.11.0
       default: none
       power_state:
         delay: "+1"
