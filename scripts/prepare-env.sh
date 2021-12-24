@@ -440,7 +440,7 @@ cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
 
 while getopts "s" o; do
     case "${o}" in
-        d)
+        s)
             slim="true"
             ;;
     esac
