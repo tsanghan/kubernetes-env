@@ -69,7 +69,7 @@ echo \
   | tee /etc/apt/sources.list.d/kubernetes.list
 #
 apt-get update
-apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl
+apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl httpie
 
 usermod -aG lxd,docker "$SUDO_USER"
 
