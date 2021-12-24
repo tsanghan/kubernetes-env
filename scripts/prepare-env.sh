@@ -474,7 +474,7 @@ check_lxd_status () {
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   lxc launch -p k8s-cloud-init focal-cloud lxd-common
-  check_lxd_statuc STOP 1 .
+  check_lxd_status STOP 1 .
   lxc publish lxd-common --alias lxd-common
   lxc delete lxd-common
 else
