@@ -646,7 +646,7 @@ lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
 fi
-rm ~/.k/{config,config-lxd} 2>&1 /dev/null
+rm ~/.k/{config,config-lxd} 2>&1 > /dev/null
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
