@@ -664,6 +664,20 @@ check_lxd_status () {
   echo
 }
 
+check_lb_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep lxd-lb | grep eth0)
+    if [ ! "$STATUS" = "" ]; then
+      break
+    fi
+    echo -n .
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
 check_cilium_status () {
   echo -n "Wait"
   while true; do
@@ -697,7 +711,7 @@ else
 fi
 
 lxc launch -p lb focal-cloud lxd-lb
-sleep 2
+check_lb_status
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
