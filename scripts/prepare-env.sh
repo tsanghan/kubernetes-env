@@ -679,7 +679,7 @@ check_cilium_status () {
 }
 
 update_local_etc_hosts () {
-  OUT=$(grep lxd-ctrlp-1 /etc/hosts)
+  OUT=$(grep lxd-lb /etc/hosts)
   if [[ $OUT == "" ]]; then
     sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-lb/" /etc/hosts
   elif [[ "$OUT" =~ lxd-lb ]]; then
