@@ -646,6 +646,7 @@ lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
 fi
+rm ~/.k/{config,config-lxd}
 MYEOF
 
 # Install kubectl
