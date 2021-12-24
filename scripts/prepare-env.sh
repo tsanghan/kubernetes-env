@@ -107,7 +107,7 @@ if [ "$k8s"  == "" ]; then
           - arches:
             - amd64
             uri: "http://security.ubuntu.com/ubuntu"
-  EOF
+EOF
 
   KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
@@ -196,7 +196,7 @@ if [ "$k8s"  == "" ]; then
       path: /
       pool: default
       type: disk
-  EOF
+EOF
 
   cat /tmp/lxd-profile-k8s | lxc profile edit k8s
   rm /tmp/lxd-profile-k8s
@@ -230,7 +230,7 @@ lb=$(lxc profile ls | grep lb)
           - arches:
             - amd64
             uri: "http://security.ubuntu.com/ubuntu"
-  EOF
+EOF
 
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
@@ -309,7 +309,7 @@ lb=$(lxc profile ls | grep lb)
       path: /
       pool: default
       type: disk
-  EOF
+EOF
 
   cat /tmp/lxd-profile-lb | lxc profile edit lb
   rm /tmp/lxd-profile-lb
