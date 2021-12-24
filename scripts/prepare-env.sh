@@ -625,12 +625,12 @@ echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
-sleep 8
+sleep 2
 echo
 for c in 1 2; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-  sleep 8
+  sleep 2
   echo
 done
 kubectl get no -owide | grep --color NotReady
@@ -722,7 +722,7 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   check_lxd_status STOP 6 .
   lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
-  sleep 8
+  sleep 2
   lxc start --all
 fi
 check_lxd_status eth0 6 \!
@@ -735,18 +735,18 @@ update_local_etc_hosts "$IPADDR"
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
-sleep 4
+sleep 2
 echo
 for c in 2 3; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
   lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
-  sleep 4
+  sleep 2
   echo
 done
 for c in 1 2 3; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-  sleep 4
+  sleep 2
   echo
 done
 kubectl get no -owide | grep --color NotReady
