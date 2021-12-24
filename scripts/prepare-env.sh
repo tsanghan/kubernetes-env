@@ -547,12 +547,12 @@ for c in ctrlp-1 wrker-1 wrker-2; do
   lxc launch -p k8s "$image" lxd-"$c"
 done
 
-common=$(lxc image ls | grep lxd-common)
-if [ "common" == "" ]; then
+#common=$(lxc image ls | grep lxd-common)
+#if [ "common" == "" ]; then
   check_lxd_status STOP 3 .
   lxc start --all
   check_lxd_status eth0 3 \!
-fi
+#fi
 
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
@@ -637,14 +637,14 @@ for c in ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3; do
   lxc launch -p k8s "$image" lxd-"$c"
 done
 
-common=$(lxc image ls | grep lxd-common)
-if [ "common" == "" ]; then
+#common=$(lxc image ls | grep lxd-common)
+#if [ "common" == "" ]; then
   check_lxd_status STOP 7 .
   lxc start lxd-ctrlp-1 lxd-ctrlp-2 lxd-ctrlp-3
   sleep 8
   lxc start --all
   check_lxd_status eth0 7 \!
-fi
+#fi
 
 IPADDR=$(lxc ls | grep lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
