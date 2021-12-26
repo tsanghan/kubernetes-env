@@ -4,6 +4,8 @@ mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 
+# Install get-fzf.sh
+
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
 
@@ -17,6 +19,8 @@ echo
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 yes | ~/.fzf/install
 EOF
+
+# Install get-cilium.sh
 
 cat <<'EOF' > ~/.local/bin/get-cilium.sh
 #!/usr/bin/env bash
@@ -35,6 +39,8 @@ tar xzvfC cilium-linux-amd64.tar.gz ~/.local/bin
 rm cilium-linux-amd64.tar.gz{,.sha256sum}
 EOF
 
+# Install get-hubble.sh
+
 cat <<'EOF' > ~/.local/bin/get-hubble.sh
 #!/usr/bin/env bash
 
@@ -52,6 +58,13 @@ sha256sum --check hubble-linux-amd64.tar.gz.sha256sum
 sudo tar xzvfC hubble-linux-amd64.tar.gz ~/.local/bin
 rm hubble-linux-amd64.tar.gz{,.sha256sum}
 EOF
+
+# Install get-helm.sh
+
+curl -fsSL -o ~/local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+sed -i "#HELM_INSTALL_DIR#s#/usr/local#~/.local#" ~/local/bin/get-helm.sh
+
+# Install l=-apply.sh
 
 cat <<'EOF' > ~/.local/bin/k-apply.sh
 #!/usr/bin/env bash
