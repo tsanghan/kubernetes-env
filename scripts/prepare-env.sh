@@ -60,29 +60,29 @@ rm hubble-linux-amd64.tar.gz{,.sha256sum}
 EOF
 
 # Install get-krew.sh
-cat <<'EOF' > ~/.local/bin/get-krew.sh
-#!/usr/bin/env bash
+# cat <<'EOF' > ~/.local/bin/get-krew.sh
+# #!/usr/bin/env bash
 
-echo
-echo "*******************************"
-echo "*                             *"
-echo "* Download and Install Krew *"
-echo "*                             *"
-echo "*******************************"
-echo
-# Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
-if [ ! -f ~/.krew ]; then
-  mkdir ~/.krew
-fi
-if [ ! -f ~/.local/bin/krew ]; then
-  curl -L --remote-name-all https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz{,.sha256}
-  echo "$(cat krew-linux_amd64.tar.gz.sha256)  krew-linux_amd64.tar.gz"
-  sha256sum --check krew-linux_amd64.tar.gz.sha256
-  tar -C ~/.local/bin -xzvf krew-linux_amd64.tar.gz ./krew-linux_amd64 ~/.local/bin
-  mv ~/.local/bin/krew-linux_amd64 ~/.local/bin/krew
-  rm krew-linux_amd64.tar.gz{,.sha256,.sha256sum}
-fi
-EOF
+# echo
+# echo "*******************************"
+# echo "*                             *"
+# echo "* Download and Install Krew *"
+# echo "*                             *"
+# echo "*******************************"
+# echo
+# # Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+# if [ ! -d ~/.krew ]; then
+#   mkdir ~/.krew
+# fi
+# if [ ! -f ~/.local/bin/krew ]; then
+#   curl -L --remote-name-all https://github.com/kubernetes-sigs/krew/releases/download/v0.4.2/krew-linux_amd64.tar.gz{,.sha256}
+#   echo "$(cat krew-linux_amd64.tar.gz.sha256)  krew-linux_amd64.tar.gz" > krew-linux_amd64.tar.gz.sha256sum
+#   sha256sum --check krew-linux_amd64.tar.gz.sha256sum
+#   tar -C ~/.local/bin -xzvf krew-linux_amd64.tar.gz ./krew-linux_amd64
+#   mv ~/.local/bin/krew-linux_amd64 ~/.local/bin/krew
+#   rm krew-linux_amd64.tar.gz{,.sha256,.sha256sum}
+# fi
+# EOF
 
 # Install get-helm.sh
 
