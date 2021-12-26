@@ -62,7 +62,7 @@ EOF
 # Install get-helm.sh
 
 curl -fsSL -o ~/.local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-sed -i "#HELM_INSTALL_DIR#s#/usr/local#~/.local#" ~/.local/bin/get-helm.sh
+sed -i "/HELM_INSTALL_DIR/s#/usr/local#~/.local#" ~/.local/bin/get-helm.sh
 
 # Install l=-apply.sh
 
