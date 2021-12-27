@@ -156,7 +156,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
 if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: localhost\:5000/#' |\
+    sed '/image\:/s#\: #\: 10.1.1.79/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 else
@@ -748,7 +748,7 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh
+nginx-ap-ingress.sh -p
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
@@ -864,7 +864,7 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh
+nginx-ap-ingress.sh -p
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
