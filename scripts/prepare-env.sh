@@ -700,6 +700,20 @@ update_local_etc_hosts () {
   fi
 }
 
+check_containerd_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
+    if [ "$STATUS" =~ .*running.* ]; then
+      break
+    fi
+    echo -n "$1"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
@@ -724,7 +738,8 @@ check_lxd_status eth0 3 \!
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
-sleep 4
+check_containerd_status +
+
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
