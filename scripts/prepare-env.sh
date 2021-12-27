@@ -358,7 +358,7 @@ EOF
       - content: |
           server = "https://quay.io"
 
-          [host."https://quay.io"]
+          [host."http://10.1.1.79:5000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/quay.io/hosts.toml
@@ -376,10 +376,6 @@ EOF
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
         - kubeadm config images pull
-        # - ctr -n k8s.io image pull quay.io/cilium/cilium:v1.11.0
-        # - ctr -n k8s.io image pull quay.io/cilium/operator-generic:v1.11.0
-        # - ctr -n k8s.io image pull quay.io/metallb/controller:v0.11.0
-        # - ctr -n k8s.io image pull quay.io/metallb/speaker:v0.11.0
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
       power_state:
