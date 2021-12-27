@@ -24,15 +24,15 @@
 5. `git clone https://github.com/tsanghan/kubernetes-env.git`
 6. `cd` into `kubernetes-env`
 7. `sudo ./prepare-vm.sh`
-8. Follow the instruction at the end of the completion of `prepare-env.sh` script
+8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
 
 ### Kubernetes on LXD
 
 11. We will explore LXD method first
-12. Run `prepare-lxd.sh`
-13. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
+12. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
+13. Run `prepare-lxd.sh`
 14. Wait untill script finish
 15. `lxc launch -p k8s focal-cloud <your lxc node name>`
 16. Instructions below will use the node name of *lxd-ctrlp-1*
