@@ -124,6 +124,15 @@ EOF
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
 
+while getopts "p" o; do
+    case "${o}" in
+        p)
+            private="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 echo
 echo "**************************************"
 echo "*                                    *"
@@ -132,7 +141,6 @@ echo "*                                    *"
 echo "**************************************"
 echo
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ns-and-sa.yaml
-kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) --docker-password=none -n nginx-ingress
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/rbac.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/ap-rbac.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/default-server-secret.yaml
@@ -146,7 +154,21 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/14f48314dd500fe75ed1a7d0df65ba7919d12e33/nginx-ap-ingress.yaml
+if [ "$private" == "true" ];
+  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
+    sed '/image\:/s#\: #\: localhost\:5000/#' |\
+    sed '/enable-app-protect$/s%#-% -%'|\
+    kubectl apply -f -
+else
+  kubectl create secret docker-registry regcred \
+    --docker-server=private-registry.nginx.com \
+    --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) \
+    --docker-password=none -n nginx-ingress
+  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
+    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic/#' |\
+    sed '/enable-app-protect$/s%#-% -%'|\
+    kubectl apply -f -
+fi
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh

@@ -34,7 +34,7 @@
 12. Run `prepare-lxd.sh`
 13. `cd` into `Projects/kubernetes-env/kubernetes-on-lxd`
 14. Wait untill script finish
-15. `lxc launch -p k8s focal-cloud <your lxc node name>`
+15. `lxc launch -p k8s-cloud-init focal-cloud <your lxc node name>`
 16. Instructions below will use the node name of *lxd-ctrlp-1*
 17. Launch 2 more worker nodes with above command (example *lxd-wrker-1* and *lxd-wrker-2*)
 18. `watch lxc ls`
