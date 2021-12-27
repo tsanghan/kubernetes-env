@@ -169,6 +169,7 @@ else
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 fi
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/service/loadbalancer.yaml
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
