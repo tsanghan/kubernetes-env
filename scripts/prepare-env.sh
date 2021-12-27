@@ -339,6 +339,8 @@ EOF
         - ctr -n k8s.io image pull quay.io/cilium/operator-generic:v1.11.0
         - ctr -n k8s.io image pull quay.io/metallb/controller:v0.11.0
         - ctr -n k8s.io image pull quay.io/metallb/speaker:v0.11.0
+        - mkdir -p /etc/containerd
+        - containerd config default | tee /etc/containerd/config.toml
       default: none
       power_state:
         delay: "+1"
