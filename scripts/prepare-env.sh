@@ -154,7 +154,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-if [ "$private" == "true" ];
+if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
     sed '/image\:/s#\: #\: localhost\:5000/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
