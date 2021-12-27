@@ -331,18 +331,18 @@ EOF
         path: /etc/crictl.yaml
         permissions: '0644'
       - content: |
-        server = "https://docker.io"
+          server = "https://docker.io"
 
-        [host."https://registry-1.docker.io"]
-          capabilities = ["pull", "resolve"]
+          [host."https://registry-1.docker.io"]
+            capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/docker.io/hosts.toml
         permissions: '0644'
       - content: |
-        server = "http://10.1.1.79"
+          server = "http://10.1.1.79"
 
-        [host."http://10.1.1.79:5000"]
-          capabilities = ["pull", "resolve"]
+          [host."http://10.1.1.79:5000"]
+            capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
         permissions: '0644'      
