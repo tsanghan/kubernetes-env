@@ -4,6 +4,8 @@ mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 
+# Install get-fzf.sh
+
 cat <<'EOF' > ~/.local/bin/get-fzf.sh
 #!/usr/bin/env bash
 
@@ -17,6 +19,8 @@ echo
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 yes | ~/.fzf/install
 EOF
+
+# Install get-cilium.sh
 
 cat <<'EOF' > ~/.local/bin/get-cilium.sh
 #!/usr/bin/env bash
@@ -35,6 +39,8 @@ tar xzvfC cilium-linux-amd64.tar.gz ~/.local/bin
 rm cilium-linux-amd64.tar.gz{,.sha256sum}
 EOF
 
+# Install get-hubble.sh
+
 cat <<'EOF' > ~/.local/bin/get-hubble.sh
 #!/usr/bin/env bash
 
@@ -49,9 +55,42 @@ echo
 export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
 curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz{,.sha256sum}
 sha256sum --check hubble-linux-amd64.tar.gz.sha256sum
-sudo tar xzvfC hubble-linux-amd64.tar.gz ~/.local/bin
+tar xzvfC hubble-linux-amd64.tar.gz ~/.local/bin
 rm hubble-linux-amd64.tar.gz{,.sha256sum}
 EOF
+
+# Install get-krew.sh
+# cat <<'EOF' > ~/.local/bin/get-krew.sh
+# #!/usr/bin/env bash
+
+# echo
+# echo "*******************************"
+# echo "*                             *"
+# echo "* Download and Install Krew *"
+# echo "*                             *"
+# echo "*******************************"
+# echo
+# # Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+# if [ ! -d ~/.krew ]; then
+#   mkdir ~/.krew
+# fi
+# if [ ! -f ~/.local/bin/krew ]; then
+#   curl -L --remote-name-all https://github.com/kubernetes-sigs/krew/releases/download/v0.4.2/krew-linux_amd64.tar.gz{,.sha256}
+#   echo "$(cat krew-linux_amd64.tar.gz.sha256)  krew-linux_amd64.tar.gz" > krew-linux_amd64.tar.gz.sha256sum
+#   sha256sum --check krew-linux_amd64.tar.gz.sha256sum
+#   tar -C ~/.local/bin -xzvf krew-linux_amd64.tar.gz ./krew-linux_amd64
+#   mv ~/.local/bin/krew-linux_amd64 ~/.local/bin/krew
+#   rm krew-linux_amd64.tar.gz{,.sha256,.sha256sum}
+# fi
+# EOF
+
+# Install get-helm.sh
+
+curl -fsSL -o ~/.local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+sed -i "/HELM_INSTALL_DIR/s#/usr/local#$HOME/.local#" ~/.local/bin/get-helm.sh
+sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm.sh
+
+# Install l=-apply.sh
 
 cat <<'EOF' > ~/.local/bin/k-apply.sh
 #!/usr/bin/env bash
@@ -85,6 +124,15 @@ EOF
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
 
+while getopts "p" o; do
+    case "${o}" in
+        p)
+            private="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 echo
 echo "**************************************"
 echo "*                                    *"
@@ -93,7 +141,6 @@ echo "*                                    *"
 echo "**************************************"
 echo
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ns-and-sa.yaml
-kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) --docker-password=none -n nginx-ingress
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/rbac.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/ap-rbac.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/default-server-secret.yaml
@@ -107,7 +154,21 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-kubectl apply -f https://gist.githubusercontent.com/tsanghan/496b6edfc734cacaa3b50a8fa88082a4/raw/14f48314dd500fe75ed1a7d0df65ba7919d12e33/nginx-ap-ingress.yaml
+if [ "$private" == "true" ];
+  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
+    sed '/image\:/s#\: #\: localhost\:5000/#' |\
+    sed '/enable-app-protect$/s%#-% -%'|\
+    kubectl apply -f -
+else
+  kubectl create secret docker-registry regcred \
+    --docker-server=private-registry.nginx.com \
+    --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) \
+    --docker-password=none -n nginx-ingress
+  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
+    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic/#' |\
+    sed '/enable-app-protect$/s%#-% -%'|\
+    kubectl apply -f -
+fi
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
