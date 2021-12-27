@@ -705,7 +705,7 @@ check_containerd_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
-    if [ "$STATUS" =~ .*running.* ]; then
+    if [[ "$STATUS" =~ .*running.* ]]; then
       break
     fi
     echo -n "$1"
