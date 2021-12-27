@@ -165,7 +165,7 @@ else
     --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) \
     --docker-password=none -n nginx-ingress
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic/#' |\
+    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 fi
