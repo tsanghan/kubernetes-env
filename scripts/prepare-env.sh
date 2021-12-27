@@ -834,6 +834,7 @@ check_lb_status
 IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
+sleep 4
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
