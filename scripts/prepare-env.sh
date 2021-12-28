@@ -305,9 +305,9 @@ EOF
         - kubeadm=$KUBE_VER-00
         - kubelet=$KUBE_VER-00
         - jq
-      package_update: true
-      package_upgrade: true
-      package_reboot_if_required: true
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
       locale: en_SG.UTF-8
       locale_configfile: /etc/default/locale
       timezone: Asia/Singapore
@@ -429,9 +429,9 @@ EOF
         - kubeadm=$KUBE_VER-00
         - kubelet=$KUBE_VER-00
         - jq
-      package_update: true
-      package_upgrade: true
-      package_reboot_if_required: true
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
       locale: en_SG.UTF-8
       locale_configfile: /etc/default/locale
       timezone: Asia/Singapore
@@ -588,9 +588,9 @@ EOF
         - apt-transport-https
         - ca-certificates
         - nginx
-      package_update: true
-      package_upgrade: true
-      package_reboot_if_required: true
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
       locale: en_SG.UTF-8
       locale_configfile: /etc/default/locale
       timezone: Asia/Singapore
