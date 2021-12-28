@@ -330,7 +330,7 @@ EOF
           timeout: 10
         owner: root:root
         path: /etc/crictl.yaml
-        permissions: '0644' 
+        permissions: '0644'
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
@@ -494,7 +494,7 @@ EOF
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
-        permissions: '0644'      
+        permissions: '0644'
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
