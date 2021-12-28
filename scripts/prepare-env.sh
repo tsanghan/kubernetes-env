@@ -386,28 +386,28 @@ if [ "$k8s_cloud_init_local_registries"  == "" ]; then
   lxc profile create k8s-cloud-init-local-registries
 
   cat <<EOF > /tmp/lxd-profile-k8s-cloud-init-local-registries
-    config:
-      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-      raw.lxc: |-
-        lxc.apparmor.profile=unconfined
-        lxc.cap.drop=
-        lxc.cgroup.devices.allow=a
-        lxc.mount.auto=proc:rw sys:rw cgroup:rw
-        lxc.seccomp.profile=
-      security.nesting: "true"
-      security.privileged: "true"
-      user.user-data: |
-        #cloud-config
-        apt:
-          preserve_sources_list: false
-          primary:
-            - arches:
-              - amd64
-              uri: "http://archive.ubuntu.com/ubuntu/"
-          security:
-            - arches:
-              - amd64
-              uri: "http://security.ubuntu.com/ubuntu"
+  config:
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |-
+      lxc.apparmor.profile=unconfined
+      lxc.cap.drop=
+      lxc.cgroup.devices.allow=a
+      lxc.mount.auto=proc:rw sys:rw cgroup:rw
+      lxc.seccomp.profile=
+    security.nesting: "true"
+    security.privileged: "true"
+    user.user-data: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches:
+            - amd64
+            uri: "http://archive.ubuntu.com/ubuntu/"
+        security:
+          - arches:
+            - amd64
+            uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
   KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
