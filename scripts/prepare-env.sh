@@ -503,6 +503,7 @@ EOF
         - kubeadm config images pull
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
         delay: "+1"
         mode: poweroff
