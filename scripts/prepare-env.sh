@@ -336,9 +336,11 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - kubeadm config images pull
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - systemctl restart containerd
+        - kubeadm config images pull
+        - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
         delay: "+1"
         mode: poweroff
@@ -459,7 +461,7 @@ EOF
       - content: |
           server = "https://docker.io"
 
-          [host."https://registry-1.docker.io"]
+          [host."http://10.1.1.79:5000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/docker.io/hosts.toml
@@ -467,23 +469,15 @@ EOF
       - content: |
           server = "https://k8s.gcr.io"
 
-          [host."https://k8s.gcr.io"]
+          [host."http://10.1.1.79:5001"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
         permissions: '0644'
       - content: |
-          server = "https://gcr.io"
-
-          [host."https://gcr.io"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/gcr.io/hosts.toml
-        permissions: '0644'
-      - content: |
           server = "https://quay.io"
 
-          [host."https://quay.io"]
+          [host."http://10.1.1.79:5002"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/quay.io/hosts.toml
@@ -500,9 +494,11 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - kubeadm config images pull
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - systemctl restart containerd
+        - kubeadm config images pull
+        - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
         delay: "+1"
         mode: poweroff
