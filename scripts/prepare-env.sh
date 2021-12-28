@@ -336,9 +336,11 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - kubeadm config images pull
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - systemctl restart containerd
+        - kubeadm config images pull
+        - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
         delay: "+1"
         mode: poweroff
@@ -500,9 +502,10 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - kubeadm config images pull
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - systemctl restart containerd
+        - kubeadm config images pull
         - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
         delay: "+1"
