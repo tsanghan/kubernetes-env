@@ -381,9 +381,9 @@ EOF
   rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
-k8s_cloud_init-local-registries=$(lxc profile ls | grep k8s-cloud-init-local-registries)
-if [ "$k8s_cloud_init-local-registries"  == "" ]; then
-  lxc profile create k8s-cloud-init
+k8s_cloud_init_local_registries=$(lxc profile ls | grep k8s-cloud-init-local-registries)
+if [ "$k8s_cloud_init_local_registries"  == "" ]; then
+  lxc profile create k8s-cloud-init-local-registries
 
   cat <<EOF > /tmp/lxd-profile-k8s-cloud-init-local-registries
     config:
@@ -413,7 +413,7 @@ EOF
   KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
-    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-localregistries
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-local-registries
   fi
 
   cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init-local-registries
