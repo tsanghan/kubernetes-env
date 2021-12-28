@@ -668,7 +668,7 @@ shift $((OPTIND-1))
 
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
-  if [ "$slim" == "" ]; then 
+  if [ "$slim" == "" ]; then
     VERSION=$(curl -sSL https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:download.json | jq '.products."com.ubuntu.cloud.daily:server:20.04:amd64".versions | keys[]' | sort -r | head -1 | tr -d '"')
     PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
     if [ "$PROXY" != "" ]; then
@@ -776,6 +776,41 @@ else
     mv /tmp/kubectl ~/.local/bin/kubectl
     chmod +x ~/.local/bin/kubectl
   fi
+fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/update_k9s.sh
+#!/usr/bin/env bash
+
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+if [ ! -x ~/.local/bin/k9s ]; then
+  echo "k9s not found or not executable!!"
+  exit
+fi
+
+OLD_K9S_VER=$(k9s version | grep Version | sed 's/.*v\(.*\)/\1/')
+K9S_LATEST=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest)
+NEW_K9S_VER=$(echo -E "$K9S_LATEST" | jq ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+
+verlt "$OLD_K9S_VER" "$NEW_K9S_VER"
+if [ "$?"  = 1 ]; then
+  echo "No upgrade required!!"
+  exit
+else
+  K9S_VER=v"$NEW_K9S_VER"
+  K9S_FRIEND=$(echo -E "$K9S_LATEST" | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+  curl -sSL "$K9S_FRIEND" | tar -C ~/.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
 fi
 MYEOF
 
@@ -1104,7 +1139,7 @@ fi
 if [ ! -f ~/.local/bin/kind ]; then
   curl -sSL -o ~/.local/bin/kind \
     "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
-fi 
+fi
 # Install k9s
 if [ ! -f ~/.local/bin/k9s ]; then
   K9S_FRIEND=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
