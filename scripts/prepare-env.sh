@@ -461,7 +461,7 @@ EOF
       - content: |
           server = "https://docker.io"
 
-          [host."https://registry-1.docker.io"]
+          [host."http://10.1.1.79:5000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/docker.io/hosts.toml
@@ -469,23 +469,15 @@ EOF
       - content: |
           server = "https://k8s.gcr.io"
 
-          [host."https://k8s.gcr.io"]
+          [host."http://10.1.1.79:5001"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
         permissions: '0644'
       - content: |
-          server = "https://gcr.io"
-
-          [host."https://gcr.io"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/gcr.io/hosts.toml
-        permissions: '0644'
-      - content: |
           server = "https://quay.io"
 
-          [host."https://quay.io"]
+          [host."http://10.1.1.79:5002"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/quay.io/hosts.toml
