@@ -48,9 +48,10 @@
 26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
 27. Activate `kubectl` auto-completion
 28. `source ~/.bash_complete` assuming you are using bash
-29. Now you can access you cluster with `kubectl` command, alised with `k`
-30. `k get no`
-31. All your nodes are not ready, becasue we have yet to instal a CNI plugin
+29. ________________________________________________________(missing instruction here, fill in the blank for sucessful step 30)
+30. Now you can access you cluster with `kubectl` command, alised with `k`
+31. `k get no`
+32. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
 lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
