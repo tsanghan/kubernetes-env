@@ -130,3 +130,7 @@ dmypy.json
 
 # out file
 *.out
+*.tar
+*.cast
+.images/
+.cast/
