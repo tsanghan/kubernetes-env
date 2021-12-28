@@ -60,29 +60,30 @@ rm hubble-linux-amd64.tar.gz{,.sha256sum}
 EOF
 
 # Install get-krew.sh
-# cat <<'EOF' > ~/.local/bin/get-krew.sh
-# #!/usr/bin/env bash
+cat <<'EOF' > ~/.local/bin/get-krew.sh
+#!/usr/bin/env bash
 
-# echo
-# echo "*******************************"
-# echo "*                             *"
-# echo "* Download and Install Krew *"
-# echo "*                             *"
-# echo "*******************************"
-# echo
-# # Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
-# if [ ! -d ~/.krew ]; then
-#   mkdir ~/.krew
-# fi
-# if [ ! -f ~/.local/bin/krew ]; then
-#   curl -L --remote-name-all https://github.com/kubernetes-sigs/krew/releases/download/v0.4.2/krew-linux_amd64.tar.gz{,.sha256}
-#   echo "$(cat krew-linux_amd64.tar.gz.sha256)  krew-linux_amd64.tar.gz" > krew-linux_amd64.tar.gz.sha256sum
-#   sha256sum --check krew-linux_amd64.tar.gz.sha256sum
-#   tar -C ~/.local/bin -xzvf krew-linux_amd64.tar.gz ./krew-linux_amd64
-#   mv ~/.local/bin/krew-linux_amd64 ~/.local/bin/krew
-#   rm krew-linux_amd64.tar.gz{,.sha256,.sha256sum}
-# fi
-# EOF
+echo
+echo "*******************************"
+echo "*                             *"
+echo "* Download and Install Krew *"
+echo "*                             *"
+echo "*******************************"
+echo
+# Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+if [ ! -d ~/.krew ]; then
+  mkdir ~/.krew
+fi
+(
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+EOF
 
 # Install get-helm.sh
 
@@ -154,9 +155,9 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-if [ "$private" == "true" ];
+if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: localhost\:5000/#' |\
+    sed '/image\:/s#\: #\: 10.1.1.79/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 else
@@ -165,10 +166,11 @@ else
     --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) \
     --docker-password=none -n nginx-ingress
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic/#' |\
+    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 fi
+kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/service/loadbalancer.yaml
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
@@ -304,9 +306,9 @@ EOF
         - kubeadm=$KUBE_VER-00
         - kubelet=$KUBE_VER-00
         - jq
-      package_update: true
-      package_upgrade: true
-      package_reboot_if_required: true
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
       locale: en_SG.UTF-8
       locale_configfile: /etc/default/locale
       timezone: Asia/Singapore
@@ -335,11 +337,8 @@ EOF
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
         - kubeadm config images pull
-        - ctr -n k8s.io image pull quay.io/cilium/cilium:v1.11.0
-        - ctr -n k8s.io image pull quay.io/cilium/operator-generic:v1.11.0
-        - ctr -n k8s.io image pull quay.io/metallb/controller:v0.11.0
-        - ctr -n k8s.io image pull quay.io/metallb/speaker:v0.11.0
-      default: none
+        - mkdir -p /etc/containerd
+        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
       power_state:
         delay: "+1"
         mode: poweroff
@@ -383,6 +382,169 @@ EOF
   rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
+k8s_cloud_init_local_registries=$(lxc profile ls | grep k8s-cloud-init-local-registries)
+if [ "$k8s_cloud_init_local_registries"  == "" ]; then
+  lxc profile create k8s-cloud-init-local-registries
+
+  cat <<EOF > /tmp/lxd-profile-k8s-cloud-init-local-registries
+  config:
+    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+    raw.lxc: |-
+      lxc.apparmor.profile=unconfined
+      lxc.cap.drop=
+      lxc.cgroup.devices.allow=a
+      lxc.mount.auto=proc:rw sys:rw cgroup:rw
+      lxc.seccomp.profile=
+    security.nesting: "true"
+    security.privileged: "true"
+    user.user-data: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches:
+            - amd64
+            uri: "http://archive.ubuntu.com/ubuntu/"
+        security:
+          - arches:
+            - amd64
+            uri: "http://security.ubuntu.com/ubuntu"
+EOF
+
+  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+  if [ "$PROXY" != "" ]; then
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-local-registries
+  fi
+
+  cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init-local-registries
+        sources:
+          kubernetes.list:
+            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+      packages:
+        - apt-transport-https
+        - ca-certificates
+        - containerd
+        - curl
+        - kubeadm=$KUBE_VER-00
+        - kubelet=$KUBE_VER-00
+        - jq
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
+      locale: en_SG.UTF-8
+      locale_configfile: /etc/default/locale
+      timezone: Asia/Singapore
+      write_files:
+      - content: |
+          [Unit]
+          Description=Mount Make Rshare
+
+          [Service]
+          ExecStart=/bin/mount --make-rshare /
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root:root
+        path: /etc/systemd/system/mount-make-rshare.service
+        permissions: '0644'
+      - content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+          image-endpoint: unix:///run/containerd/containerd.sock
+          timeout: 10
+        owner: root:root
+        path: /etc/crictl.yaml
+        permissions: '0644'
+      - content: |
+          server = "https://docker.io"
+
+          [host."https://registry-1.docker.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/docker.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://k8s.gcr.io"
+
+          [host."https://k8s.gcr.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://gcr.io"
+
+          [host."https://gcr.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/gcr.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://quay.io"
+
+          [host."https://quay.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/quay.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "http://10.1.1.79"
+
+          [host."http://10.1.1.79:6000"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
+        permissions: '0644'
+      runcmd:
+        - apt-get -y purge nano
+        - apt-get -y autoremove
+        - systemctl enable mount-make-rshare
+        - kubeadm config images pull
+        - mkdir -p /etc/containerd
+        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+      power_state:
+        delay: "+1"
+        mode: poweroff
+        message: Bye Bye
+        timeout: 10
+        condition: True
+  description: ""
+  devices:
+    _dev_sda1:
+      path: /dev/sda1
+      source: /dev/sda1
+      type: unix-block
+    aadisable:
+      path: /sys/module/nf_conntrack/parameters/hashsize
+      source: /dev/null
+      type: disk
+    aadisable1:
+      path: /sys/module/apparmor/parameters/enabled
+      source: /dev/null
+      type: disk
+    boot_dir:
+      path: /boot
+      source: /boot
+      type: disk
+    dev_kmsg:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+    eth0:
+      name: eth0
+      nictype: bridged
+      parent: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+EOF
+
+  cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
+  rm /tmp/lxd-profile-k8s-cloud-init-local-registries
+fi
 
 lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
@@ -427,9 +589,9 @@ EOF
         - apt-transport-https
         - ca-certificates
         - nginx
-      package_update: true
-      package_upgrade: true
-      package_reboot_if_required: true
+      package_update: false
+      package_upgrade: false
+      package_reboot_if_required: false
       locale: en_SG.UTF-8
       locale_configfile: /etc/default/locale
       timezone: Asia/Singapore
@@ -620,6 +782,15 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
+while getopts "r" o; do
+    case "${o}" in
+        r)
+            registries="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 check_lxd_status () {
   echo -n "Wait"
   while true; do
@@ -659,10 +830,28 @@ update_local_etc_hosts () {
   fi
 }
 
+check_containerd_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
+    if [[ "$STATUS" =~ .*running.* ]]; then
+      break
+    fi
+    echo -n "$1"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
-  profile=k8s-cloud-init
+  if [ "$registries" == "true" ]; then
+    profile=k8s-cloud-init-local-registries
+  else
+    profile=k8s-cloud-init
+  fi
 else
   image=lxd-common
   profile=k8s
@@ -682,6 +871,8 @@ check_lxd_status eth0 3 \!
 
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
+
+check_containerd_status +
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
@@ -707,7 +898,7 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh
+nginx-ap-ingress.sh -p
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
@@ -793,6 +984,7 @@ check_lb_status
 IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
+sleep 4
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-lb:6443 --upload-certs | tee kubeadm-init.out
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
@@ -823,7 +1015,7 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh
+nginx-ap-ingress.sh -p
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
@@ -837,6 +1029,7 @@ while getopts "d" o; do
     esac
 done
 shift $((OPTIND-1))
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
@@ -854,6 +1047,40 @@ do
   fi
 done
 k9s
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/create-local-registries.sh
+#!/usr/bin/env bash
+
+docker run -d -p 5000:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
+    --restart always \
+    --name registry-docker.io registry:2
+
+docker run -d -p 5001:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://k8s.gcr.io \
+    --restart always \
+    --name registry-k8s.gcr.io registry:2
+
+docker run -d -p 5002:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://quay.io \
+    --restart always \
+    --name registry-quay.io registry:2.5
+
+# docker run -d -p 5003:5000 \
+#     -e REGISTRY_PROXY_REMOTEURL=https://gcr.io \
+#     --restart always \
+#     --name registry-gcr.io registry:2
+
+# docker run -d -p 5004:5000 \
+#     -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
+#     --restart always \
+#     --name registry-ghcr.io registry:
+
+docker run -d p 6000:5000 \
+    --restart always \
+    --name registry registry:2
+
 MYEOF
 
 # Install kubectl
