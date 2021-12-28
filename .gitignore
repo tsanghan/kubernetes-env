@@ -128,5 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# out file
+# misc file
 *.out
+*.tar
+*.cast
+.images/
+.cast/
