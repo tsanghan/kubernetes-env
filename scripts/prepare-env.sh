@@ -847,7 +847,7 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
-    profile=k8s-cloud-init-local-registeries
+    profile=k8s-cloud-init-local-registries
   else
     profile=k8s-cloud-init
   fi
