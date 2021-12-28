@@ -330,47 +330,7 @@ EOF
           timeout: 10
         owner: root:root
         path: /etc/crictl.yaml
-        permissions: '0644'
-      - content: |
-          server = "https://docker.io"
-
-          [host."https://registry-1.docker.io"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/docker.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "https://k8s.gcr.io"
-
-          [host."https://k8s.gcr.io"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "https://gcr.io"
-
-          [host."https://gcr.io"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/gcr.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "https://quay.io"
-
-          [host."http://10.1.1.79:5000"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/quay.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "http://10.1.1.79"
-
-          [host."http://10.1.1.79:5000"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
-        permissions: '0644'      
+        permissions: '0644' 
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
@@ -421,6 +381,169 @@ EOF
   rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
+k8s_cloud_init-local-registries=$(lxc profile ls | grep k8s-cloud-init-local-registries)
+if [ "$k8s_cloud_init-local-registries"  == "" ]; then
+  lxc profile create k8s-cloud-init
+
+  cat <<EOF > /tmp/lxd-profile-k8s-cloud-init-local-registries
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+EOF
+
+  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+  if [ "$PROXY" != "" ]; then
+    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-localregistries
+  fi
+
+  cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init-local-registries
+        sources:
+          kubernetes.list:
+            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+      packages:
+        - apt-transport-https
+        - ca-certificates
+        - containerd
+        - curl
+        - kubeadm=$KUBE_VER-00
+        - kubelet=$KUBE_VER-00
+        - jq
+      package_update: true
+      package_upgrade: true
+      package_reboot_if_required: true
+      locale: en_SG.UTF-8
+      locale_configfile: /etc/default/locale
+      timezone: Asia/Singapore
+      write_files:
+      - content: |
+          [Unit]
+          Description=Mount Make Rshare
+
+          [Service]
+          ExecStart=/bin/mount --make-rshare /
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root:root
+        path: /etc/systemd/system/mount-make-rshare.service
+        permissions: '0644'
+      - content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+          image-endpoint: unix:///run/containerd/containerd.sock
+          timeout: 10
+        owner: root:root
+        path: /etc/crictl.yaml
+        permissions: '0644'
+      - content: |
+          server = "https://docker.io"
+
+          [host."https://registry-1.docker.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/docker.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://k8s.gcr.io"
+
+          [host."https://k8s.gcr.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://gcr.io"
+
+          [host."https://gcr.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/gcr.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "https://quay.io"
+
+          [host."https://quay.io"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/quay.io/hosts.toml
+        permissions: '0644'
+      - content: |
+          server = "http://10.1.1.79"
+
+          [host."http://10.1.1.79:6000"]
+            capabilities = ["pull", "resolve"]
+        owner: root:root
+        path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
+        permissions: '0644'      
+      runcmd:
+        - apt-get -y purge nano
+        - apt-get -y autoremove
+        - systemctl enable mount-make-rshare
+        - kubeadm config images pull
+        - mkdir -p /etc/containerd
+        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+      power_state:
+        delay: "+1"
+        mode: poweroff
+        message: Bye Bye
+        timeout: 10
+        condition: True
+  description: ""
+  devices:
+    _dev_sda1:
+      path: /dev/sda1
+      source: /dev/sda1
+      type: unix-block
+    aadisable:
+      path: /sys/module/nf_conntrack/parameters/hashsize
+      source: /dev/null
+      type: disk
+    aadisable1:
+      path: /sys/module/apparmor/parameters/enabled
+      source: /dev/null
+      type: disk
+    boot_dir:
+      path: /boot
+      source: /boot
+      type: disk
+    dev_kmsg:
+      path: /dev/kmsg
+      source: /dev/kmsg
+      type: unix-char
+    eth0:
+      name: eth0
+      nictype: bridged
+      parent: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+EOF
+
+  cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
+  rm /tmp/lxd-profile-k8s-cloud-init-local-registries
+fi
 
 lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
@@ -658,6 +781,15 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
+while getopts "r" o; do
+    case "${o}" in
+        r)
+            registries="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 check_lxd_status () {
   echo -n "Wait"
   while true; do
@@ -714,7 +846,8 @@ check_containerd_status () {
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
-  profile=k8s-cloud-init
+  if [ "$registries" == "true" ]; then
+    profile=k8s-cloud-init-local-registeries
 else
   image=lxd-common
   profile=k8s
@@ -892,6 +1025,7 @@ while getopts "d" o; do
     esac
 done
 shift $((OPTIND-1))
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
@@ -909,6 +1043,40 @@ do
   fi
 done
 k9s
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/create-local-registries.sh
+#!/usr/bin/env bash
+
+docker run -d -p 5000:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
+    --restart always \
+    --name registry-docker.io registry:2
+
+docker run -d -p 5001:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://k8s.gcr.io \
+    --restart always \
+    --name registry-k8s.gcr.io registry:2
+
+docker run -d -p 5002:5000 \
+    -e REGISTRY_PROXY_REMOTEURL=https://quay.io \
+    --restart always \
+    --name registry-quay.io registry:2.5
+
+# docker run -d -p 5003:5000 \
+#     -e REGISTRY_PROXY_REMOTEURL=https://gcr.io \
+#     --restart always \
+#     --name registry-gcr.io registry:2
+
+# docker run -d -p 5004:5000 \
+#     -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
+#     --restart always \
+#     --name registry-ghcr.io registry:
+
+docker run -d p 6000:5000 \
+    --restart always \
+    --name registry registry:2
+
 MYEOF
 
 # Install kubectl
