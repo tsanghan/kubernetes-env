@@ -848,6 +848,9 @@ if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
     profile=k8s-cloud-init-local-registeries
+  else
+    profile=k8s-cloud-init
+  fi
 else
   image=lxd-common
   profile=k8s
