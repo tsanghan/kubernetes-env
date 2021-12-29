@@ -542,7 +542,7 @@ EOF
         - rm containerd-1.5.8-linux-amd64.tar.gz
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
-        - systemctl restart containerd
+        - systemctl enable containerd
         - kubeadm config images pull
         - ctr oci spec | tee /etc/containerd/cri-base.json
       power_state:
