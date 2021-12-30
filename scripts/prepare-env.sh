@@ -103,6 +103,7 @@ echo "* Deploy Metrics Server (abridged version), MetalLB  & Local-Path-Provisio
 echo "*                                                                                       *"
 echo "*****************************************************************************************"
 echo
+# kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
@@ -494,14 +495,16 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - curl -SLO https://github.com/containerd/containerd/releases/download/v1.5.8/containerd-1.5.8-linux-amd64.tar.gz
-        - tar -C /usr -zxvf containerd-1.5.8-linux-amd64.tar.gz
+        - tar -C /usr -zxvf /mnt/containerd-1.5.8-linux-amd64.tar.gz
+        - cp /mnt/crun-1.4-linux-amd64 /usr/local/sbin/crun
         - rm containerd-1.5.8-linux-amd64.tar.gz
         - mkdir -p /etc/containerd
-        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
-        - systemctl restart containerd
+        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
+        - systemctl enable containerd
+        - systemctl start containerd
         - kubeadm config images pull
         - ctr oci spec | tee /etc/containerd/cri-base.json
+        - rm /etc/cni/net.d/10-containerd-net.conflist
       power_state:
         delay: "+1"
         mode: poweroff
