@@ -542,6 +542,10 @@ EOF
       path: /
       pool: default
       type: disk
+    containerd:
+      path: /mnt
+      source: /home/localadmin/Projects/containerd
+      type: disk
 EOF
 
   cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
@@ -1120,6 +1124,24 @@ docker run -d p 6000:5000 \
 
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
+#!/usr/bin/env bash
+
+pushd $(pwd)
+
+VERSION=1.5.8
+if [ ! -d ~/Projects/containerd ]; then
+  mkdir ~/Projects/containerd
+fi
+cd ~/Projects/containerd
+curl -SLO https://github.com/containerd/containerd/releases/download/v"$VERSION"/cri-containerd-cni-"$VERSION"-windows-amd64.tar.gz{,.sha256sum}
+sha256sum --check cri-containerd-cni-"$VERSION"-linux-amd64.tar.gz.sha256sum
+curl -SLO https://github.com/containers/crun/releases/download/1.4/crun-1.4-linux-amd64
+
+popd
+
+MYEOF
+
 # Install kubectl
 if [ ! -f ~/.local/bin/kubectl ]; then
   KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
@@ -1133,7 +1155,6 @@ if [ ! -f ~/.local/bin/kubectl ]; then
   else
     echo "Installing kubectl verion=$KUBECTL_VER"
     mv /tmp/kubectl ~/.local/bin/kubectl
-    chmod +x ~/.local/bin/kubectl
   fi
 fi
 
