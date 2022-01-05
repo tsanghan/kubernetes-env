@@ -905,6 +905,15 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
+    if [ ! -d /tmp/$USER ]; then
+      echo "Run pull-containerd.sh first!!"
+      exit 63
+    fi
+    registeries=$(docker container ls | grep -c registry)
+    if [ "$registeries" != "4"]; then
+      echo "Are local registries running? Run create-local-registries.sh first!!"
+      exit 127
+    fi
     profile=k8s-cloud-init-local-registries
   else
     profile=k8s-cloud-init
