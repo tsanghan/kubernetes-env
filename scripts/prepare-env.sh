@@ -520,8 +520,8 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - tar -C / -zxvf /mnt/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
-        - cp /mnt/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
+        - tar -C / -zxvf /mnt/containerd.cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+        - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
         - systemctl enable containerd
@@ -567,8 +567,8 @@ EOF
       pool: default
       type: disk
     containerd:
-      path: /mnt
-      source: /tmp/$USER
+      path: /mnt/containerd
+      source: /home/"$USER"/kubernetes-env/.containerd
       type: disk
 EOF
 
@@ -1155,8 +1155,8 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 
 pushd $(pwd)
 
-mkdir -p /tmp/"$USER"
-cd /tmp/"$USER"
+mkdir -p /home/"$USER"/kubernetes-env/.containerd
+cd /home/"$USER"/kubernetes-env/.containerd
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
