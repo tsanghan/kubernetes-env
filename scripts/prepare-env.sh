@@ -568,7 +568,7 @@ EOF
       type: disk
     containerd:
       path: /mnt/containerd
-      source: /home/$USER/kubernetes-env/.containerd
+      source: /home/$USER/Projects/kubernetes-env/.containerd
       type: disk
 EOF
 
@@ -1156,8 +1156,8 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 USER=localadmin
 pushd $(pwd)
 
-mkdir -p /home/"$USER"/kubernetes-env/.containerd
-cd /home/"$USER"/kubernetes-env/.containerd
+mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
+cd /home/"$USER"/Projects/kubernetes-env/.containerd
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
