@@ -1156,6 +1156,7 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 pushd $(pwd)
 
 mkdir -p /tmp/"$USER"
+cd /tmp/"$USER"
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
