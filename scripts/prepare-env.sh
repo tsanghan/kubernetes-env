@@ -1153,6 +1153,7 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
+USER=localadmin
 pushd $(pwd)
 
 mkdir -p /home/"$USER"/kubernetes-env/.containerd
