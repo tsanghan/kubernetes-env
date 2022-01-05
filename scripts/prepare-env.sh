@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+USER=localadmin
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 
 # Install get-fzf.sh
 
@@ -103,6 +108,7 @@ echo "* Deploy Metrics Server (abridged version), MetalLB  & Local-Path-Provisio
 echo "*                                                                                       *"
 echo "*****************************************************************************************"
 echo
+# kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
@@ -124,7 +130,7 @@ EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
-
+IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 while getopts "p" o; do
     case "${o}" in
         p)
@@ -157,7 +163,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
 if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: 10.1.1.79/nginx-ic-nap/#' |\
+    sed '/image\:/s#\: #\: '"$IP"'/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 else
@@ -175,6 +181,27 @@ EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/usr/bin/env bash
+
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+
+while getopts "s" o; do
+    case "${o}" in
+        s)
+            slim="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+for profile in lb k8s k8s-cloud-init k8s-cloud-init-local-registries;
+do
+  lxc profile delete "$profile"
+done
 
 cat <<EOF | sudo lxd init --preseed
 config: {}
@@ -287,7 +314,7 @@ if [ "$k8s_cloud_init"  == "" ]; then
             uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
-  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  # KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
     echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init
@@ -413,7 +440,7 @@ if [ "$k8s_cloud_init_local_registries"  == "" ]; then
             uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
-  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  # KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
     echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-local-registries
@@ -460,7 +487,7 @@ EOF
       - content: |
           server = "https://docker.io"
 
-          [host."http://10.1.1.79:5000"]
+          [host."http://$IP:5000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/docker.io/hosts.toml
@@ -468,7 +495,7 @@ EOF
       - content: |
           server = "https://k8s.gcr.io"
 
-          [host."http://10.1.1.79:5001"]
+          [host."http://$IP:5001"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
@@ -476,75 +503,32 @@ EOF
       - content: |
           server = "https://quay.io"
 
-          [host."http://10.1.1.79:5002"]
+          [host."http://$IP:5002"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/quay.io/hosts.toml
         permissions: '0644'
       - content: |
-          server = "http://10.1.1.79"
+          server = "http://$IP"
 
-          [host."http://10.1.1.79:6000"]
+          [host."http://$IP:6000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
-        path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
-        permissions: '0644'
-      - content: |
-          # Copyright The containerd Authors.
-          #
-          # Licensed under the Apache License, Version 2.0 (the "License");
-          # you may not use this file except in compliance with the License.
-          # You may obtain a copy of the License at
-          #
-          #     http://www.apache.org/licenses/LICENSE-2.0
-          #
-          # Unless required by applicable law or agreed to in writing, software
-          # distributed under the License is distributed on an "AS IS" BASIS,
-          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-          # See the License for the specific language governing permissions and
-          # limitations under the License.
-
-          [Unit]
-          Description=containerd container runtime
-          Documentation=https://containerd.io
-          After=network.target local-fs.target
-
-          [Service]
-          ExecStartPre=-/sbin/modprobe overlay
-          ExecStart=/usr/bin/containerd
-
-          Type=notify
-          Delegate=yes
-          KillMode=process
-          Restart=always
-          RestartSec=5
-          # Having non-zero Limit*s causes performance problems due to accounting overhead
-          # in the kernel. We recommend using cgroups to do container-local accounting.
-          LimitNPROC=infinity
-          LimitCORE=infinity
-          LimitNOFILE=infinity
-          # Comment TasksMax if your systemd version does not supports it.
-          # Only systemd 226 and above support this version.
-          TasksMax=infinity
-          OOMScoreAdjust=-999
-
-          [Install]
-          WantedBy=multi-user.target
-        owner: root:root
-        path: /lib/systemd/system/containerd.service
+        path: /etc/containerd/certs.d/$IP/hosts.toml
         permissions: '0644'
       runcmd:
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - curl -SLO https://github.com/containerd/containerd/releases/download/v1.5.8/containerd-1.5.8-linux-amd64.tar.gz
-        - tar -C /usr -zxvf containerd-1.5.8-linux-amd64.tar.gz
-        - rm containerd-1.5.8-linux-amd64.tar.gz
+        - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+        - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
         - mkdir -p /etc/containerd
-        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
         - systemctl enable containerd
+        - systemctl start containerd
         - kubeadm config images pull
         - ctr oci spec | tee /etc/containerd/cri-base.json
+        - rm /etc/cni/net.d/10-containerd-net.conflist
       power_state:
         delay: "+1"
         mode: poweroff
@@ -581,6 +565,10 @@ EOF
     root:
       path: /
       pool: default
+      type: disk
+    containerd:
+      path: /mnt/containerd
+      source: /home/$USER/Projects/kubernetes-env/.containerd
       type: disk
 EOF
 
@@ -698,15 +686,6 @@ fi
 MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
-
-while getopts "s" o; do
-    case "${o}" in
-        s)
-            slim="true"
-            ;;
-    esac
-done
-shift $((OPTIND-1))
 
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
@@ -859,6 +838,8 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
+USER=localadmin
+
 while getopts "r" o; do
     case "${o}" in
         r)
@@ -925,6 +906,15 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
+    if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
+      echo "Run pull-containerd.sh first!!"
+      exit 63
+    fi
+    registeries=$(docker container ls | grep -c registry)
+    if [ "$registeries" != "4" ]; then
+      echo "Are local registries running? Run create-local-registries.sh first!!"
+      exit 127
+    fi
     profile=k8s-cloud-init-local-registries
   else
     profile=k8s-cloud-init
@@ -1110,8 +1100,8 @@ shift $((OPTIND-1))
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
+  rm ~/.k/{config,config-lxd} 2> /dev/null
 fi
-rm ~/.k/{config,config-lxd} 2> /dev/null
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
@@ -1154,9 +1144,35 @@ docker run -d -p 5002:5000 \
 #     --restart always \
 #     --name registry-ghcr.io registry:
 
-docker run -d p 6000:5000 \
+docker run -d -p 6000:5000 \
     --restart always \
     --name registry registry:2
+
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
+#!/usr/bin/env bash
+
+USER=localadmin
+pushd $(pwd)
+
+mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
+cd /home/"$USER"/Projects/kubernetes-env/.containerd
+
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+echo "Downloading Containerd v$CONTAINERD_VER..."
+CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
+curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
+sha256sum --check $(basename $CONTAINERD_URL).sha256sum
+
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+echo "Downloading Crun v$CRUN_VER..."
+CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | grep -v systemd | tr -d '"')
+curl -L --remote-name-all "$CRUN_URL"{,.asc}
+
+popd
 
 MYEOF
 
@@ -1173,7 +1189,6 @@ if [ ! -f ~/.local/bin/kubectl ]; then
   else
     echo "Installing kubectl verion=$KUBECTL_VER"
     mv /tmp/kubectl ~/.local/bin/kubectl
-    chmod +x ~/.local/bin/kubectl
   fi
 fi
 
