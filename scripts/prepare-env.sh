@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USER=loclaadmin
+USER=localadmin
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
@@ -839,6 +839,8 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
+USER=localadmin
+
 while getopts "r" o; do
     case "${o}" in
         r)
@@ -905,7 +907,7 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
-    if [ ! -d /tmp/$USER ]; then
+    if [ ! -d /tmp/"$USER" ]; then
       echo "Run pull-containerd.sh first!!"
       exit 63
     fi
