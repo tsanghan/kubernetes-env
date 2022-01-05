@@ -975,7 +975,8 @@ for c in 1 2; do
   sleep 2
   echo
 done
-HEAD=$(kubectl get no -owide | head -1)
+# Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
+HEAD=$(kubectl get no -owide | head -1 | GREP_COLORS="ms=1;93" grep --color STATUS)
 echo "$HEAD"
 kubectl get no -owide | grep --color NotReady
 echo
@@ -985,7 +986,8 @@ fi
 cilium install
 check_cilium_status @
 echo
-HEAD=$(kubectl get no -owide | head -1)
+# Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
+HEAD=$(kubectl get no -owide | head -1 | GREP_COLORS="ms=1;93" grep --color STATUS)
 echo "$HEAD"
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
