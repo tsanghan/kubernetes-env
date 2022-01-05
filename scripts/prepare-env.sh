@@ -975,6 +975,8 @@ for c in 1 2; do
   sleep 2
   echo
 done
+HEAD=$(kubectl get no -owide | head -1)
+echo "$HEAD"
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
@@ -983,6 +985,8 @@ fi
 cilium install
 check_cilium_status @
 echo
+HEAD=$(kubectl get no -owide | head -1)
+echo "$HEAD"
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 kubectl create namespace metallb-system
