@@ -55,6 +55,16 @@ if ! [ -x "$(which snap)" ]; then
   snap install lxd
 fi
 
+if ! command -v snap &> /dev/null
+then
+    apt install -y --no-install-recommends snapd
+fi
+
+if ! command -v lxd &> /dev/null
+then
+    snap install lxd
+fi
+
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release jq xz-utils
 #
