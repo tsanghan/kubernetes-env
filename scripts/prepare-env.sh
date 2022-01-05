@@ -905,6 +905,7 @@ if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
     profile=k8s-cloud-init-local-registries
+    create-local-registries.sh
   else
     profile=k8s-cloud-init
   fi
