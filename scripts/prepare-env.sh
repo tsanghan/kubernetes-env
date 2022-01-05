@@ -569,7 +569,7 @@ EOF
       type: disk
     containerd:
       path: /mnt
-      source: /tmp/"$USER"
+      source: /tmp/$USER
       type: disk
 EOF
 
@@ -912,7 +912,7 @@ if [ "$common" == "" ]; then
       exit 63
     fi
     registeries=$(docker container ls | grep -c registry)
-    if [ "$registeries" != "4"]; then
+    if [ "$registeries" != "4" ]; then
       echo "Are local registries running? Run create-local-registries.sh first!!"
       exit 127
     fi
@@ -1162,14 +1162,14 @@ CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/r
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Containerd v$CONTAINERD_VER..."
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
-curl -L --remote-name-all "$CONTAONERD_URL"{,.sha256sum}
+curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
 sha256sum --check $(basename $CONTAINERD_URL).sha256sum
 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Crun v$CRUN_VER..."
 CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | tr -d '"')
-curl -L --remote-name-all "$CONTAONERD_URL"{,.asc}
+curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
 popd
 
