@@ -200,8 +200,8 @@ shift $((OPTIND-1))
 
 for profile in lb k8s k8s-cloud-init k8s-cloud-init-local-registries;
 do
-  exist=$(lxc profile ls | grep "$profile")
-  if [ ! "$exist" == "" ]; then
+  exists=$(lxc profile ls | grep "$profile")
+  if [ "$exists" != "" ]; then
     lxc profile delete "$profile"
   fi
 done
@@ -696,7 +696,7 @@ if [ "$image" == "" ]; then
     VERSION=$(curl -sSL https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:download.json | jq '.products."com.ubuntu.cloud.daily:server:20.04:amd64".versions | keys[]' | sort -r | head -1 | tr -d '"')
     PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
     if [ "$PROXY" != "" ]; then
-      SERVER=$PROXY
+      SERVER=http://$PROXY
     else
       SERVER="https://cloud-images.ubuntu.com"
     fi
