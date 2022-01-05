@@ -568,7 +568,7 @@ EOF
       type: disk
     containerd:
       path: /mnt/containerd
-      source: /home/"$USER"/kubernetes-env/.containerd
+      source: /home/$USER/kubernetes-env/.containerd
       type: disk
 EOF
 
