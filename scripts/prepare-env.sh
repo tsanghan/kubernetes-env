@@ -182,6 +182,12 @@ EOF
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/usr/bin/env bash
 
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+
 while getopts "s" o; do
     case "${o}" in
         s)
@@ -307,7 +313,7 @@ if [ "$k8s_cloud_init"  == "" ]; then
             uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
-  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  # KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
     echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init
@@ -433,7 +439,7 @@ if [ "$k8s_cloud_init_local_registries"  == "" ]; then
             uri: "http://security.ubuntu.com/ubuntu"
 EOF
 
-  KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+  # KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
   if [ "$PROXY" != "" ]; then
     echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-local-registries
@@ -514,8 +520,8 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - tar -C / -zxvf /mnt/cri-containerd-cni-"$CONTAINERD_VER"-linux-amd64.tar.gz
-        - cp /mnt/crun-"$CRUN_VER"-linux-amd64 /usr/local/sbin/crun
+        - tar -C / -zxvf /mnt/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+        - cp /mnt/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
         - systemctl enable containerd
