@@ -454,7 +454,6 @@ EOF
       packages:
         - apt-transport-https
         - ca-certificates
-        - containerd
         - curl
         - kubeadm=$KUBE_VER-00
         - kubelet=$KUBE_VER-00
