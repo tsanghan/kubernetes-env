@@ -767,6 +767,12 @@ then
   source <(kind completion bash)
   complete -F __start_kind kind
 fi
+
+if [ -x ~/.local/bin/kubecolor ]
+then
+  alias kc=kubecolor
+fi
+
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/update_kubectl.sh
@@ -1243,6 +1249,12 @@ if [ ! -f ~/.local/bin/kubectx ] || [ ! -f ~/.local/bin/kubens ]; then
   do
     curl -sSL "$friend" | tar -C ~/.local/bin -zxvf - "$(basename \""$friend\"" | sed 's/\(.*\)_v.*/\1/')"
   done
+fi
+
+# Install kubecolor
+if [ ! -f ~/.local/bin/kubecolor ]; then
+  KUBECOLOR=$(curl -s https://api.github.com/repos/hidetatz/kubecolor/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
+  curl -sSL "$KUBECOLOR" | tar -C ~/.local/bin -zxvf - kubecolor
 fi
 
 chmod +x ~/.local/bin/*
