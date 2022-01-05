@@ -130,7 +130,7 @@ EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
-
+IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 while getopts "p" o; do
     case "${o}" in
         p)
@@ -163,7 +163,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
 if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: 10.1.1.79/nginx-ic-nap/#' |\
+    sed "/image\:/s#\: #\: $IP/nginx-ic-nap/#" |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 else
@@ -187,6 +187,7 @@ CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 
 while getopts "s" o; do
     case "${o}" in
@@ -487,7 +488,7 @@ EOF
       - content: |
           server = "https://docker.io"
 
-          [host."http://10.1.1.79:5000"]
+          [host."http://$IP:5000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/docker.io/hosts.toml
@@ -495,7 +496,7 @@ EOF
       - content: |
           server = "https://k8s.gcr.io"
 
-          [host."http://10.1.1.79:5001"]
+          [host."http://$IP:5001"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
@@ -503,18 +504,18 @@ EOF
       - content: |
           server = "https://quay.io"
 
-          [host."http://10.1.1.79:5002"]
+          [host."http://$IP:5002"]
             capabilities = ["pull", "resolve"]
         owner: root:root
         path: /etc/containerd/certs.d/quay.io/hosts.toml
         permissions: '0644'
       - content: |
-          server = "http://10.1.1.79"
+          server = "http://$IP"
 
-          [host."http://10.1.1.79:6000"]
+          [host."http://$IP:6000"]
             capabilities = ["pull", "resolve"]
         owner: root:root
-        path: /etc/containerd/certs.d/10.1.1.79/hosts.toml
+        path: /etc/containerd/certs.d/$IP/hosts.toml
         permissions: '0644'
       runcmd:
         - apt-get -y purge nano
