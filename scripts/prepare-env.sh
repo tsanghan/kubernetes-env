@@ -182,6 +182,20 @@ EOF
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/usr/bin/env bash
 
+while getopts "s" o; do
+    case "${o}" in
+        s)
+            slim="true"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+for profile in lb k8s k8s-cloud-init k8s-cloud-init-local-registries;
+do
+  lxc profile delete "$profile"
+done
+
 cat <<EOF | sudo lxd init --preseed
 config: {}
 networks:
@@ -666,15 +680,6 @@ fi
 MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
-
-while getopts "s" o; do
-    case "${o}" in
-        s)
-            slim="true"
-            ;;
-    esac
-done
-shift $((OPTIND-1))
 
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
