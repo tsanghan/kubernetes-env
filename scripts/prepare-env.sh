@@ -988,7 +988,8 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh -p
+# nginx-ap-ingress.sh -p
+ingress-nginx.sh
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
