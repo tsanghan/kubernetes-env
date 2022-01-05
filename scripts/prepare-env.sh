@@ -163,7 +163,7 @@ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v
 kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
 if [ "$private" == "true" ]; then
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed "/image\:/s#\: #\: $IP/nginx-ic-nap/#" |\
+    sed '/image\:/s#\: #\: '"$IP"'/nginx-ic-nap/#' |\
     sed '/enable-app-protect$/s%#-% -%'|\
     kubectl apply -f -
 else
