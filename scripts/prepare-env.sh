@@ -520,7 +520,7 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - tar -C / -zxvf /mnt/containerd.cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+        - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
         - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
@@ -906,7 +906,7 @@ common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
   if [ "$registries" == "true" ]; then
-    if [ ! -d /tmp/"$USER" ]; then
+    if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
       echo "Run pull-containerd.sh first!!"
       exit 63
     fi
