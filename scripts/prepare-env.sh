@@ -976,7 +976,7 @@ for c in 1 2; do
   echo
 done
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
-kubectl get no -owide | head -1 | GREP_COLORS="ms=1;95;107" grep --color STATUS
+kubectl get no -owide | GREP_COLORS="ms=1;95;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
 if ! command  -v cilium &> /dev/null; then
@@ -986,7 +986,7 @@ cilium install
 check_cilium_status @
 echo
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
-kubectl get no -owide | head -1 | GREP_COLORS="ms=1;95;107" grep --color STATUS
+kubectl get no -owide | GREP_COLORS="ms=1;95;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 kubectl create namespace metallb-system
