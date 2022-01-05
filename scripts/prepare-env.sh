@@ -130,7 +130,12 @@ EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
 #!/usr/bin/env bash
-IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
+if [ "$iface" == "" ]; then
+  echo "Interface ens* no found!!"
+  exit 127
+fi
+IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 while getopts "p" o; do
     case "${o}" in
         p)
@@ -187,7 +192,12 @@ CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-IP=$(ip a s ens32 | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
+if [ "$iface" == "" ]; then
+  echo "Interface ens* no found!!"
+  exit 127
+fi
+IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 
 while getopts "s" o; do
     case "${o}" in
