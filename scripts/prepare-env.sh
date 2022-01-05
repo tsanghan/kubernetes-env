@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+USER=loclaadmin
 mkdir -p ~/.local/bin
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 
 # Install get-fzf.sh
 
@@ -495,9 +500,8 @@ EOF
         - apt-get -y purge nano
         - apt-get -y autoremove
         - systemctl enable mount-make-rshare
-        - tar -C /usr -zxvf /mnt/containerd-1.5.8-linux-amd64.tar.gz
-        - cp /mnt/crun-1.4-linux-amd64 /usr/local/sbin/crun
-        - rm containerd-1.5.8-linux-amd64.tar.gz
+        - tar -C / -zxvf /mnt/cri-containerd-cni-"$CONTAINERD_VER"-linux-amd64.tar.gz
+        - cp /mnt/crun-"$CRUN_VER"-linux-amd64 /usr/local/sbin/crun
         - mkdir -p /etc/containerd
         - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
         - systemctl enable containerd
@@ -544,7 +548,7 @@ EOF
       type: disk
     containerd:
       path: /mnt
-      source: /home/localadmin/Projects/containerd
+      source: /tmp/"$USER"
       type: disk
 EOF
 
@@ -1118,7 +1122,7 @@ docker run -d -p 5002:5000 \
 #     --restart always \
 #     --name registry-ghcr.io registry:
 
-docker run -d p 6000:5000 \
+docker run -d -p 6000:5000 \
     --restart always \
     --name registry registry:2
 
@@ -1129,14 +1133,20 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 
 pushd $(pwd)
 
-VERSION=1.5.8
-if [ ! -d ~/Projects/containerd ]; then
-  mkdir ~/Projects/containerd
-fi
-cd ~/Projects/containerd
-curl -SLO https://github.com/containerd/containerd/releases/download/v"$VERSION"/cri-containerd-cni-"$VERSION"-windows-amd64.tar.gz{,.sha256sum}
-sha256sum --check cri-containerd-cni-"$VERSION"-linux-amd64.tar.gz.sha256sum
-curl -SLO https://github.com/containers/crun/releases/download/1.4/crun-1.4-linux-amd64
+mkdir -p /tmp/"$USER"
+
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+echo "Downloading Containerd v$CONTAINERD_VER..."
+CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | tr -d '"')
+curl -L --remote-name-all "$CONTAONERD_URL"{,.sha256sum}
+sha256sum --check $(basename $CONTAINERD_URL).sha256sum
+
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+echo "Downloading Crun v$CRUN_VER..."
+CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')
+curl -L --remote-name-all "$CONTAONERD_URL"{,.asc}
 
 popd
 
