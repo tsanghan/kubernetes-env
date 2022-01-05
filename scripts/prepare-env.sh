@@ -955,6 +955,10 @@ update_local_etc_hosts "$IPADDR"
 check_containerd_status +
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
+if [ ! -d ~/.kube ]; then
+  mkdir ~/.kube
+  ln -s ~/.kube ~/.k
+fi
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 sleep 2
