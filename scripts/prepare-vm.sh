@@ -50,20 +50,8 @@ sysctl net.bridge.bridge-nf-call-iptables=1
 sysctl net.ipv4.ip_forward=1
 sysctl net.bridge.bridge-nf-call-ip6tables=1
 
-if ! [ -x "$(which snap)" ]; then
-  apt install -y --no-install-recommends snapd
-  snap install lxd
-fi
-
-if ! command -v snap &> /dev/null
-then
-    apt install -y --no-install-recommends snapd
-fi
-
-if ! command -v lxd &> /dev/null
-then
-    snap install lxd
-fi
+apt install -y --no-install-recommends snapd
+snap install lxd
 
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release jq xz-utils
