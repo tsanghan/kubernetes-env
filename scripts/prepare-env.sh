@@ -200,7 +200,10 @@ shift $((OPTIND-1))
 
 for profile in lb k8s k8s-cloud-init k8s-cloud-init-local-registries;
 do
-  lxc profile delete "$profile"
+  exist=$(lxc profile ls | grep "$profile")
+  if [ ! "$exist" == "" ]; then
+    lxc profile delete "$profile"
+  fi
 done
 
 cat <<EOF | sudo lxd init --preseed
@@ -1082,7 +1085,8 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-nginx-ap-ingress.sh -p
+# nginx-ap-ingress.sh -p
+ingress-nginx.sh
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
