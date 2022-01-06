@@ -700,11 +700,13 @@ MYEOF
 
 cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
 
+YY=20
+CODE_NAME=focal
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
     VERSION=$(curl -sSL https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:download.json | \
-              jq '.products."com.ubuntu.cloud.daily:server:20.04:amd64".versions | keys[]' | sort -r | head -1 | tr -d '"')
+              jq ".products.\"com.ubuntu.cloud.daily:server:$YY.04:amd64\".versions | keys[]" | sort -r | head -1 | tr -d '"')
     PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
     if [ "$PROXY" != "" ]; then
       SERVER=http://$PROXY
@@ -717,7 +719,7 @@ if [ "$image" == "" ]; then
     rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
   else
     VERSION=$(curl -sSL https://uk.lxd.images.canonical.com/streams/v1/images.json | \
-              jq '.products."ubuntu:focal:amd64:cloud".versions | keys[]' | sort -r | head -1 | tr -d '"')
+              jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
     curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
     curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
     lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
