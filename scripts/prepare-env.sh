@@ -2,6 +2,8 @@
 
 USER=localadmin
 mkdir -p ~/.local/bin
+mkdir -p ~/.local/share/completions
+mkdir -p ~/.local/man/man{1,2,3,4,5,6,7,8,9}
 mkdir -p ~/.config/k9s
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
@@ -1239,6 +1241,18 @@ fi
 if [ ! -f ~/.local/bin/yq ]; then
 curl -sSL -o ~/.local/bin/yq \
   "$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq ".assets[].browser_download_url" | grep -v "tar.gz" | grep amd64 | grep linux | tr -d '"')"
+fi
+
+# Install bat
+if [ ! -f ~/.local/bin/bat ]; then
+  BAT=$(curl -s https://api.github.com/repos/sharkdp/bat/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | grep gnu | tr -d '"')
+  BAT_DIR=$(basename "$BAT" | sed 's/\(^.*\).tar.gz/\1/')
+  BAT_BIN=$(basename "$BAT" | sed 's/\(.*\)-v.*/\1/')
+  curl -sSL "$BAT" | tar -C /tmp -zxvf -
+  mv /tmp/"$BAT_DIR"/"$BAT_BIN" ~/.local/bin
+  mv /tmp/"$BAT_DIR"/"$BAT_BIN".1 ~/.local/man/man1
+  mv /tmp/"$BAT_DIR"/autocomplete/* ~/.local/share/completions
+  rm -rf /tmp/"$BAT_DIR"
 fi
 
 # Install shellcheck
