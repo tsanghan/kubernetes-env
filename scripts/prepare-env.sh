@@ -71,11 +71,11 @@ cat <<'EOF' > ~/.local/bin/get-krew.sh
 #!/usr/bin/env bash
 
 echo
-echo "*******************************"
-echo "*                             *"
+echo "*****************************"
+echo "*                           *"
 echo "* Download and Install Krew *"
-echo "*                             *"
-echo "*******************************"
+echo "*                           *"
+echo "*****************************"
 echo
 # Ref: https://krew.sigs.k8s.io/docs/user-guide/setup/install/
 if [ ! -d ~/.krew ]; then
@@ -96,14 +96,48 @@ EOF
 cat <<'EOF' > ~/.local/bin/get-helm.sh
 #!/usr/bin/env bash
 
+echo
+echo "*****************************"
+echo "*                           *"
+echo "* Download and Install Helm *"
+echo "*                           *"
+echo "*****************************"
+echo
 curl -fsSL -o ~/.local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 sed -i "/HELM_INSTALL_DIR/s#/usr/local#$HOME/.local#" ~/.local/bin/get-helm.sh
 sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm.sh
 EOF
 
 # Install VirtualBox
-cat <<'EOF' > ~/.local/bin/get-vb.sh
+# cat <<'EOF' > ~/.local/bin/get-vb.sh
+# #!/usr/bin/env bash
+
+# echo
+# echo "***********************************"
+# echo "*                                 *"
+# echo "* Configure VirtualBox Repository *"
+# echo "*                                 *"
+# echo "***********************************"
+# echo
+
+# curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor /usr/share/keyrings/oracle_vbox_2016.gpg
+# echo \
+#   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
+#   http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
+#   sudo tee /etc/apt/sources.list.d/oracle_vbox.list
+# EOF
+
+# Install Vagrant
+cat <<'EOF' > ~/.local/bin/get-vagrant.sh
 #!/usr/bin/env bash
+
+echo
+echo "********************************"
+echo "*                              *"
+echo "* Download and Install Vagrant *"
+echo "*                              *"
+echo "********************************"
+echo
 pushd .
 cd /tmp
 LATEST=$(curl -SL https://releases.hashicorp.com/vagrant | grep ">vagrant_.*<" | sed 's#^.*>vagrant_\(.*\)<.*#\1#' | head -1)
