@@ -93,12 +93,27 @@ fi
 EOF
 
 # Install get-helm.sh
+cat <<'EOF' > ~/.local/bin/get-helm.sh
+#!/usr/bin/env bash
 
 curl -fsSL -o ~/.local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 sed -i "/HELM_INSTALL_DIR/s#/usr/local#$HOME/.local#" ~/.local/bin/get-helm.sh
 sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm.sh
+EOF
 
-# Install l=-apply.sh
+# Install VirtualBox
+cat <<'EOF' > ~/.local/bin/get-vb.sh
+#!/usr/bin/env bash
+pushd .
+cd /tmp
+LATEST=$(curl -SL https://releases.hashicorp.com/vagrant | grep ">vagrant_.*<" | sed 's#^.*>vagrant_\(.*\)<.*#\1#' | head -1)
+curl -sSLO https://releases.hashicorp.com/vagrant/"$LATEST"/vagrant_"$LATEST"_x86_64.deb
+sudo apt install ./vagrant_"$LATEST"_x86_64.deb
+rm ./vagrant_"$LATEST"_x86_64.deb
+popd
+EOF
+
+# Install k-apply.sh
 
 cat <<'EOF' > ~/.local/bin/k-apply.sh
 #!/usr/bin/env bash
