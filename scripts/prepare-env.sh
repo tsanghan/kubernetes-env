@@ -109,23 +109,23 @@ sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm.sh
 EOF
 
 # Install VirtualBox
-# cat <<'EOF' > ~/.local/bin/get-vb.sh
-# #!/usr/bin/env bash
+cat <<'EOF' > ~/.local/bin/get-vb.sh
+#!/usr/bin/env bash
 
-# echo
-# echo "***********************************"
-# echo "*                                 *"
-# echo "* Configure VirtualBox Repository *"
-# echo "*                                 *"
-# echo "***********************************"
-# echo
+echo
+echo "***********************************"
+echo "*                                 *"
+echo "* Configure VirtualBox Repository *"
+echo "*                                 *"
+echo "***********************************"
+echo
 
-# curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor /usr/share/keyrings/oracle_vbox_2016.gpg
-# echo \
-#   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
-#   http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
-#   sudo tee /etc/apt/sources.list.d/oracle_vbox.list
-# EOF
+curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor /usr/share/keyrings/oracle_vbox_2016.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
+  http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
+  sudo tee /etc/apt/sources.list.d/oracle_vbox.list
+EOF
 
 # Install Vagrant
 cat <<'EOF' > ~/.local/bin/get-vagrant.sh
