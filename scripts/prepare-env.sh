@@ -115,7 +115,7 @@ cat <<'EOF' > ~/.local/bin/get-vb.sh
 echo
 echo "***********************************"
 echo "*                                 *"
-echo "* Configure VirtualBox Repository *"
+echo "* Download and Install VirtualBox *"
 echo "*                                 *"
 echo "***********************************"
 echo
@@ -125,6 +125,9 @@ echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
   http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
   sudo tee /etc/apt/sources.list.d/oracle_vbox.list
+
+sudo apt update
+sudo apt install virtualbox mkisofs -y
 EOF
 
 # Install Vagrant
@@ -145,6 +148,7 @@ curl -sSLO https://releases.hashicorp.com/vagrant/"$LATEST"/vagrant_"$LATEST"_x8
 sudo apt install ./vagrant_"$LATEST"_x86_64.deb
 rm ./vagrant_"$LATEST"_x86_64.deb
 popd
+vagrant plugin install vagrant-vbguest
 EOF
 
 # Install k-apply.sh
