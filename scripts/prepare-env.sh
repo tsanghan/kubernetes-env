@@ -120,7 +120,7 @@ echo "*                                 *"
 echo "***********************************"
 echo
 
-curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor /usr/share/keyrings/oracle_vbox_2016.gpg
+curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor -o /usr/share/keyrings/oracle_vbox_2016.gpg
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
   http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
