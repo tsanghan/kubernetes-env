@@ -192,7 +192,7 @@ echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
 echo "*                                                                                       *"
 echo "*****************************************************************************************"
 echo
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.4/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
