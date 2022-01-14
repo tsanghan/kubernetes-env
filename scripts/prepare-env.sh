@@ -112,6 +112,13 @@ EOF
 cat <<'EOF' > ~/.local/bin/get-vb.sh
 #!/usr/bin/env bash
 
+ID=$(id | awk '{print $1}' | sed 's/^uid=\(.*\)(.*)$/\1/')
+if [ "$ID" != "0" ]; then
+  BASENAME=$(basename $0)
+  echo "Please run command with 'sudo $BASENAME'"
+  exit
+fi
+
 echo
 echo "***********************************"
 echo "*                                 *"
@@ -120,19 +127,26 @@ echo "*                                 *"
 echo "***********************************"
 echo
 
-curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --dearmor -o /usr/share/keyrings/oracle_vbox_2016.gpg
+curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc | gpg --dearmor -o /usr/share/keyrings/oracle_vbox_2016.gpg
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/oracle_vbox_2016.gpg] \
   http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" | \
-  sudo tee /etc/apt/sources.list.d/oracle_vbox.list
+  tee /etc/apt/sources.list.d/oracle_vbox.list
 
-sudo apt update
-sudo apt install virtualbox mkisofs -y
+apt update
+apt install virtualbox mkisofs -y
 EOF
 
 # Install Vagrant
 cat <<'EOF' > ~/.local/bin/get-vagrant.sh
 #!/usr/bin/env bash
+
+ID=$(id | awk '{print $1}' | sed 's/^uid=\(.*\)(.*)$/\1/')
+if [ "$ID" != "0" ]; then
+  BASENAME=$(basename $0)
+  echo "Please run command with 'sudo $BASENAME'"
+  exit
+fi
 
 echo
 echo "********************************"
@@ -145,7 +159,7 @@ pushd .
 cd /tmp
 LATEST=$(curl -SL https://releases.hashicorp.com/vagrant | grep ">vagrant_.*<" | sed 's#^.*>vagrant_\(.*\)<.*#\1#' | head -1)
 curl -sSLO https://releases.hashicorp.com/vagrant/"$LATEST"/vagrant_"$LATEST"_x86_64.deb
-sudo apt install ./vagrant_"$LATEST"_x86_64.deb
+apt install ./vagrant_"$LATEST"_x86_64.deb
 rm ./vagrant_"$LATEST"_x86_64.deb
 popd
 vagrant plugin install vagrant-vbguest
