@@ -114,8 +114,7 @@ cat <<'EOF' > ~/.local/bin/get-vb.sh
 
 ID=$(id | awk '{print $1}' | sed 's/^uid=\(.*\)(.*)$/\1/')
 if [ "$ID" != "0" ]; then
-  BASENAME=$(basename $0)
-  echo "Please run command with 'sudo $BASENAME'"
+  echo "Please run command with 'sudo $0'"
   exit
 fi
 
@@ -143,8 +142,7 @@ cat <<'EOF' > ~/.local/bin/get-vagrant.sh
 
 ID=$(id | awk '{print $1}' | sed 's/^uid=\(.*\)(.*)$/\1/')
 if [ "$ID" != "0" ]; then
-  BASENAME=$(basename $0)
-  echo "Please run command with 'sudo $BASENAME'"
+  echo "Please run command with 'sudo $0'"
   exit
 fi
 
