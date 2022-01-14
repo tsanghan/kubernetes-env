@@ -5,7 +5,7 @@ Vagrant.configure(2) do |config|
     config.vm.define "vbx-ctrlp-1" do |v1|
         v1.vm.box = "ubuntu/focal64"
         v1.vm.network :private_network, ip: "10.253.253.11"
-        v1.vm.hostname = "vbx-ctrl-1"
+        v1.vm.hostname = "vbx-ctrlp-1"
         v1.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
         v1.vm.cloud_init :user_data, content_type: "text/x-shellscript",
             inline: "#!/usr/bin/bash\n\nsed -i 's/\\(^Exec.*ARGS$\\)/\\1 --node-ip=10.253.253.11/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
