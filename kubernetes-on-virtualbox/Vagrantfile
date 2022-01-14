@@ -4,7 +4,7 @@
 Vagrant.configure(2) do |config|
     config.vm.define "vbx-ctrlp-1" do |v1|
         v1.vm.box = "ubuntu/focal64"
-        v1.vm.network :public_network, beidge: "ens32", type: "dhcp"
+        v1.vm.network :public_network, bridge: "ens32", type: "dhcp"
         v1.vm.hostname = "vbx-ctrl-1"
         v1.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
         v1.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
@@ -19,7 +19,7 @@ Vagrant.configure(2) do |config|
     (1..NodeCount).each do |i|
         config.vm.define "vbx-wrker-#{i}" do |v2|
             v2.vm.box = "ubuntu/focal64"
-            v2.vm.network :public_network, beidge: "ens32", type: "dhcp"
+            v2.vm.network :public_network, bridge: "ens32", type: "dhcp"
             v2.vm.hostname = "vbx-wrker-#{i}"
             v2.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
             v2.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
