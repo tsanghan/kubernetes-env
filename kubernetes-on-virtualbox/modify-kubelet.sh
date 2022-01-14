@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-ip link set enp0s8 up
-dhclient enp0s8
+
 while true; do
   IPADDR=$(ip a s | grep "enp0s8$" | awk '{print $2}' | awk -F/ '{print $1}')
   if [ "$IPADDR" != "" ]; then
