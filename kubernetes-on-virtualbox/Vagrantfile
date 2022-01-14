@@ -7,13 +7,14 @@ Vagrant.configure(2) do |config|
         v1.vm.network :private_network, ip: "10.253.253.11"
         v1.vm.hostname = "vbx-ctrl-1"
         v1.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
-        # v1.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
+        v1.vm.cloud_init :user_data, content_type: "text/x-shellscript",
+            inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.11/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
         v1.vm.provider :virtualbox do |v|
             v.memory = 2048
             v.cpus = 2
         end
-        v1.vm.provision :shell,
-            inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.11/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+        # v1.vm.provision "shell",
+        #     inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.11/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
     end
 
     NodeCount = 2
@@ -24,13 +25,14 @@ Vagrant.configure(2) do |config|
             node.vm.network :private_network, ip: "10.253.253.1#{i+1}"
             node.vm.hostname = "vbx-wrker-#{i}"
             node.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
-            # node.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
+            node.vm.cloud_init :user_data, content_type: "text/x-shellscript",
+                inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.1#{i+1}/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
             node.vm.provider :virtualbox do |v|
                 v.memory = 2048
                 v.cpus = 2
             end
-            node.vm.provision :shell,
-                inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.1#{i+1}/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+            # node.vm.provision "shell",
+            #     inline: "sed -i 's/\(^Exec.*ARGS$\)/\1 --node-ip=10.253.253.1#{i+1}/' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
         end
     end
 
