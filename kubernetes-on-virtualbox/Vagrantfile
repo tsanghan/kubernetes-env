@@ -4,9 +4,10 @@
 Vagrant.configure(2) do |config|
     config.vm.define "vbx-ctrlp-1" do |v1|
         v1.vm.box = "ubuntu/focal64"
-        v1.vm.network :private_network, ip: "10.254.254.11", virtualbox__intnet: "k8snet"
+        v1.vm.network :public_network, bridge: "ens32"
         v1.vm.hostname = "vbx-ctrl-1"
         v1.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
+        v1.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
         v1.vm.provider :virtualbox do |v|
             v.memory = 2048
             v.cpus = 2
@@ -14,9 +15,10 @@ Vagrant.configure(2) do |config|
     end
     config.vm.define "vbx-wrker-1" do |v2|
         v2.vm.box = "ubuntu/focal64"
-        v2.vm.network :private_network, ip: "10.254.254.21", virtualbox__intnet: "k8snet"
+        v2.vm.network :public_network, bridge: "ens32"
         v2.vm.hostname = "vbx-wrker-1"
         v2.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
+        v2.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
         v2.vm.provider :virtualbox do |v|
             v.memory = 2048
             v.cpus = 2
@@ -24,9 +26,10 @@ Vagrant.configure(2) do |config|
     end
     config.vm.define "vbx-wrker-2" do |v3|
         v3.vm.box = "ubuntu/focal64"
-        v3.vm.network :private_network, ip: "10.254.254.20", virtualbox__intnet: "k8snet"
+        v3.vm.network :public_network, bridge: "ens32"
         v3.vm.hostname = "vbx-wrker-2"
         v3.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
+        v3.vm.cloud_init :user_data, content_type: "text/x-shellscript", path: "modify-kubelet.sh"
         v3.vm.provider :virtualbox do |v|
             v.memory = 2048
             v.cpus = 2
@@ -36,3 +39,4 @@ Vagrant.configure(2) do |config|
     config.vbguest.auto_update = false
     config.vm.boot_timeout = 600
   end
+
