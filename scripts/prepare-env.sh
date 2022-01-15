@@ -155,6 +155,8 @@ EOF
 cat <<'EOF' > ~/.local/bin/create-vbx-cluster.sh
 #!/usr/bin/env bash
 
+# Ref: https://github.com/scriptcamp/vagrant-kubeadm-kubernetes/blob/main/scripts/master.sh
+
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               --apiserver-advertise-address=10.253.253.11 \
