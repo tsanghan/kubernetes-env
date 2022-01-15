@@ -152,7 +152,7 @@ vagrant plugin install vagrant-vbguest
 EOF
 
 # VBX cluster
-cat <<'EOF' > ~/.local/bin/create-vbx=cluster.sh
+cat <<'EOF' > ~/.local/bin/create-vbx-cluster.sh
 #!/usr/bin/env bash
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
