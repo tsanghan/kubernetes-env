@@ -151,6 +151,19 @@ popd
 vagrant plugin install vagrant-vbguest
 EOF
 
+# VBX cluster
+cat <<'EOF' > ~/.local/bin/create-vbx=cluster.sh
+#!/usr/bin/env bash
+
+VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
+# vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init --apiserver-advertise-address=10.253.253.11 --apiserver-cert-extra-sans=10.253.253.11 --pod-network-cidr=192.168.0.0/16 --node-name vbx-ctrlp-1 --upload-certs | tee /vagrant/kubeadm-init.out"
+vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init --apiserver-advertise-address=10.253.253.11 --apiserver-cert-extra-sans=10.253.253.11 --upload-certs | tee /vagrant/kubeadm-init.out"
+vagrant ssh vbx-ctrlp-1 -c "sudo cp /etc/kubernetes/admin.conf /vagrant/config"
+cp config ~/.kube/config
+vagrant ssh vbx-wrker-1 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')"
+# vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')"
+EOF
+
 # Install k-apply.sh
 
 cat <<'EOF' > ~/.local/bin/k-apply.sh
