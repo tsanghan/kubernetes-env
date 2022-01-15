@@ -203,11 +203,13 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***.
 3. Make sure you have turn on *nested* virtualization on your Hypervisor on your base OS.
 4. The instructions below will bring up *1x Control-Plane, 2x Workers* Kubernetes Cluster with the following specifications.
+
 | Node        | vCPU | Memory |
 | ------------|:----:|:------:|
 | vbx-ctrlp-1 | 2    | 2GB    |
 | vbx-wrker-1 | 2    | 1.5GB  |
 | vbx-wrker-2 | 2    | 1.5GB  |
+
 4. `cd ../kubernetes-on-virtualbox`
 5. `get-vb.sh`
 6. `get-vagrant.sh`
