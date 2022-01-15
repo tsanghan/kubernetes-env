@@ -27,7 +27,7 @@
 8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
-11. As of v1.12.0, yuo now have a 3rd choice, Kubernetes on Virtualbox/Vagrant.
+11. As of v1.12.0, you now have a 3rd choice, Kubernetes on Virtualbox/Vagrant.
 
 ### Kubernetes on LXD
 
@@ -54,9 +54,9 @@
 31. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
-lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
-lxd-wrker-1   NotReady   <none>                 15s     v1.22.4
-lxd-wrker-2   NotReady   <none>                 5s      v1.22.4
+lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.23.1
+lxd-wrker-1   NotReady   <none>                 15s     v1.23.1
+lxd-wrker-2   NotReady   <none>                 5s      v1.23.1
 ```
 32. Install calico as it support Network Policy
 33. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
@@ -64,9 +64,9 @@ lxd-wrker-2   NotReady   <none>                 5s      v1.22.4
 35. Wait till all nodes are ready
 ```
 NAME          STATUS   ROLES                  AGE     VERSION
-lxd-ctrlp-1   Ready    control-plane,master   5m42s   v1.22.4
-lxd-wrker-1   Ready    <none>                 3m2s    v1.22.4
-lxd-wrker-2   Ready    <none>                 2m52s   v1.22.4
+lxd-ctrlp-1   Ready    control-plane,master   5m42s   v1.23.1
+lxd-wrker-1   Ready    <none>                 3m2s    v1.23.1
+lxd-wrker-2   Ready    <none>                 2m52s   v1.23.1
 ```
 36. Type `k get all -A` to see all pods
 ```
@@ -143,9 +143,9 @@ CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPAC
 12. All the nodes are not ready, a CNI plugin as yet to be installed (default CNI in `kind.yaml` is disabled)
 ```
 NAME                 STATUS     ROLES                  AGE     VERSION
-kind-control-plane   NotReady   control-plane,master   6m46s   v1.22.0
-kind-worker          NotReady   <none>                 6m15s   v1.22.0
-kind-worker2         NotReady   <none>                 6m15s   v1.22.0
+kind-control-plane   NotReady   control-plane,master   6m46s   v1.23.1
+kind-worker          NotReady   <none>                 6m15s   v1.23.1
+kind-worker2         NotReady   <none>                 6m15s   v1.23.1
 ```
 13. We will use calico as it support Network Policy
 14. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
@@ -154,9 +154,9 @@ kind-worker2         NotReady   <none>                 6m15s   v1.22.0
 ```
 
 NAME                 STATUS   ROLES                  AGE     VERSION
-kind-control-plane   Ready    control-plane,master   9m      v1.22.0
-kind-worker          Ready    <none>                 8m29s   v1.22.0
-kind-worker2         Ready    <none>                 8m29s   v1.22.0
+kind-control-plane   Ready    control-plane,master   9m      v1.23.1
+kind-worker          Ready    <none>                 8m29s   v1.23.1
+kind-worker2         Ready    <none>                 8m29s   v1.23.1
 ```
 17. `k get all -A` to see all the pods
 ```
@@ -200,11 +200,11 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 
 ### Kubernetes on Virtualbox/Vagrant
 
-1. ***WARNING*** This is just a acamdemic exercises. This is ***NOT*** the prefered method to create Kubernetes cluster, give the 2 methods above.
-2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***
+1. ***WARNING*** This is just an acamdemic exercise. This is ***NOT*** the prefered method to create a Kubernetes cluster for self-learning, given the 2 methods available above.
+2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***.
 3. `cd ../kubernetes-on-virtualbox`
 4. `get-vb.sh`
-5. `get-vegrant.sh`
+5. `get-vagrant.sh`
 6. `create-vbx-cluster.sh`
 7. Enjoy!!
 
@@ -212,7 +212,7 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 ### Kubernetes on LXD
 1. `lxc stop --all`
 2. To start again `lxc start --all`
-3. Nodes instance can deleted the with `lxc delete <node name>`
+3. Nodes instance can be deleted the with `lxc delete <node name>`
 ### Kubernetes with KIND
 1. There are no provision to stop a `kind` cluster with `kind`.
 2. Kind cluster can only be `create`d or `delete`d
@@ -221,9 +221,9 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 5. `docker container ls`
 ```
 CONTAINER ID   IMAGE                  COMMAND                  CREATED             STATUS              PORTS                       NAMES
-20ffab3b00a3   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute   127.0.0.1:44651->6443/tcp   kind-control-plane
-38f750fd85cb   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker2
-26e00165cc2c   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker
+20ffab3b00a3   kindest/node:v1.23.1   "/usr/local/bin/entr…"   About an hour ago   Up About a minute   127.0.0.1:44651->6443/tcp   kind-control-plane
+38f750fd85cb   kindest/node:v1.23.1   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker2
+26e00165cc2c   kindest/node:v1.23.1   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker
 ```
 5. `docker stop <NAME/CONTAINER ID> <NAME/CONTAINER ID> ...`
 ### Kubernetes on Virtualbox/Vagrant
