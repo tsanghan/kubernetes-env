@@ -169,7 +169,7 @@ vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               --apiserver-advertise-address=10.253.253.11 \
                               --apiserver-cert-extra-sans=10.253.253.11 \
                               --node-name vbx-ctrlp-1 \
-                              --pod-network-cidr=192.168.0.0/16
+                              --pod-network-cidr=192.168.0.0/16 \
                               --upload-certs | \
                               tee kubeadm-init.out" 2> /dev/null
 vagrant ssh vbx-ctrlp-1 -c "mv kubeadm-init.out /vagrant" 2> /dev/null
