@@ -27,6 +27,7 @@
 8. Follow the instruction at the end of the completion of `prepare-vm.sh` script
 9. Log back into your VM
 10. You have 2 choices to deploy a kubernetes cluster, using *LXD* or *KIND*
+11. As of v1.12.0, yuo now have a 3rd choice, Kubernetes on Virtualbox/Vagrant.
 
 ### Kubernetes on LXD
 
@@ -48,10 +49,9 @@
 26. `lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config` make sure you have created ~/.kube directory first
 27. Activate `kubectl` auto-completion
 28. `source ~/.bash_complete` assuming you are using bash
-29. ________________________________________________________(missing instruction here, fill in the blank for sucessful step 30)
-30. Now you can access you cluster with `kubectl` command, alised with `k`
-31. `k get no`
-32. All your nodes are not ready, becasue we have yet to instal a CNI plugin
+29. Now you can access you cluster with `kubectl` command, alised with `k`
+30. `k get no`
+31. All your nodes are not ready, becasue we have yet to instal a CNI plugin
 ```
 NAME          STATUS     ROLES                  AGE     VERSION
 lxd-ctrlp-1   NotReady   control-plane,master   2m55s   v1.22.4
@@ -198,6 +198,16 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 19. Explore and enjoy the 2 Kubernetes clusters
 20. Check memory usage with `htop`
 
+### Kubernetes on Virtualbox/Vagrant
+
+1. ***WARNING*** This is just a acamdemic exercises. This is ***NOT*** the prefered method to create Kubernetes cluster, give the 2 methods above.
+2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***
+3. `cd ../kubernetes-on-virtualbox`
+4. `get-vb.sh`
+5. `get-vegrant.sh`
+6. `create-vbx-cluster.sh`
+7. Enjoy!!
+
 ## How to stop the clusters?
 ### Kubernetes on LXD
 1. `lxc stop --all`
@@ -216,3 +226,5 @@ CONTAINER ID   IMAGE                  COMMAND                  CREATED          
 26e00165cc2c   kindest/node:v1.22.0   "/usr/local/bin/entr…"   About an hour ago   Up About a minute                               kind-worker
 ```
 5. `docker stop <NAME/CONTAINER ID> <NAME/CONTAINER ID> ...`
+### Kubernetes on Virtualbox/Vagrant
+1. `vagrant destroy -f`
