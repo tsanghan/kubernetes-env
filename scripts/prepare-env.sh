@@ -174,7 +174,7 @@ vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               tee kubeadm-init.out" 2> /dev/null
 vagrant ssh vbx-ctrlp-1 -c "mv kubeadm-init.out /vagrant" 2> /dev/null
 vagrant ssh vbx-ctrlp-1 -c "sudo cp /etc/kubernetes/admin.conf /vagrant/config" 2> /dev/null
-cp config ~/.kube/config 2> /dev/null
+cp config ~/.kube/config
 vagrant ssh vbx-wrker-1 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
