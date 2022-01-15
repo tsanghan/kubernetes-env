@@ -199,7 +199,7 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 
 ### Kubernetes on Virtualbox/Vagrant
 
-1. ***WARNING*** This is just an acamdemic exercise. This is ***NOT*** the prefered method to create a Kubernetes cluster for self-learning, given the 2 methods available above.
+1. ***WARNING*** This is just an acamdemic exercise. This is ***NOT*** the prefered method to create a Kubernetes cluster for self-learning & education, given that the 2 methods available above exists.
 2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***.
 3. `cd ../kubernetes-on-virtualbox`
 4. `get-vb.sh`
