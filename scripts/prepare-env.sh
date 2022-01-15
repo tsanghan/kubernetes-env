@@ -157,18 +157,25 @@ cat <<'EOF' > ~/.local/bin/create-vbx-cluster.sh
 
 # Ref: https://github.com/scriptcamp/vagrant-kubeadm-kubernetes/blob/main/scripts/master.sh
 
+if [ -f kubeadm-init.out ]; then
+  rm kubeadm-init.out
+fi
+if [ -f config ]; then
+  rm config
+fi
+
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               --apiserver-advertise-address=10.253.253.11 \
                               --apiserver-cert-extra-sans=10.253.253.11 \
-                              --pod-network-cidr=192.168.0.0/16 \
                               --node-name vbx-ctrlp-1 \
                               --upload-certs | \
-                              tee /vagrant/kubeadm-init.out"
+                              tee kubeadm-init.out" 2> /dev/null
+vagrant ssh vbx-ctrlp-1 -c "mv kubeadm-init.out /vagrant"
 vagrant ssh vbx-ctrlp-1 -c "sudo cp /etc/kubernetes/admin.conf /vagrant/config" 2> /dev/null
 cp config ~/.kube/config 2> /dev/null
 vagrant ssh vbx-wrker-1 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
-vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
+# vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 EOF
 
 # Install k-apply.sh
