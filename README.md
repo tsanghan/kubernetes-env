@@ -201,12 +201,19 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 
 1. ***WARNING*** This is just an acamdemic exercise. This is ***NOT*** the prefered method to create a Kubernetes cluster for self-learning & education, given that the 2 methods available above exists.
 2. But, if you ***MUST***, follow the instrctions below at you own ***RISKS***.
-3. `cd ../kubernetes-on-virtualbox`
-4. `get-vb.sh`
-5. `get-vagrant.sh`
-6. `create-vbx-cluster.sh`
-7. Enjoy!!
-8. Check memory usage with `htop`
+3. Make sure you have turn on *nested* virtualization on your Hypervisor on your base OS.
+4. The instructions below will bring up *1x Control-Plane, 2x Workers* Kubernetes Cluster with the following specifications.
+| Node        | vCPU | Memory |
+| ------------|:----:|:------:|
+| vbx-ctrlp-1 | 2    | 2GB    |
+| vbx-wrker-1 | 2    | 1.5GB  |
+| vbx-wrker-2 | 2    | 1.5GB  |
+4. `cd ../kubernetes-on-virtualbox`
+5. `get-vb.sh`
+6. `get-vagrant.sh`
+7. `create-vbx-cluster.sh`
+8. Enjoy!!
+9. Check memory usage with `htop`
 
 ## How to stop the clusters?
 ### Kubernetes on LXD
