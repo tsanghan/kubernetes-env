@@ -126,31 +126,30 @@ kube-system     metrics-server                       ClusterIP      10.107.154.2
 
 1. `cd ../kind`
 2. Activate `kind` auto-completion
-3. `source <(kind completion bash)`
-4. `complete -F __start_kind kind`
-5. Start the `kind` cluster
-6. `kind create cluster --config kind.yaml`
-7. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disabled default CNI
-8. `kind` automatically merge `kind` cluster config into `~/.kube/config`
-9. `k config get-contexts` will show that there are 2 contexts for 2 clusters
+3. `source ~/.bash_complete` assuming you are using bash
+4. Start the `kind` cluster
+5. `kind create cluster --config kind.yaml`
+6. The provided `kind.yaml` will start 1x *Control-Plane Node* and 2x *Worker Nodes* and disabled default CNI
+7. `kind` automatically merge `kind` cluster config into `~/.kube/config`
+8. `k config get-contexts` will show that there are 2 contexts for 2 clusters
 ```
 CURRENT   NAME                          CLUSTER      AUTHINFO           NAMESPACE
 *         kind-kind                     kind-kind    kind-kind
           kubernetes-admin@kubernetes   kubernetes   kubernetes-admin
 ```
-10. The current context is `kind-kind`
-11. `k get no`
-12. All the nodes are not ready, a CNI plugin as yet to be installed (default CNI in `kind.yaml` is disabled)
+9. The current context is `kind-kind`
+10. `k get no`
+11. All the nodes are not ready, a CNI plugin as yet to be installed (default CNI in `kind.yaml` is disabled)
 ```
 NAME                 STATUS     ROLES                  AGE     VERSION
 kind-control-plane   NotReady   control-plane,master   6m46s   v1.23.1
 kind-worker          NotReady   <none>                 6m15s   v1.23.1
 kind-worker2         NotReady   <none>                 6m15s   v1.23.1
 ```
-13. We will use calico as it support Network Policy
-14. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
-15. `k get no` again
-16. Wait till all the nodes are ready
+12. We will use calico as it support Network Policy
+13. `k apply -f https://docs.projectcalico.org/manifests/calico.yaml`
+14. `k get no` again
+15. Wait till all the nodes are ready
 ```
 
 NAME                 STATUS   ROLES                  AGE     VERSION
@@ -158,7 +157,7 @@ kind-control-plane   Ready    control-plane,master   9m      v1.23.1
 kind-worker          Ready    <none>                 8m29s   v1.23.1
 kind-worker2         Ready    <none>                 8m29s   v1.23.1
 ```
-17. `k get all -A` to see all the pods
+16. `k get all -A` to see all the pods
 ```
 NAMESPACE            NAME                                             READY   STATUS    RESTARTS   AGE
 kube-system          pod/calico-kube-controllers-56b8f699d9-f9jxp     1/1     Running   0          2m9s
@@ -194,9 +193,9 @@ kube-system          replicaset.apps/calico-kube-controllers-56b8f699d9   1     
 kube-system          replicaset.apps/coredns-78fcd69978                   2         2         2       9m43s
 local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1         1         1       9m43s
 ```
-18. Follow step 37. from `Kubernetes on LXD` to proceed
-19. Explore and enjoy the 2 Kubernetes clusters
-20. Check memory usage with `htop`
+17. Follow step 37. from `Kubernetes on LXD` to proceed
+18. Explore and enjoy the 2 Kubernetes clusters
+19. Check memory usage with `htop`
 
 ### Kubernetes on Virtualbox/Vagrant
 
@@ -207,6 +206,7 @@ local-path-storage   replicaset.apps/local-path-provisioner-85494db59d    1     
 5. `get-vagrant.sh`
 6. `create-vbx-cluster.sh`
 7. Enjoy!!
+8. Check memory usage with `htop`
 
 ## How to stop the clusters?
 ### Kubernetes on LXD
