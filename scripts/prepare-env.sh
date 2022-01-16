@@ -1139,7 +1139,12 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
+if [ "$multimaster" == "true" ]; then
+  CTRLP=lxd-lb
+else
+  CTRLP=lxd-ctrlp-1
+fi
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
   ln -s ~/.kube ~/.k
