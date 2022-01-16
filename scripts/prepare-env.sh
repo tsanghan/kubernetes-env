@@ -1134,7 +1134,7 @@ done
 
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
-  check_lxd_status STOP "$NODESNUM "\U0001F600"
+  check_lxd_status STOP "$NODESNUM" "\U0001F600"
   lxc start --all
 fi
 
