@@ -1041,7 +1041,7 @@ check_containerd_status () {
 
 check_if_cluster_already_exists () {
   STATUS=$(lxc ls | grep -c "lxd-.*")
-  if [ "$STATUS" -ne 0]; then
+  if [ "$STATUS" -ne 0 ]; then
     echo "Old K8s Cluster exists!!"
     exit
   fi
