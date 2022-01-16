@@ -1106,6 +1106,8 @@ if [ "$n" == "cilium" ]; then
 elseif [ "$n" == "calico" ]; then
   kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
   check_calico_status %
+else
+  echo "No CNI specified!!. Doing nothing for CNI plugin!!"
 fi
 echo
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
@@ -1120,6 +1122,8 @@ if [ "$i" == "ingress-ngx" ]; then
 elseif [ "$i" == "nic-ap" ]; then
   # nginx-ap-ingress.sh -p
   echo "Not implemented yet!!"
+else
+  echo "No Ingress-Controller specified!!. Doing nothing for Ingress-Controller!!"
 fi
 MYEOF
 
