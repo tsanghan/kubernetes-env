@@ -1193,7 +1193,7 @@ else
     cilium install
     check_cilium_status "\U0001F680"
   elif [ "$n" == "calico" ]; then
-    curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1# | kubectl apply -f -
+    curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
     check_calico_status "\U0001F680"
   else
     echo "Error CNI flag exists but != <cilium|calico>!!"
