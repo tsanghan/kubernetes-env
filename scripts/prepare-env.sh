@@ -103,9 +103,10 @@ echo "* Download and Install Helm *"
 echo "*                           *"
 echo "*****************************"
 echo
-curl -fsSL -o ~/.local/bin/get-helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-sed -i "/HELM_INSTALL_DIR/s#/usr/local#$HOME/.local#" ~/.local/bin/get-helm.sh
-sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm.sh
+curl -fsSL -o ~/.local/bin/get-helm-3.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+sed -i "/HELM_INSTALL_DIR/s#/usr/local#$HOME/.local#" ~/.local/bin/get-helm-3.sh
+sed -i "/runAsRoot cp/s#runAsRoot cp#cp#" ~/.local/bin/get-helm-3.sh
+~/.local/bin/get-helm-3.sh
 EOF
 
 # Install VirtualBox
