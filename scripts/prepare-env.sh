@@ -993,7 +993,7 @@ check_lxd_status () {
     if [ "$STATUS" = "$2" ]; then
       break
     fi
-    printf '%s' "$3"
+    echo -e "$3"
     sleep 2
   done
   sleep 2
@@ -1007,7 +1007,7 @@ check_lb_status () {
     if [ ! "$STATUS" = "" ]; then
       break
     fi
-    printf '%s' "\U0001F601"
+    echo -e "\U0001F601"
     sleep 2
   done
   sleep 2
@@ -1021,7 +1021,7 @@ check_cilium_status () {
     if [ "$STATUS" = "OK" ]; then
       break
     fi
-    printf '%s' "$1"
+    echo -e "$1"
     sleep 2
   done
   sleep 4
@@ -1035,7 +1035,7 @@ check_calico_status () {
     if [ "$STATUS" -eq 0 ]; then
       break
     fi
-    printf '%s' "$1"
+    echo -e "$1"
     sleep 2
   done
   sleep 4
@@ -1068,14 +1068,14 @@ check_containerd_status () {
       if [[ "$STATUS1" =~ .*running.* ]] && [[ "$STATUS2" =~ .*running.* ]] && [[ "$STATUS3" =~ .*running.* ]]; then
         break
       fi
-      printf '%s' "$1"
+      echo -e "$1"
       sleep 2
     else
       STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
       if [[ "$STATUS" =~ .*running.* ]]; then
         break
       fi
-      printf '%s' "$1"
+      echo -e "$1"
       sleep 2
     fi
   done
