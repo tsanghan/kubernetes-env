@@ -1028,7 +1028,7 @@ check_calico_status () {
     if [ "$STATUS" -eq 0 ]; then
       break
     fi
-    printf "$1"
+    printf '%s' "$1"
     sleep 2
   done
   sleep 4
