@@ -994,6 +994,20 @@ check_lxd_status () {
   echo
 }
 
+check_lb_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep lxd-lb | grep eth0)
+    if [ ! "$STATUS" = "" ]; then
+      break
+    fi
+    printf "\U0001F601"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
 check_cilium_status () {
   echo -n "Wait"
   while true; do
@@ -1074,6 +1088,16 @@ check_if_cluster_already_exists () {
 
 check_if_cluster_already_exists
 
+if [ "$multimaster" == "true" ]; then
+  NODESNUM=6
+  CTRLP=lxd-lb
+  NODES=(1 2 3)
+else
+  NODESNUM=3
+  CTRLP=lxd-ctrlp-1
+  NODES=(1 2)
+fi
+
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   image=focal-cloud
@@ -1112,11 +1136,11 @@ if [ "$common" == "" ]; then
   lxc start --all
 fi
 
-if [ "$multimaster" == "true" ]; then
-  NODESNUM=6
-else
-  NODESNUM=3
-fi
+# if [ "$multimaster" == "true" ]; then
+#   NODESNUM=6
+# else
+#   NODESNUM=3
+# fi
 
 check_lxd_status eth0 "$NODESNUM" "\U0001F604"
 
@@ -1139,11 +1163,12 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-if [ "$multimaster" == "true" ]; then
-  CTRLP=lxd-lb
-else
-  CTRLP=lxd-ctrlp-1
-fi
+# if [ "$multimaster" == "true" ]; then
+#   CTRLP=lxd-lb
+# else
+#   CTRLP=lxd-ctrlp-1
+# fi
+
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
@@ -1163,11 +1188,11 @@ if [ "$multimaster" == "true" ]; then
   done
 fi
 
-if [ "$multimaster" == "true" ]; then
-  NODES=(1 2 3)
-else
-  NODES=(1 2)
-fi
+# if [ "$multimaster" == "true" ]; then
+#   NODES=(1 2 3)
+# else
+#   NODES=(1 2)
+# fi
 
 for c in "${NODES[@]}"; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
