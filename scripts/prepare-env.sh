@@ -946,7 +946,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 
 USER=localadmin
 
-usage() { echo "Usage: $0 [-r] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-r] [-c] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
 
 while getopts ":rn:i:" o; do
     case "${o}" in
@@ -964,6 +964,9 @@ while getopts ":rn:i:" o; do
             if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
             fi
+            ;;
+        c)
+            containersonly="true"
             ;;
         *)
             usage
@@ -1088,6 +1091,11 @@ IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
 check_containerd_status "\U0001F601"
+
+if [ "$containersonly" == "true" ]; then
+  echo "Cluster container created!!"
+  exit;
+fi
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 if [ ! -d ~/.kube ]; then
