@@ -1097,17 +1097,22 @@ done
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
-if [ "$n" == "cilium" ]; then
-  if ! command  -v cilium &> /dev/null; then
-    get-cilium.sh
-  fi
-  cilium install
-  check_cilium_status %
-elif [ "$n" == "calico" ]; then
-  kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-  check_calico_status %
-else
+if [ -z "$n" ]; then
   echo "No CNI specified!!. Doing nothing for CNI plugin!!"
+else
+  if [ "$n" == "cilium" ]; then
+    if ! command  -v cilium &> /dev/null; then
+      get-cilium.sh
+    fi
+    cilium install
+    check_cilium_status %
+  elif [ "$n" == "calico" ]; then
+    kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+    check_calico_status %
+  else
+    echo "Error CNI flag exists but != <cilium|calico>!!"
+    exit
+  fi
 fi
 echo
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
@@ -1117,13 +1122,18 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-if [ "$i" == "ingress-ngx" ]; then
-  ingress-nginx.sh
-elif [ "$i" == "nic-ap" ]; then
-  # nginx-ap-ingress.sh -p
-  echo "Not implemented yet!!"
-else
+if [ -z "$n" ]; then
   echo "No Ingress-Controller specified!!. Doing nothing for Ingress-Controller!!"
+else
+  if [ "$i" == "ingress-ngx" ]; then
+    ingress-nginx.sh
+  elif [ "$i" == "nic-ap" ]; then
+    # nginx-ap-ingress.sh -p
+    echo "Not implemented yet!!"
+  else
+    echo "Error Ingress-Controller flag exists but != <ingress-ngx|nic-ap>!!"
+    exit
+  fi
 fi
 MYEOF
 
