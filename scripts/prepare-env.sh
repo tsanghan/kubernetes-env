@@ -986,7 +986,7 @@ check_lxd_status () {
     if [ "$STATUS" = "$2" ]; then
       break
     fi
-    printf "$3"
+    printf '%s' "$3"
     sleep 2
   done
   sleep 2
@@ -1000,7 +1000,7 @@ check_lb_status () {
     if [ ! "$STATUS" = "" ]; then
       break
     fi
-    printf "\U0001F601"
+    printf '%s' "\U0001F601"
     sleep 2
   done
   sleep 2
@@ -1014,7 +1014,7 @@ check_cilium_status () {
     if [ "$STATUS" = "OK" ]; then
       break
     fi
-    printf "$1"
+    printf '%s' "$1"
     sleep 2
   done
   sleep 4
@@ -1044,7 +1044,7 @@ update_local_etc_hosts () {
   OUT=$(grep "$HOST" /etc/hosts)
   if [[ $OUT == "" ]]; then
     sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 $HOST/" /etc/hosts
-  elif [[ "$OUT" =~ "$HOST" ]]; then
+  elif [[ "$OUT" =~ $HOST ]]; then
     sudo sed -ri "/$HOST/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
   else
     echo "Error!!"
@@ -1061,14 +1061,14 @@ check_containerd_status () {
       if [[ "$STATUS1" =~ .*running.* ]] && [[ "$STATUS2" =~ .*running.* ]] && [[ "$STATUS3" =~ .*running.* ]]; then
         break
       fi
-      printf "$1"
+      printf '%s' "$1"
       sleep 2
     else
       STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
       if [[ "$STATUS" =~ .*running.* ]]; then
         break
       fi
-      printf "$1"
+      printf '%s' "$1"
       sleep 2
     fi
   done
@@ -1164,7 +1164,7 @@ echo
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
-    # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+    # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
     lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
     sleep 2
     echo
@@ -1172,7 +1172,7 @@ if [ "$multimaster" == "true" ]; then
 fi
 
 for c in "${WRKERNODES[@]}"; do
-  # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+  # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
   sleep 2
   echo
