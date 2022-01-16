@@ -946,7 +946,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 
 USER=localadmin
 
-usage() { echo "Usage: $0 [-r] [-n <cilium|calico> ] [-i <ingress-ngx|nic-ap> ]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-r] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
 
 while getopts ":rn:i:" o; do
     case "${o}" in
@@ -961,7 +961,7 @@ while getopts ":rn:i:" o; do
             ;;
         i)
             i=${OPTARG}
-            if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ]; then
+            if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
             fi
             ;;
@@ -1099,6 +1099,8 @@ kubectl get no -owide | grep --color NotReady
 echo
 if [ -z "$n" ]; then
   echo "No CNI specified!!. Doing nothing for CNI plugin!!"
+  echo "Will exit here!!"
+  exit
 else
   if [ "$n" == "cilium" ]; then
     if ! command  -v cilium &> /dev/null; then
