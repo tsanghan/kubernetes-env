@@ -59,8 +59,9 @@ echo "*                             *"
 echo "*******************************"
 echo
 # Ref: https://docs.cilium.io/en/stable/gettingstarted/hubble_setup/
-export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz{,.sha256sum}
+HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+export HUBBLE_VERSION
+curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/"$HUBBLE_VERSION"/hubble-linux-amd64.tar.gz{,.sha256sum}
 sha256sum --check hubble-linux-amd64.tar.gz.sha256sum
 tar xzvfC hubble-linux-amd64.tar.gz ~/.local/bin
 rm hubble-linux-amd64.tar.gz{,.sha256sum}
@@ -144,12 +145,12 @@ echo "*                              *"
 echo "********************************"
 echo
 pushd .
-cd /tmp
+cd /tmp || exit
 LATEST=$(curl -SL https://releases.hashicorp.com/vagrant | grep ">vagrant_.*<" | sed 's#^.*>vagrant_\(.*\)<.*#\1#' | head -1)
 curl -sSLO https://releases.hashicorp.com/vagrant/"$LATEST"/vagrant_"$LATEST"_x86_64.deb
 sudo apt install ./vagrant_"$LATEST"_x86_64.deb
 rm ./vagrant_"$LATEST"_x86_64.deb
-popd
+popd || exit
 vagrant plugin install vagrant-vbguest
 EOF
 
@@ -226,6 +227,8 @@ while getopts "p" o; do
         p)
             private="true"
             ;;
+        *)
+            ;;
     esac
 done
 shift $((OPTIND-1))
@@ -259,7 +262,7 @@ if [ "$private" == "true" ]; then
 else
   kubectl create secret docker-registry regcred \
     --docker-server=private-registry.nginx.com \
-    --docker-username=$(/usr/bin/cat ~/.local/share/nginx-repo.jwt) \
+    --docker-username="$(/usr/bin/cat ~/.local/share/nginx-repo.jwt)" \
     --docker-password=none -n nginx-ingress
   curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
     sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic-nap/#' |\
@@ -288,6 +291,8 @@ while getopts "s" o; do
     case "${o}" in
         s)
             slim="true"
+            ;;
+        *)
             ;;
     esac
 done
@@ -504,7 +509,8 @@ EOF
       type: disk
 EOF
 
-  cat /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
+  lxc profile edit k8s-cloud-init < /tmp/lxd-profile-k8s-cloud-init
+  # cat /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
   rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
@@ -669,7 +675,8 @@ EOF
       type: disk
 EOF
 
-  cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
+  lxc profile edit k8s-cloud-init-local-registries < /tmp/lxd-profile-k8s-cloud-init-local-registries
+  # cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
   rm /tmp/lxd-profile-k8s-cloud-init-local-registries
 fi
 
@@ -777,7 +784,8 @@ EOF
       type: disk
 EOF
 
-  cat /tmp/lxd-profile-lb | lxc profile edit lb
+  lxc profile edit lb < /tmp/lxd-profile-lb
+  # cat /tmp/lxd-profile-lb | lxc profile edit lb
   rm /tmp/lxd-profile-lb
 fi
 MYEOF
@@ -936,7 +944,6 @@ if [ "$?"  = 1 ]; then
   echo "No upgrade required!!"
   exit
 else
-  K9S_VER=v"$NEW_K9S_VER"
   K9S_FRIEND=$(echo -E "$K9S_LATEST" | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
   curl -sSL "$K9S_FRIEND" | tar -C ~/.local/bin -zxvf - "$(basename \""$K9S_FRIEND\"" | sed 's/\(.*\)_Linux_.*/\1/')"
 fi
@@ -1231,6 +1238,8 @@ while getopts "d" o; do
         d)
             delete="true"
             ;;
+        *)
+            ;;
     esac
 done
 shift $((OPTIND-1))
@@ -1293,17 +1302,17 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
 USER=$(whoami)
-pushd $(pwd)
+pushd $(pwd) || exit
 
 mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
-cd /home/"$USER"/Projects/kubernetes-env/.containerd
+cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Containerd v$CONTAINERD_VER..."
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
-sha256sum --check $(basename $CONTAINERD_URL).sha256sum
+sha256sum --check $(basename "$CONTAINERD_URL").sha256sum
 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
@@ -1311,7 +1320,7 @@ echo "Downloading Crun v$CRUN_VER..."
 CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | grep -v systemd | tr -d '"')
 curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
-popd
+popd || exit
 
 MYEOF
 
