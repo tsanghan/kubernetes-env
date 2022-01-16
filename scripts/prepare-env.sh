@@ -946,10 +946,27 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 
 USER=localadmin
 
-while getopts "r" o; do
+usage() { echo "Usage: $0 [-r] [-n <cilium|calico> ] [-i <ingress-ngx|nic-ap> ]" 1>&2; exit 1; }
+
+while getopts ":rn:i:" o; do
     case "${o}" in
         r)
             registries="true"
+            ;;
+        n)
+            n=${OPTARG}
+            if [ "$n" != "cilium" ] && [ "$n" != "calico" ]; then
+                usage
+            fi
+            ;;
+        i)
+            i=${OPTARG}
+            if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ]; then
+                usage
+            fi
+            ;;
+        *)
+            usage
             ;;
     esac
 done
@@ -974,6 +991,20 @@ check_cilium_status () {
   while true; do
     STATUS=$(cilium status | grep "Cilium:" | awk '{print $4}' | sed 's/\x1b\[[0-9;]*m//g')
     if [ "$STATUS" = "OK" ]; then
+      break
+    fi
+    echo -n "$1"
+    sleep 2
+  done
+  sleep 4
+  echo
+}
+
+check_calico_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(kubectl get no | grep -c NotReady)
+    if [ "$STATUS" -eq 0 ]; then
       break
     fi
     echo -n "$1"
@@ -1066,11 +1097,16 @@ done
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
-if ! command  -v cilium &> /dev/null; then
-  get-cilium.sh
+if [ "$n" == "cilium" ]; then
+  if ! command  -v cilium &> /dev/null; then
+    get-cilium.sh
+  fi
+  cilium install
+  check_cilium_status %
+elseif [ "$n" == "calico" ]; then
+  kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  check_calico_status %
 fi
-cilium install
-check_cilium_status @
 echo
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
 kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
@@ -1079,8 +1115,12 @@ echo
 kubectl create namespace metallb-system
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
-# nginx-ap-ingress.sh -p
-ingress-nginx.sh
+if [ "$i" == "ingress-ngx" ]; then
+  ingress-nginx.sh
+elseif [ "$i" == "nic-ap" ]; then
+  # nginx-ap-ingress.sh -p
+  echo "Not implemented yet!!"
+fi
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/create-cluster-mm.sh
