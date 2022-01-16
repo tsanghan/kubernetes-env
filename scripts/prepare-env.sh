@@ -1103,7 +1103,7 @@ if [ "$n" == "cilium" ]; then
   fi
   cilium install
   check_cilium_status %
-elseif [ "$n" == "calico" ]; then
+elif [ "$n" == "calico" ]; then
   kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
   check_calico_status %
 else
@@ -1119,7 +1119,7 @@ sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | 
 k-apply.sh
 if [ "$i" == "ingress-ngx" ]; then
   ingress-nginx.sh
-elseif [ "$i" == "nic-ap" ]; then
+elif [ "$i" == "nic-ap" ]; then
   # nginx-ap-ingress.sh -p
   echo "Not implemented yet!!"
 else
