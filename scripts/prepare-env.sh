@@ -1091,11 +1091,13 @@ check_if_cluster_already_exists
 if [ "$multimaster" == "true" ]; then
   NODESNUM=6
   CTRLP=lxd-lb
-  NODES=(1 2 3)
+  NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
+  WRKERNODES=(1 2 3)
 else
   NODESNUM=3
   CTRLP=lxd-ctrlp-1
-  NODES=(1 2)
+  NODES=(ctrlp-1 wrker-1 wrker-2)
+  WRKERNODES=(1 2)
 fi
 
 common=$(lxc image ls | grep lxd-common)
@@ -1120,11 +1122,11 @@ else
   profile=k8s
 fi
 
-if [ "$multimaster" == "true" ]; then
-  NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
-else
-  NODES=(ctrlp-1 wrker-1 wrker-2)
-fi
+# if [ "$multimaster" == "true" ]; then
+#   NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
+# else
+#   NODES=(ctrlp-1 wrker-1 wrker-2)
+# fi
 
 for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
@@ -1189,12 +1191,12 @@ if [ "$multimaster" == "true" ]; then
 fi
 
 # if [ "$multimaster" == "true" ]; then
-#   NODES=(1 2 3)
+#   WRKERNODES=(1 2 3)
 # else
-#   NODES=(1 2)
+#   WRKERNODES=(1 2)
 # fi
 
-for c in "${NODES[@]}"; do
+for c in "${WRKERNODES[@]}"; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
   sleep 2
