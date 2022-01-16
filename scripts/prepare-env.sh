@@ -1043,6 +1043,7 @@ check_if_cluster_already_exists () {
   STATUS=$(lxc ls | grep -c "lxd-.*")
   if [ "$STATUS" -ne 0 ]; then
     echo "Old K8s Cluster exists!!"
+    echo "Run 'stop-cluster.sh -d' first!!"
     exit
   fi
 }
