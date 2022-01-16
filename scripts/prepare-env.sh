@@ -1134,7 +1134,7 @@ done
 
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
-  check_lxd_status STOP 3 "\U0001F600"
+  check_lxd_status STOP "$NODESNUM "\U0001F600"
   lxc start --all
 fi
 
@@ -1382,6 +1382,7 @@ lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
   rm ~/.k/{config,config-lxd} 2> /dev/null
+  sudo sed -i '/lxd/d' /etc/hosts
 fi
 MYEOF
 
