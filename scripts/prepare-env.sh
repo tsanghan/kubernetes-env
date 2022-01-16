@@ -979,7 +979,7 @@ check_lxd_status () {
     if [ "$STATUS" = "$2" ]; then
       break
     fi
-    echo -n "$3"
+    printf "$3"
     sleep 2
   done
   sleep 2
@@ -993,7 +993,7 @@ check_cilium_status () {
     if [ "$STATUS" = "OK" ]; then
       break
     fi
-    echo -n "$1"
+    printf "$1"
     sleep 2
   done
   sleep 4
@@ -1007,7 +1007,7 @@ check_calico_status () {
     if [ "$STATUS" -eq 0 ]; then
       break
     fi
-    echo -n "$1"
+    printf "$1"
     sleep 2
   done
   sleep 4
@@ -1032,7 +1032,7 @@ check_containerd_status () {
     if [[ "$STATUS" =~ .*running.* ]]; then
       break
     fi
-    echo -n "$1"
+    printf "$1"
     sleep 2
   done
   sleep 2
@@ -1078,16 +1078,16 @@ done
 
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
-  check_lxd_status STOP 3 .
+  check_lxd_status STOP 3 "\U0001F600"
   lxc start --all
 fi
 
-check_lxd_status eth0 3 \!
+check_lxd_status eth0 3 "\U0001F604"
 
 IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
 update_local_etc_hosts "$IPADDR"
 
-check_containerd_status +
+check_containerd_status "\U0001F601"
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
 if [ ! -d ~/.kube ]; then
