@@ -948,10 +948,13 @@ USER=localadmin
 
 usage() { echo "Usage: $0 [-r] [-c] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
 
-while getopts ":rn:i:" o; do
+while getopts ":rcn:i:" o; do
     case "${o}" in
         r)
             registries="true"
+            ;;
+        c)
+            containersonly="true"
             ;;
         n)
             n=${OPTARG}
@@ -964,9 +967,6 @@ while getopts ":rn:i:" o; do
             if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
             fi
-            ;;
-        c)
-            containersonly="true"
             ;;
         *)
             usage
