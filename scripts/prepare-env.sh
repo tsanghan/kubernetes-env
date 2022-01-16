@@ -948,15 +948,18 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 
 USER=localadmin
 
-usage() { echo "Usage: $0 [-r] [-c] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
 
-while getopts ":rcn:i:" o; do
+while getopts ":rcmn:i:" o; do
     case "${o}" in
         r)
             registries="true"
             ;;
         c)
             containersonly="true"
+            ;;
+        m)
+            multimaster="true"
             ;;
         n)
             n=${OPTARG}
@@ -1020,11 +1023,16 @@ check_calico_status () {
 }
 
 update_local_etc_hosts () {
-  OUT=$(grep lxd-ctrlp-1 /etc/hosts)
+  if [ "$multimaster" == "true" ]; then
+    HOST=lxd-lb
+  else
+    HOST=lxd-ctrlp-1
+  fi
+  OUT=$(grep "$HOST" /etc/hosts)
   if [[ $OUT == "" ]]; then
-    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 lxd-ctrlp-1/" /etc/hosts
-  elif [[ "$OUT" =~ lxd-ctrlp-1 ]]; then
-    sudo sed -ri "/lxd/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
+    sudo sed -i "/127.0.0.1 localhost/s/localhost/localhost\n$1 $HOST/" /etc/hosts
+  elif [[ "$OUT" =~ "$HOST" ]]; then
+    sudo sed -ri "/$HOST/s/^([0-9]{1,3}\.){3}[0-9]{1,3}/$1/" /etc/hosts
   else
     echo "Error!!"
   fi
@@ -1033,12 +1041,23 @@ update_local_etc_hosts () {
 check_containerd_status () {
   echo -n "Wait"
   while true; do
-    STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
-    if [[ "$STATUS" =~ .*running.* ]]; then
-      break
+    if [ "$multimaster" == "true" ]; then
+      STATUS1=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
+      STATUS2=$(lxc exec lxd-ctrlp-2 -- systemctl status containerd | grep Active | grep running)
+      STATUS3=$(lxc exec lxd-ctrlp-3 -- systemctl status containerd | grep Active | grep running)
+      if [[ "$STATUS1" =~ .*running.* ]] && [[ "$STATUS2" =~ .*running.* ]] && [[ "$STATUS3" =~ .*running.* ]]; then
+        break
+      fi
+      printf "$1"
+      sleep 2
+    else
+      STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
+      if [[ "$STATUS" =~ .*running.* ]]; then
+        break
+      fi
+      printf "$1"
+      sleep 2
     fi
-    printf "$1"
-    sleep 2
   done
   sleep 2
   echo
@@ -1077,7 +1096,13 @@ else
   profile=k8s
 fi
 
-for c in ctrlp-1 wrker-1 wrker-2; do
+if [ "$multimaster" == "true" ]; then
+  NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
+else
+  NODES=(ctrlp-1 wrker-1 wrker-2)
+fi
+
+for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
 done
 
@@ -1087,16 +1112,31 @@ if [ "$common" == "" ]; then
   lxc start --all
 fi
 
-check_lxd_status eth0 3 "\U0001F604"
+if [ "$multimaster" == "true" ]; then
+  NODESNUM=6
+else
+  NODESNUM=3
+fi
 
-IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
-update_local_etc_hosts "$IPADDR"
+check_lxd_status eth0 "$NODESNUM" "\U0001F604"
+
+if [ "$multimaster" != "true" ]; then
+  IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
+  update_local_etc_hosts "$IPADDR"
+fi
 
 check_containerd_status "\U0001F601"
 
 if [ "$containersonly" == "true" ]; then
   echo "Cluster container created!!"
   exit;
+fi
+
+if [ "$multimaster" == "true" ]; then
+  lxc launch -p lb focal-cloud lxd-lb
+  check_lb_status
+  IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
+  update_local_etc_hosts "$IPADDR"
 fi
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint lxd-ctrlp-1:6443 --upload-certs | tee kubeadm-init.out
@@ -1108,7 +1148,23 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 sleep 2
 echo
-for c in 1 2; do
+
+if [ "$multimaster" == "true" ]; then
+  for c in 2 3; do
+    # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
+    lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
+    sleep 2
+    echo
+  done
+fi
+
+if [ "$multimaster" == "true" ]; then
+  NODES=(1 2 3)
+else
+  NODES=(1 2)
+fi
+
+for c in "${NODES[@]}"; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
   sleep 2
