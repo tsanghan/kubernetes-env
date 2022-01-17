@@ -276,7 +276,7 @@ runcmd:
   - rm /etc/cni/net.d/10-containerd-net.conflist
 MYEOF
 
-if [ ! -d ~/Projects/kubernetes-env/.containerd ]; then
+if [ ! -d "~/Projects/kubernetes-env/.containerd" ]; then
   pull-containerd.sh
 fi
 ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
