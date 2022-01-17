@@ -256,9 +256,14 @@ write_files:
   permissions: '0644'
 
 runcmd:
-  - apt-get -y purge nano
-  - apt-get -y autoremove
-  - systemctl enable mount-make-rshare
+ - apt-get -y purge nano
+ - apt-get -y autoremove
+ - modprobe br_netfilter
+ - modprobe nf_conntrack
+ - sysctl --system
+ - mkdir -p /etc/containerd
+ - containerd config default | tee /etc/containerd/config.toml
+ - systemctl restart containerd
 MYEOF
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
