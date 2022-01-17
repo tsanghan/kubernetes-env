@@ -173,7 +173,7 @@ CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/late
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
 
-cat <<'MYEOF' > cloud.cgf
+cat <<'MYEOF' > cloud.cfg
 #cloud-config
 
 apt:
