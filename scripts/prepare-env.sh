@@ -917,7 +917,7 @@ MYEOF
 cat <<'EOF' > ~/.local/bin/create-common.sh
 #!/usr/bin/env bash
 
-check_lxd_containers_status () {
+check_lxd_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(lxc ls | grep -c "$1")
@@ -934,7 +934,7 @@ check_lxd_containers_status () {
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
   lxc launch -p k8s-cloud-init focal-cloud lxd-common
-  check_lxd_containers_status STOP 1 .
+  check_lxd_status STOP 1 .
   lxc publish lxd-common --alias lxd-common
   lxc delete lxd-common
 else
@@ -1080,7 +1080,7 @@ while getopts ":rcmn:i:" o; do
 done
 shift $((OPTIND-1))
 
-check_lxd_containers_status () {
+check_lxd_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(lxc ls | grep -c "$1")
@@ -1228,11 +1228,11 @@ done
 
 common=$(lxc image ls | grep lxd-common)
 if [ "$common" == "" ]; then
-  check_lxd_containers_status STOP "$NODESNUM" "\U0001F600"
+  check_lxd_status STOP "$NODESNUM" "\U0001F600"
   lxc start --all
 fi
 
-check_lxd_containers_status eth0 "$NODESNUM" "\U0001F604"
+check_lxd_status eth0 "$NODESNUM" "\U0001F604"
 
 if [ "$multimaster" != "true" ]; then
   IPADDR=$(lxc ls | grep ctrlp | awk '{print $6}')
