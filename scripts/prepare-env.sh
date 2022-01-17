@@ -1473,6 +1473,13 @@ cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Containerd v$CONTAINERD_VER..."
+echo
+echo "*******************************************"
+echo "*                                         *"
+echo "* Downloading Containerd v$CONTAINERD_VER *"
+echo "*                                         *"
+echo "*******************************************"
+echo
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
 sha256sum --check $(basename "$CONTAINERD_URL").sha256sum
