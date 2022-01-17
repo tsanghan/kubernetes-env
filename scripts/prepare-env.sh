@@ -137,6 +137,14 @@ EOF
 cat <<'EOF' > ~/.local/bin/get-vagrant.sh
 #!/usr/bin/env bash
 
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
+
 echo
 echo "********************************"
 echo "*                              *"
@@ -1442,6 +1450,14 @@ MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
 
 USER=$(whoami)
 pushd $(pwd) || exit
