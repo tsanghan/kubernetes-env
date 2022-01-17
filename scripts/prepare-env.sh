@@ -1387,6 +1387,7 @@ kubectl get no -owide | grep --color NotReady
 echo
 if [ -z "$n" ]; then
   echo "No CNI specified!!. Doing nothing for CNI plugin!!"
+  echo "you might want to deploy Calico. 'kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml'"
   echo "Will exit here!!"
   exit
 else
@@ -1409,11 +1410,12 @@ echo
 kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
-kubectl create namespace metallb-system
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 k-apply.sh
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 if [ -z "$n" ]; then
   echo "No Ingress-Controller specified!!. Doing nothing for Ingress-Controller!!"
+  echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'
+  exit
 else
   if [ "$i" == "ingress-ngx" ]; then
     ingress-nginx.sh
