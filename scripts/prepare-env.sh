@@ -1416,7 +1416,7 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 USER=$(whoami)
 pushd $(pwd) || exit
 
-if [ -d "/home/$USER/Projects/kubernetes-env/.containerd"]; then
+if [ -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
   echo "/home/$USER/Projects/kubernetes-env/.containerd exists!! Not downloading!!"
   exit
 fi
