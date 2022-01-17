@@ -277,7 +277,10 @@ runcmd:
 MYEOF
 
 pull-containerd.sh
-ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
+if [ -h "./.containerd" ]; then
+  rm ./.containerd
+  ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
+fi
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
