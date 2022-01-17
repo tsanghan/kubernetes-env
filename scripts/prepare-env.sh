@@ -276,9 +276,7 @@ runcmd:
   - rm /etc/cni/net.d/10-containerd-net.conflist
 MYEOF
 
-if [ ! -d "~/Projects/kubernetes-env/.containerd" ]; then
-  pull-containerd.sh
-fi
+pull-containerd.sh
 ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
@@ -1415,10 +1413,16 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
+USER=$(whoami)
 pushd $(pwd) || exit
 
-mkdir -p ~/Projects/kubernetes-env/.containerd
-cd ~/Projects/kubernetes-env/.containerd || exit
+if [ -d "/home/$USER/Projects/kubernetes-env/.containerd"]; then
+  echo "/home/$USER/Projects/kubernetes-env/.containerd exists!! Not downloading!!"
+  exit
+fi
+
+mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
+cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
