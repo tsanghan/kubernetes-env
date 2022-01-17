@@ -236,4 +236,4 @@ CONTAINER ID   IMAGE                  COMMAND                  CREATED          
 ```
 5. `docker stop <NAME/CONTAINER ID> <NAME/CONTAINER ID> ...`
 ### Kubernetes on Virtualbox/Vagrant
-1. `vagrant destroy -f`
+1. `stop-vbx-cluster.sh`
