@@ -276,7 +276,9 @@ runcmd:
   - rm /etc/cni/net.d/10-containerd-net.conflist
 MYEOF
 
-pull-containerd.sh
+if [ ! -d ~/Projects/kubernetes-env/.containerd ]; then
+  pull-containerd.sh
+fi
 ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
