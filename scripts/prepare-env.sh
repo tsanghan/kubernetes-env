@@ -173,7 +173,7 @@ CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/late
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
 
-cat <<'EOF' > cloud.cgf
+cat <<'MYEOF' > cloud.cgf
 #cloud-config
 
 apt:
@@ -274,7 +274,7 @@ runcmd:
   - kubeadm config images pull
   - ctr oci spec | tee /etc/containerd/cri-base.json
   - rm /etc/cni/net.d/10-containerd-net.conflist
-EOF
+MYEOF
 
 pull-containerd.sh
 ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
