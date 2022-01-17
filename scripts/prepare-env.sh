@@ -167,10 +167,6 @@ if [ -f config ]; then
   rm config
 fi
 
-CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
-CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
 
 cat <<MYEOF > cloud.cfg
@@ -197,8 +193,8 @@ apt:
 packages:
  - apt-transport-https
  - jq
- - kubeadm
- - kubelet
+ - kubeadm=$KUB_VER-00
+ - kubelet=$KUB_VER-00
  - containerd
 
 package_update: true
@@ -265,22 +261,7 @@ runcmd:
   - apt-get -y purge nano
   - apt-get -y autoremove
   - systemctl enable mount-make-rshare
-  - tar -C / -zxvf /vagrant/.containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
-  - cp /vagrant/.containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
-  - mkdir -p /etc/containerd
-  - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
-  - systemctl enable containerd
-  - systemctl start containerd
-  - kubeadm config images pull
-  - ctr oci spec | tee /etc/containerd/cri-base.json
-  - rm /etc/cni/net.d/10-containerd-net.conflist
 MYEOF
-
-pull-containerd.sh
-if [ -h "./.containerd" ]; then
-  rm ./.containerd
-  ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
-fi
 
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
