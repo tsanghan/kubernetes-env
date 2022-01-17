@@ -167,8 +167,6 @@ if [ -f config ]; then
   rm config
 fi
 
-KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-
 cat <<MYEOF > cloud.cfg
 #cloud-config
 
@@ -193,8 +191,8 @@ apt:
 packages:
  - apt-transport-https
  - jq
- - kubeadm=$KUB_VER-00
- - kubelet=$KUB_VER-00
+ - kubeadm
+ - kubelet
  - containerd
 
 package_update: true
