@@ -266,6 +266,48 @@ runcmd:
  - systemctl restart containerd
 MYEOF
 
+cat <<MYEOF > Vagrantfile
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+    CtrlpCount = 1
+
+    (1..CtrlpCount).each do |i|
+    config.vm.define "vbx-ctrlp-1" do |ctrlp|
+            ctrlp.vm.box = "ubuntu/focal64"
+            ctrlp.vm.network :private_network, ip: "10.253.253.1#{i}"
+            ctrlp.vm.hostname = "vbx-ctrlp-1"
+            ctrlp.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
+            ctrlp.vm.provider :virtualbox do |v|
+                v.memory = 2048
+                v.cpus = 2
+            end
+        end
+    end
+
+    NodeCount = 2
+
+    (1..NodeCount).each do |i|
+        config.vm.define "vbx-wrker-#{i}" do |node|
+            node.vm.box = "ubuntu/focal64"
+            node.vm.network :private_network, ip: "10.253.253.1#{i+CtrlpCount}"
+            node.vm.hostname = "vbx-wrker-#{i}"
+            node.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "cloud.cfg"
+            node.vm.provider :virtualbox do |v|
+                v.memory = 1536
+                v.cpus = 2
+            end
+        end
+    end
+
+    config.vm.box_check_update = false
+    config.vbguest.auto_update = false
+    config.vm.boot_timeout = 600
+end
+MYEOF
+
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               --apiserver-advertise-address=10.253.253.11 \
@@ -280,6 +322,7 @@ cp config ~/.kube/config
 vagrant ssh vbx-wrker-1 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
+rm cloud.cfg Vagrantfile
 EOF
 
 # Install k-apply.sh
