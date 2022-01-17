@@ -167,6 +167,118 @@ if [ -f config ]; then
   rm config
 fi
 
+CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+
+cat <<'EOF' > cloud.cgf
+#cloud-config
+
+apt:
+  preserve_sources_list: false
+
+  primary:
+    - arches:
+      - amd64
+      uri: "http://mirror.0x.sg/ubuntu/"
+
+  security:
+    - arches:
+      - amd64
+      uri: "http://security.ubuntu.com/ubuntu"
+
+  sources:
+    kubernetes.list:
+      source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+      keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+
+packages:
+ - apt-transport-https
+ - jq
+ - kubeadm
+ - kubelet
+ - containerd
+
+package_update: true
+
+package_upgrade: true
+
+package_reboot_if_required: true
+
+mount_default_fields: [ None, None, "auto", "defaults,nobootwait", "0", "2" ]
+
+locale: en_SG.UTF-8
+locale_configfile: /etc/default/locale
+
+resize_rootfs: True
+
+final_message: "The system is finally up, after $UPTIME seconds"
+
+timezone: Asia/Singapore
+
+ntp:
+  enabled: true
+manual_cache_clean: True
+
+write_files:
+- content: |
+      overlay
+      br_netfilter
+      nf_conntrack
+  owner: root:root
+  path: /etc/modules-load.d/containerd.conf
+  permissions: '0644'
+
+- content: |
+      options nf_conntrack hashsize=32768
+  owner: root:root
+  path: /etc/modprobe.d/containerd.conf
+  permissions: '0644'
+
+- content: |
+      net.bridge.bridge-nf-call-iptables=1
+      net.ipv4.ip_forward=1
+      net.bridge.bridge-nf-call-ip6tables=1
+  path: /etc/sysctl.d/99-sysctl.conf
+  append: true
+
+- content: |
+      127.0.0.1 localhost
+      10.253.253.11 vbx-ctrlp-1
+      10.253.253.12 vbx-wrker-1
+      10.253.253.13 vbx-wrker-2
+
+      # The following lines are desirable for IPv6 capable hosts
+      ::1 ip6-localhost ip6-loopback
+      fe00::0 ip6-localnet
+      ff00::0 ip6-mcastprefix
+      ff02::1 ip6-allnodes
+      ff02::2 ip6-allrouters
+      ff02::3 ip6-allhosts
+  owner: root:root
+  path: /etc/hosts
+  permissions: '0644'
+
+runcmd:
+  - apt-get -y purge nano
+  - apt-get -y autoremove
+  - systemctl enable mount-make-rshare
+  - tar -C / -zxvf /vagrant/.containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+  - cp /vagrant/.containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
+  - mkdir -p /etc/containerd
+  - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
+  - systemctl enable containerd
+  - systemctl start containerd
+  - kubeadm config images pull
+  - ctr oci spec | tee /etc/containerd/cri-base.json
+  - rm /etc/cni/net.d/10-containerd-net.conflist
+EOF
+
+pull-containerd.sh
+ln -s ~/Projects/kubernetes-env/.containerd ./.containerd
+
 VAGRANT_EXPERIMENTAL="cloud_init,disks" vagrant up
 vagrant ssh vbx-ctrlp-1 -c "sudo kubeadm init \
                               --apiserver-advertise-address=10.253.253.11 \
@@ -180,7 +292,7 @@ vagrant ssh vbx-ctrlp-1 -c "sudo cp /etc/kubernetes/admin.conf /vagrant/config" 
 cp config ~/.kube/config
 vagrant ssh vbx-wrker-1 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
 vagrant ssh vbx-wrker-2 -c "sudo $(tail -2 kubeadm-init.out | tr -d '\\\n')" 2> /dev/null
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
 EOF
 
 # Install k-apply.sh
@@ -1301,11 +1413,10 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
-USER=$(whoami)
 pushd $(pwd) || exit
 
-mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
-cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
+mkdir -p ~/Projects/kubernetes-env/.containerd
+cd ~/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
