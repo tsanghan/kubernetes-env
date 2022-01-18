@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USER=localadmin
+USER=$(whoami)
 mkdir -p ~/.local/bin
 mkdir -p ~/.local/share/completions
 mkdir -p ~/.local/man/man{1,2,3,4,5,6,7,8,9}
