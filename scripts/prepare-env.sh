@@ -1545,10 +1545,10 @@ do
     echo "name : ${name}"
     echo "tag  : ${tag}"
     echo
-    curl -s http://${sites[$site]}/v2/$name/manifests/$tag?ns=$site | jq -r '.fsLayers[].blobSum' > ${name/\//-}-blobsums.txt
+    curl -s http://"${sites[$site]}"/v2/"$name"/manifests/"$tag"?ns="$site" | jq -r '.fsLayers[].blobSum' > "${name/\//-}"-blobsums.txt
     while read BLOBSUM; do
-      curl -s --location http://${sites[$site]}/v2/$name/blobs/${BLOBSUM} > /dev/null
-    done < ${name/\//-}-blobsums.txt
+      curl -s --location http://"${sites[$site]}"/v2/"$name"/blobs/"${BLOBSUM}" > /dev/null
+    done < "${name/\//-}"-blobsums.txt
 done
 rm *.txt
 
