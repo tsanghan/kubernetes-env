@@ -1497,7 +1497,7 @@ docker run -d -p 6000:5000 \
 
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/create-local-registries.sh
+cat <<'MYEOF' > ~/.local/bin/prime-local-registries.sh
 #!/usr/bin/env bash
 
 # Ref: https://stackoverflow.com/questions/1494178/how-to-define-hash-tables-in-bash
