@@ -1160,7 +1160,7 @@ usage() {
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not enabled yet."'
-  echo -e '\n\n'
+  echo -e '\n'
   exit 1
 }
 
