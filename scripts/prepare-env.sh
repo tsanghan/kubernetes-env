@@ -1351,9 +1351,14 @@ if [ "$common" == "" ]; then
     fi
     profile=k8s-cloud-init-local-registries
   elif [ "$remote_registries" == "true" ]; then
-    PROXY=$(grep Proxy /etc/apt/apt.conf.d/*)
+    PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
     if [ "$PROXY" == "" ]; then
       echo -e "No Remote Registries detected!!\nExciting!!"
+      exit
+    fi
+    count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$PROXY")
+    if [ "$count" -eq 0 ]; then
+      echo -e "lxc profile not setup for remote registries!!\nExciting!!"
       exit
     fi
     profile=k8s-cloud-init-local-registries
