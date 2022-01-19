@@ -1160,7 +1160,7 @@ usage() {
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller installation not enabled yet."'
-  echo -e '\n\n\n'
+  echo -e '\n\n'
   exit 1
 }
 
@@ -1192,6 +1192,11 @@ while getopts ":rcmn:i:" o; do
             ;;
     esac
 done
+# Ref: https://unix.stackexchange.com/questions/50563/how-can-i-detect-that-no-options-were-passed-with-getopts
+if [ $OPTIND -eq 1 ]; then
+  Usage
+  exit
+fi
 shift $((OPTIND-1))
 
 check_lxd_status () {
