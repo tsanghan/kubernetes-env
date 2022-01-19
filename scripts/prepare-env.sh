@@ -1514,7 +1514,7 @@ done
 
 for volume in "${volume_list[@]}";
 do
-  echo -n "Deleting volume $registry "
+  echo -n "Deleting volume $volume "
   docker volume rm $volume
 done
 
