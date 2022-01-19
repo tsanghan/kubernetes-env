@@ -1552,7 +1552,7 @@ do
       curl -s --location http://"${sites[$site]}"/v2/"$name"/blobs/"${BLOBSUM}" > /dev/null
     done < "${name/\//-}"-blobsums.txt
 done
-rm *.txt
+rm ./*.txt
 
 MYEOF
 
