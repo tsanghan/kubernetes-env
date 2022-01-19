@@ -1497,6 +1497,26 @@ docker run -d -p 6000:5000 \
 
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/delete-local-registries.sh
+#!/usr/bin/env bash
+
+registries_list=($(docker container ls | grep registry | awk '{print $15}'))
+
+volume_list=($(for registry in "${registries_list[@]}"; do docker inspect $registry | jq -M '.[].Mounts | .[].Name' | tr -d '"'; done))
+
+for registry in "${registries_list[@]}";
+do
+  docker stop $registry
+  docker rm $registry
+done
+
+for volume in "${volume_list[@]}";
+do
+  docker volume rm $volume
+done
+
+MYEOF
+
 cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
