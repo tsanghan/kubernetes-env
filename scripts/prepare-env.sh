@@ -1154,7 +1154,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $0 [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -r   "Not for public consumption. Use at your own risk!!"'
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
