@@ -1160,8 +1160,9 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-r|-l] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -r   "Not for public consumption. Use at your own risk!!"'
+  echo '       -l   "Not for public consumption. Use at your own risk!!"'
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
@@ -1170,9 +1171,12 @@ usage() {
   exit 1
 }
 
-while getopts ":rcmn:i:" o; do
+while getopts ":rlcmn:i:" o; do
     case "$o" in
         r)
+            remote_registries="true"
+            ;;
+        l)
             registries="true"
             ;;
         c)
@@ -1333,6 +1337,24 @@ if [ "$common" == "" ]; then
     if [ "$registeries" != "4" ]; then
       echo "Are local registries running? Run create-local-registries.sh first!!"
       exit 127
+    fi
+    iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
+    if [ "$iface" == "" ]; then
+      echo "Interface ens* no found!!"
+      exit 127
+    fi
+    IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+    count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$IP")
+    if [ "$count" -eq 0 ]; then
+      echo -e "lxc profile not setup for local registries!!\nExciting!!"
+      exit
+    fi
+    profile=k8s-cloud-init-local-registries
+  elif [ "$remote_registries" == "true" ]; then
+    PROXY=$(grep Proxy /etc/apt/apt.conf.d/*)
+    if [ "$PROXY" == "" ]; then
+      echo -e "No Remote Registries detected!!\nExciting!!"
+      exit
     fi
     profile=k8s-cloud-init-local-registries
   else
