@@ -1158,13 +1158,14 @@ usage() {
   echo '       -r   "Not for public consumption. Use at your own risk!!"'
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
+  echo '       -s   "Single control-plane mnode. Will exit before CNI installation if CNI not deinfed."
   echo '       -n   "Install CNI. Only 2 options"'
-  echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not enabled yet."'
+  echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo -e '\n'
   exit 1
 }
 
-while getopts ":rcmn:i:" o; do
+while getopts ":rcmsn:i:" o; do
     case "${o}" in
         r)
             registries="true"
@@ -1174,6 +1175,9 @@ while getopts ":rcmn:i:" o; do
             ;;
         m)
             multimaster="true"
+            ;;
+        s)
+            single="true"
             ;;
         n)
             n=${OPTARG}
