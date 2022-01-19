@@ -334,7 +334,9 @@ rm cloud.cfg Vagrantfile
 EOF
 
 # Stop VBX cluster
+#!/usr/bin/env bash
 cat <<'EOF' > ~/.local/bin/stop-vbx-cluster.sh
+#!/usr/bin/env bash
 cat <<MYEOF > Vagrantfile
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
