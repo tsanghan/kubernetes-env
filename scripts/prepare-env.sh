@@ -1384,6 +1384,7 @@ for c in "${WRKERNODES[@]}"; do
   # Ref: https://stackoverflow.com/questions/48854905/how-to-add-roles-to-nodes-in-kubernetes
   kubectl label nodes lxd-wrker-"$c" node-role.kubernetes.io/worker=
 done
+echo
 
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
