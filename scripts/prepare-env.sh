@@ -1497,6 +1497,63 @@ docker run -d -p 6000:5000 \
 
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/create-local-registries.sh
+#!/usr/bin/env bash
+
+# Ref: https://stackoverflow.com/questions/1494178/how-to-define-hash-tables-in-bash
+# Ref: https://stackoverflow.com/questions/12317483/array-of-arrays-in-bash
+# requires bash 4 or later; on macOS, /bin/bash is version 3.x,
+# so need to install bash 4 or 5 using e.g. https://brew.sh
+
+
+declare -A sites
+declare -a images
+
+sites=( ["docker.io"]="10.1.1.78:5000" ["k8s.gcr.io"]="10.1.1.78:5001" ["quay.io"]="10.1.1.78:5002" )
+
+images[0]='docker.io/calico/cni;v3.21.4'
+images[1]='docker.io/calico/kube-controllers;v3.21.4'
+images[2]='docker.io/calico/node;v3.21.4'
+images[3]='docker.io/calico/pod2daemon-flexvol;v3.21.4'
+images[4]='docker.io/library/nginx;1.21.4'
+images[5]='docker.io/library/nginx;1.21.5'
+images[6]='docker.io/rancher/local-path-provisioner;v0.0.21'
+images[7]='k8s.gcr.io/coredns/coredns;v1.8.6'
+images[8]='k8s.gcr.io/etcd;3.5.1-0'
+images[9]='k8s.gcr.io/kube-apiserver;v1.23.1'
+images[10]='k8s.gcr.io/kube-controller-manager;v1.23.1'
+images[11]='k8s.gcr.io/kube-proxy;v1.23.1'
+images[12]='k8s.gcr.io/kube-scheduler;v1.23.1'
+images[13]='k8s.gcr.io/pause;3.5'
+images[14]='k8s.gcr.io/pause;3.6'
+images[15]='k8s.gcr.io/metrics-server/metrics-server;v0.3.7'
+images[16]='quay.io/cilium/cilium;v1.11.0'
+images[17]='quay.io/cilium/operator-generic;v1.11.0'
+images[18]='quay.io/metallb/controller;v0.11.0'
+images[19]='quay.io/metallb/speaker;v0.11.0'
+images[20]='k8s.gcr.io/ingress-nginx/controller;v1.1.1'
+
+
+for image in "${images[@]}"
+do
+    IFS=";" read -r -a arr <<< "${image}"
+    site_name="${arr[0]}"
+    tag="${arr[1]}"
+    site=${site_name/\/*/}
+    name=${site_name/*.io\/}
+    echo "site : ${site}"
+    echo "name : ${name}"
+    echo "tag  : ${tag}"
+    echo
+    curl -s http://${sites[$site]}/v2/$name/manifests/$tag?ns=$site | jq -r '.fsLayers[].blobSum' > ${name/\//-}-blobsums.txt
+    while read BLOBSUM; do
+      curl -s --location http://${sites[$site]}/v2/$name/blobs/${BLOBSUM} > /dev/null
+    done < ${name/\//-}-blobsums.txt
+done
+rm *.txt
+
+MYEOF
+
 cat <<'MYEOF' > ~/.local/bin/delete-local-registries.sh
 #!/usr/bin/env bash
 
