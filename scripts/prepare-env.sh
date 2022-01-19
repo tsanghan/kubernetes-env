@@ -1581,15 +1581,15 @@ cat <<'MYEOF' > ~/.local/bin/pull-containerd.sh
 #!/usr/bin/env bash
 
 pushd () {
-    command pushd "$@" > /dev/null
+    command pushd "$@" > /dev/null || exit
 }
 
 popd () {
-    command popd "$@" > /dev/null
+    command popd "$@" > /dev/null || exit
 }
 
 USER=$(whoami)
-pushd $(pwd) || exit
+pushd "$(pwd)" || exit
 
 if [ -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
   echo "/home/$USER/Projects/kubernetes-env/.containerd exists!! Not downloading!!"
@@ -1611,7 +1611,7 @@ echo "**********************************"
 echo
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
-sha256sum --check $(basename "$CONTAINERD_URL").sha256sum
+sha256sum --check "$(basename $CONTAINERD_URL)".sha256sum
 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
