@@ -1359,6 +1359,7 @@ if [ "$multimaster" == "true" ]; then
 fi
 
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
+echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
   ln -s ~/.kube ~/.k
@@ -1366,7 +1367,6 @@ fi
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
 ln -sf ~/.k/config-lxd ~/.k/config
 sleep 2
-echo
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
@@ -1380,14 +1380,9 @@ fi
 for c in "${WRKERNODES[@]}"; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-  sleep 2
-  echo
-done
-
-# Ref: https://stackoverflow.com/questions/48854905/how-to-add-roles-to-nodes-in-kubernetes
-echo "Labeling Worker Nodes."
-for node in 1 2; do
-  kubectl label nodes lxd-wrker-"$node" node-role.kubernetes.io/worker=
+  sleep 1
+  # Ref: https://stackoverflow.com/questions/48854905/how-to-add-roles-to-nodes-in-kubernetes
+  kubectl label nodes lxd-wrker-"$c" node-role.kubernetes.io/worker=
 done
 
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
