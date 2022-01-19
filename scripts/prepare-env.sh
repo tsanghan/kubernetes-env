@@ -138,11 +138,11 @@ cat <<'EOF' > ~/.local/bin/get-vagrant.sh
 #!/usr/bin/env bash
 
 pushd () {
-    command pushd "$@" > /dev/null
+    command pushd "$@" > /dev/null || exit
 }
 
 popd () {
-    command popd "$@" > /dev/null
+    command popd > /dev/null || exit
 }
 
 echo
@@ -1548,7 +1548,7 @@ do
     echo "tag  : ${tag}"
     echo
     curl -s http://"${sites[$site]}"/v2/"$name"/manifests/"$tag"?ns="$site" | jq -r '.fsLayers[].blobSum' > "${name/\//-}"-blobsums.txt
-    while read BLOBSUM; do
+    while read -r BLOBSUM; do
       curl -s --location http://"${sites[$site]}"/v2/"$name"/blobs/"${BLOBSUM}" > /dev/null
     done < "${name/\//-}"-blobsums.txt
 done
@@ -1587,7 +1587,7 @@ pushd () {
 }
 
 popd () {
-    command popd "$@" > /dev/null || exit
+    command popd > /dev/null || exit
 }
 
 USER=$(whoami)
@@ -1613,7 +1613,7 @@ echo "**********************************"
 echo
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
-sha256sum --check "$(basename $CONTAINERD_URL)".sha256sum
+sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
