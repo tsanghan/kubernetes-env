@@ -1557,22 +1557,22 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/delete-local-registries.sh
 #!/usr/bin/env bash
 
-registries_list=($(docker container ls | grep registry | awk '{print $13}'))
+registries_list=("$(docker container ls | grep registry | awk '{print $13}')")
 
-volume_list=($(for registry in "${registries_list[@]}"; do docker inspect $registry | jq -M '.[].Mounts | .[].Name' | tr -d '"'; done))
+volume_list=("$(for registry in "${registries_list[@]}"; do docker inspect $registry | jq -M '.[].Mounts | .[].Name' | tr -d '"'; done)")
 
 for registry in "${registries_list[@]}";
 do
   echo -n "Stopping "
-  docker stop $registry
+  docker stop "$registry"
   echo -n "Deleting "
-  docker rm $registry
+  docker rm "$registry"
 done
 
 for volume in "${volume_list[@]}";
 do
   echo -n "Deleting volume "
-  docker volume rm $volume
+  docker volume rm "$volume"
 done
 
 MYEOF
