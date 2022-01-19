@@ -1158,15 +1158,14 @@ usage() {
   echo '       -r   "Not for public consumption. Use at your own risk!!"'
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
-  echo '       -s   "Single control-plane mnode. Will exit before CNI installation if CNI not deinfed."'
   echo '       -n   "Install CNI. Only 2 options"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo -e '\n'
   exit 1
 }
 
-while getopts ":rcmsn:i:" o; do
-    case "${o}" in
+while getopts ":rcmn:i:" o; do
+    case "$o" in
         r)
             registries="true"
             ;;
@@ -1176,17 +1175,14 @@ while getopts ":rcmsn:i:" o; do
         m)
             multimaster="true"
             ;;
-        s)
-            single="true"
-            ;;
         n)
-            n=${OPTARG}
+            n=$OPTARG
             if [ "$n" != "cilium" ] && [ "$n" != "calico" ]; then
                 usage
             fi
             ;;
         i)
-            i=${OPTARG}
+            i=$OPTARG
             if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
             fi
@@ -1197,10 +1193,6 @@ while getopts ":rcmsn:i:" o; do
     esac
 done
 # Ref: https://unix.stackexchange.com/questions/50563/how-can-i-detect-that-no-options-were-passed-with-getopts
-if [ $OPTIND -eq 1 ]; then
-  usage
-  exit
-fi
 shift $((OPTIND-1))
 
 check_lxd_status () {
