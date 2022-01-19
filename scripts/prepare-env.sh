@@ -1535,6 +1535,7 @@ images[17]='quay.io/cilium/operator-generic;v1.11.0'
 images[18]='quay.io/metallb/controller;v0.11.0'
 images[19]='quay.io/metallb/speaker;v0.11.0'
 images[20]='k8s.gcr.io/ingress-nginx/controller;v1.1.1'
+images[21]='k8s.gcr.io/ingress-nginx/kube-webhook-certgen;v1.1.1'
 
 
 for image in "${images[@]}"
