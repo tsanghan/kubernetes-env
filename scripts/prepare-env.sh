@@ -1158,7 +1158,7 @@ usage() {
   echo '       -r   "Not for public consumption. Use at your own risk!!"'
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
-  echo '       -s   "Single control-plane mnode. Will exit before CNI installation if CNI not deinfed."
+  echo '       -s   "Single control-plane mnode. Will exit before CNI installation if CNI not deinfed."'
   echo '       -n   "Install CNI. Only 2 options"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo -e '\n'
