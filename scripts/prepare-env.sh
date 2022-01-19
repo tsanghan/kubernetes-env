@@ -1153,7 +1153,16 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 
 USER=localadmin
 
-usage() { echo "Usage: $0 [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2; exit 1; }
+usage() {
+  echo "Usage: $0 [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo '       -r   "Not for public consumption. Use at your own risk!!"'
+  echo '       -c   "Create lxc/lxd containers only"'
+  echo '       -m   "Multi-control-plane mode"'
+  echo '       -n   "Install CNI. Only 2 options"'
+  echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller installation not enabled yet."'
+  exit 1
+
+}
 
 while getopts ":rcmn:i:" o; do
     case "${o}" in
@@ -1358,6 +1367,7 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
+echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
@@ -1383,8 +1393,8 @@ for c in "${WRKERNODES[@]}"; do
   sleep 1
   # Ref: https://stackoverflow.com/questions/48854905/how-to-add-roles-to-nodes-in-kubernetes
   kubectl label nodes lxd-wrker-"$c" node-role.kubernetes.io/worker=
+  echo
 done
-echo
 
 # Ref: https://askubuntu.com/questions/1042234/modifying-the-color-of-grep
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
