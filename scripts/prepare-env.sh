@@ -1504,6 +1504,7 @@ cat <<'MYEOF' > ~/.local/bin/prime-local-registries.sh
 
 # Ref: https://stackoverflow.com/questions/1494178/how-to-define-hash-tables-in-bash
 # Ref: https://stackoverflow.com/questions/12317483/array-of-arrays-in-bash
+# Ref: https://stackoverflow.com/questions/31251356/how-to-get-a-list-of-images-on-docker-registry-v2
 # requires bash 4 or later; on macOS, /bin/bash is version 3.x,
 # so need to install bash 4 or 5 using e.g. https://brew.sh
 
