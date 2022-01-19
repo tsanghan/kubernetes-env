@@ -1151,7 +1151,7 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
-USER=localadmin
+USER=$(whoami)
 
 usage() {
   echo "Usage: $0 [-r] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
