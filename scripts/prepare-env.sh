@@ -1357,7 +1357,7 @@ if [ "$common" == "" ]; then
       exit
     fi
     count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$PROXY")
-    if [ "$count" -eq 0 ]; then
+    if [ "$count" -eq 1 ]; then
       echo -e "lxc profile not setup for remote registries!!\nExciting!!"
       exit
     fi
