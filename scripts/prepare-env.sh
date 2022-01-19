@@ -484,7 +484,12 @@ if [ "$iface" == "" ]; then
   echo "Interface ens* no found!!"
   exit 127
 fi
-IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+if [ "$PROXY" != "" ]; then
+  IP="$PROXY"
+else
+  IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+fi
 
 while getopts "s" o; do
     case "${o}" in
