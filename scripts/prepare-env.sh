@@ -1506,15 +1506,15 @@ volume_list=($(for registry in "${registries_list[@]}"; do docker inspect $regis
 
 for registry in "${registries_list[@]}";
 do
-  echo -n "Stopping $registry "
+  echo -n "Stopping "
   docker stop $registry
-  echo -n "Deleting $registry "
+  echo -n "Deleting "
   docker rm $registry
 done
 
 for volume in "${volume_list[@]}";
 do
-  echo -n "Deleting volume $volume "
+  echo -n "Deleting volume "
   docker volume rm $volume
 done
 
