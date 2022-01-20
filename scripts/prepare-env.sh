@@ -1100,13 +1100,13 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmhn:i:" o; do
+while getopts ":rlcmn:i:" o; do
     case "$o" in
         r)
             remote_registries="true"
             ;;
         l)
-            registries="true"
+            local_registries="true"
             ;;
         c)
             containersonly="true"
@@ -1256,7 +1256,7 @@ fi
 
 image=focal-cloud
 
-if [ "$registries" == "true" ]; then
+if [ "$local_registries" == "true" ]; then
   if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
     echo "Run pull-containerd.sh first!!"
     exit 63
@@ -1279,6 +1279,10 @@ if [ "$registries" == "true" ]; then
   fi
   profile=k8s-cloud-init-local-registries
 elif [ "$remote_registries" == "true" ]; then
+  if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
+    echo "Run pull-containerd.sh first!!"
+    exit 63
+  fi
   PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
   if [ "$PROXY" == "" ]; then
     echo -e "No Remote Registries detected!!\nExciting!!"
@@ -1356,9 +1360,9 @@ kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
 if [ -z "$n" ]; then
-  echo "No CNI specified!!. Doing nothing for CNI plugin!!"
-  echo "you might want to deploy Calico. 'kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml'"
-  echo "Will exit here!!"
+  echo "No CNI specified!! Doing nothing for CNI plugin!!"
+  echo "You might want to deploy Calico. 'kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml'"
+  echo -e "Will exit here!!\ncreate-cluster.sh -h for help!!"
   exit
 else
   if [ "$n" == "cilium" ]; then
