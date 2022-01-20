@@ -5,7 +5,14 @@ mkdir -p ~/.local/bin
 mkdir -p ~/.local/share/completions
 mkdir -p ~/.local/man/man{1,2,3,4,5,6,7,8,9}
 mkdir -p ~/.config/k9s
-mv /tmp/.disk ~/.config
+if [ ! -f ~/.config/.disk ]; then
+  if [ -f /tmp/.disk ]; then
+    mv /tmp/.disk ~/.config
+  else
+    echo "Did not detech Disk Device name!!"
+    echo "LXD profile may be incorrect configured. Proceed at your own risk!!"
+  fi
+fi
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
