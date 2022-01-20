@@ -511,7 +511,7 @@ while getopts "s" o; do
 done
 shift $((OPTIND-1))
 
-for profile in lb k8s k8s-cloud-init k8s-cloud-init-local-registries;
+for profile in lb k8s-cloud-init k8s-cloud-init-local-registries;
 do
   exists=$(lxc profile ls | grep "$profile")
   if [ "$exists" != "" ]; then
