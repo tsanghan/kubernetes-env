@@ -1089,14 +1089,12 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-r|-l] [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
-  echo '       -r   "Not for public consumption. Use at your own risk!!"'
-  echo '       -l   "Not for public consumption. Use at your own risk!!"'
+  echo "Usage: $(basename $0) [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
-  echo -e '\n'
+  echo
   exit 1
 }
 
