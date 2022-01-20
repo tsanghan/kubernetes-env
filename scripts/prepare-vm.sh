@@ -69,6 +69,9 @@ echo \
 apt-get update
 apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl httpie
 
+fdisk -l | grep Linux | awk '{print $1}' > /tmp/.disk
+chown "$SUDO_USER"."$SUDO_USER" /tmp/.disk
+
 usermod -aG lxd,docker "$SUDO_USER"
 
 sudo -u "$SUDO_USER" ./scripts/prepare-env.sh

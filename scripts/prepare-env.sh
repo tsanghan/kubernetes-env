@@ -5,6 +5,7 @@ mkdir -p ~/.local/bin
 mkdir -p ~/.local/share/completions
 mkdir -p ~/.local/man/man{1,2,3,4,5,6,7,8,9}
 mkdir -p ~/.config/k9s
+mv /tmp/.disk ~/.config
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
@@ -544,55 +545,6 @@ profiles:
 cluster: null
 EOF
 
-k8s=$(lxc profile ls | grep k8s)
-if [ "$k8s"  == "" ]; then
-  lxc profile create k8s
-
-  cat <<EOF | lxc profile edit k8s
-  config:
-    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-    raw.lxc: |-
-      lxc.apparmor.profile=unconfined
-      lxc.cap.drop=
-      lxc.cgroup.devices.allow=a
-      lxc.mount.auto=proc:rw sys:rw cgroup:rw
-      lxc.seccomp.profile=
-    security.nesting: "true"
-    security.privileged: "true"
-  description: ""
-  devices:
-    _dev_sda1:
-      path: /dev/sda1
-      source: /dev/sda1
-      type: unix-block
-    aadisable:
-      path: /sys/module/nf_conntrack/parameters/hashsize
-      source: /dev/null
-      type: disk
-    aadisable1:
-      path: /sys/module/apparmor/parameters/enabled
-      source: /dev/null
-      type: disk
-    boot_dir:
-      path: /boot
-      source: /boot
-      type: disk
-    dev_kmsg:
-      path: /dev/kmsg
-      source: /dev/kmsg
-      type: unix-char
-    eth0:
-      name: eth0
-      nictype: bridged
-      parent: lxdbr0
-      type: nic
-    root:
-      path: /
-      pool: default
-      type: disk
-EOF
-fi
-
 k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
 if [ "$k8s_cloud_init"  == "" ]; then
   lxc profile create k8s-cloud-init
@@ -714,8 +666,7 @@ EOF
       type: disk
 EOF
 
-  lxc profile edit k8s-cloud-init < /tmp/lxd-profile-k8s-cloud-init
-  # cat /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
+  sed "s#/dev/sda1#$(cat ~/.config/.disk)#" < /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
   rm /tmp/lxd-profile-k8s-cloud-init
 fi
 
@@ -880,8 +831,7 @@ EOF
       type: disk
 EOF
 
-  lxc profile edit k8s-cloud-init-local-registries < /tmp/lxd-profile-k8s-cloud-init-local-registries
-  # cat /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
+  sed "s#/dev/sda1#$(cat ~/.config/.disk)#" < /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
   rm /tmp/lxd-profile-k8s-cloud-init-local-registries
 fi
 
@@ -1024,34 +974,6 @@ if [ "$image" == "" ]; then
   fi
 fi
 MYEOF
-
-cat <<'EOF' > ~/.local/bin/create-common.sh
-#!/usr/bin/env bash
-
-check_lxd_status () {
-  echo -n "Wait"
-  while true; do
-    STATUS=$(lxc ls | grep -c "$1")
-    if [ "$STATUS" = "$2" ]; then
-      break
-    fi
-    echo -n "$3"
-    sleep 2
-  done
-  sleep 2
-  echo
-}
-
-common=$(lxc image ls | grep lxd-common)
-if [ "$common" == "" ]; then
-  lxc launch -p k8s-cloud-init focal-cloud lxd-common
-  check_lxd_status STOP 1 .
-  lxc publish lxd-common --alias lxd-common
-  lxc delete lxd-common
-else
-  echo "lxd-common already created."
-fi
-EOF
 
 cat <<'EOF' > ~/.bash_complete
 # For kubernetes-env
@@ -1325,60 +1247,52 @@ else
   WRKERNODES=(1 2)
 fi
 
-common=$(lxc image ls | grep lxd-common)
-if [ "$common" == "" ]; then
-  image=focal-cloud
-  if [ "$registries" == "true" ]; then
-    if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
-      echo "Run pull-containerd.sh first!!"
-      exit 63
-    fi
-    registeries=$(docker container ls | grep -c registry)
-    if [ "$registeries" != "4" ]; then
-      echo "Are local registries running? Run create-local-registries.sh first!!"
-      exit 127
-    fi
-    iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
-    if [ "$iface" == "" ]; then
-      echo "Interface ens* no found!!"
-      exit 127
-    fi
-    IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
-    count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$IP")
-    if [ "$count" -eq 0 ]; then
-      echo -e "lxc profile not setup for local registries!!\nExciting!!"
-      exit
-    fi
-    profile=k8s-cloud-init-local-registries
-  elif [ "$remote_registries" == "true" ]; then
-    PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-    if [ "$PROXY" == "" ]; then
-      echo -e "No Remote Registries detected!!\nExciting!!"
-      exit
-    fi
-    count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$PROXY")
-    if [ "$count" -eq 1 ]; then
-      echo -e "lxc profile not setup for remote registries!!\nExciting!!"
-      exit
-    fi
-    profile=k8s-cloud-init-local-registries
-  else
-    profile=k8s-cloud-init
+image=focal-cloud
+
+if [ "$registries" == "true" ]; then
+  if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
+    echo "Run pull-containerd.sh first!!"
+    exit 63
   fi
+  registeries=$(docker container ls | grep -c registry)
+  if [ "$registeries" != "4" ]; then
+    echo "Are local registries running? Run create-local-registries.sh first!!"
+    exit 127
+  fi
+  iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
+  if [ "$iface" == "" ]; then
+    echo "Interface ens* no found!!"
+    exit 127
+  fi
+  IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
+  count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$IP")
+  if [ "$count" -eq 0 ]; then
+    echo -e "lxc profile not setup for local registries!!\nExciting!!"
+    exit
+  fi
+  profile=k8s-cloud-init-local-registries
+elif [ "$remote_registries" == "true" ]; then
+  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  if [ "$PROXY" == "" ]; then
+    echo -e "No Remote Registries detected!!\nExciting!!"
+    exit
+  fi
+  count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$PROXY")
+  if [ "$count" -eq 1 ]; then
+    echo -e "lxc profile not setup for remote registries!!\nExciting!!"
+    exit
+  fi
+  profile=k8s-cloud-init-local-registries
 else
-  image=lxd-common
-  profile=k8s
+  profile=k8s-cloud-init
 fi
 
 for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
 done
 
-common=$(lxc image ls | grep lxd-common)
-if [ "$common" == "" ]; then
-  check_lxd_status STOP "$NODESNUM" "\U0001F600"
-  lxc start --all
-fi
+check_lxd_status STOP "$NODESNUM" "\U0001F600"
+lxc start --all
 
 check_lxd_status eth0 "$NODESNUM" "\U0001F604"
 
@@ -1746,10 +1660,14 @@ fi
 
 chmod +x ~/.local/bin/*
 
-echo -e "\n"
-echo "*************************************************************************************"
-echo "*                                                                                   *"
-echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
-echo "*                                                                                   *"
-echo "*************************************************************************************"
-echo -e "\n\n"
+lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
+dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
+if [ "$lxdg" == "" ] || [ "$dockerg" == "" ]; then
+  echo -e "\n"
+  echo "*************************************************************************************"
+  echo "*                                                                                   *"
+  echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
+  echo "*                                                                                   *"
+  echo "*************************************************************************************"
+  echo -e "\n\n"
+fi
