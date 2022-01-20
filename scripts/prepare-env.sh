@@ -1093,7 +1093,7 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmn:i:" o; do
+while getopts ":rlcmhn:i:" o; do
     case "$o" in
         r)
             remote_registries="true"
