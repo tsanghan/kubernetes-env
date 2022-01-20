@@ -1386,8 +1386,8 @@ kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 k-apply.sh
 sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
-if [ -z "$n" ]; then
-  echo "No Ingress-Controller specified!!. Doing nothing for Ingress-Controller!!"
+if [ -z "$i" ]; then
+  echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
   echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'"
   exit
 else
@@ -1396,9 +1396,6 @@ else
   elif [ "$i" == "nic-ap" ]; then
     # nginx-ap-ingress.sh -p
     echo "Not implemented yet!!"
-  else
-    echo "Error Ingress-Controller flag exists but != <ingress-ngx|nic-ap>!!"
-    exit
   fi
 fi
 MYEOF
