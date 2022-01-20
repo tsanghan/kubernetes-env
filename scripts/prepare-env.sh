@@ -479,9 +479,9 @@ CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
+iface=$(ip link | egrep "ens|eth" | awk '{print $2}' | tr -d ':')
 if [ "$iface" == "" ]; then
-  echo "Interface ens* no found!!"
+  echo "Interface ens* or eth* not found!!"
   exit 127
 fi
 PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
