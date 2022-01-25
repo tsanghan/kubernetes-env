@@ -972,10 +972,10 @@ if [ "$image" == "" ]; then
     lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
     rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
   else
-    VERSION=$(curl -sSL https://uk.lxd.images.canonical.com/streams/v1/images.json | \
+    VERSION=$(curl -sSL https://us.lxd.images.canonical.com/streams/v1/images.json | \
               jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
-    curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
-    curl -SLO https://uk.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
+    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
+    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
     lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
     rm lxd.tar.xz rootfs.squashfs
   fi
@@ -1415,8 +1415,27 @@ shift $((OPTIND-1))
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
-  rm ~/.k/{config,config-lxd} 2> /dev/null
-  sudo sed -i '/lxd/d' /etc/hosts
+
+  KUBECONFIG=~/.kube/config
+  context=kubernetes-admin@kubernetes
+  if [ ! -f $KUBECONFIG ]; then
+    printf "%s" "$KUBECONFIG file not found!!"
+    exit
+  fi
+
+  user=$(yq e ".contexts[] | select(.name == \"$context\") | .context.user" - < $KUBECONFIG)
+  # echo "User to delete: $user"
+  yq e "del(.users[] | select(.name == \"$user\"))" - < $KUBECONFIG > .tmp.config-user
+
+  cluster=$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG)
+  # echo "Cluster to delete: $cluster"
+  yq e "del(.clusters[] | select(.name == \"$cluster\"))" - < .tmp.config-user > .tmp.config-user-cluster
+
+  # echo "Context to delete: $context"
+  yq e "del(.contexts[] | select(.name == \"$context\"))" - < .tmp.config-user-cluster > .tmp.config-user-cluster-context
+  yq e ".current-context = \"\"" - < .tmp.config-user-cluster-context > .tmp.config-user-cluster-context-current
+  mv .tmp.config-user-cluster-context-current ~/.kube/config
+  rm .tmp*
 fi
 MYEOF
 
