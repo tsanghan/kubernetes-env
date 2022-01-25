@@ -1140,7 +1140,7 @@ check_lxd_status () {
       break
     fi
     echo -en "$3"
-    sleep 3
+    sleep 2
   done
   sleep 2
   echo
@@ -1154,7 +1154,7 @@ check_lb_status () {
       break
     fi
     echo -en "\U0001F601"
-    sleep 3
+    sleep 2
   done
   sleep 2
   echo
@@ -1168,9 +1168,9 @@ check_cilium_status () {
       break
     fi
     echo -en "$1"
-    sleep 1
+    sleep 2
   done
-  sleep 1
+  sleep 2
   echo
 }
 
@@ -1182,9 +1182,9 @@ check_calico_status () {
       break
     fi
     echo -en "$1"
-    sleep 1
+    sleep 2
   done
-  sleep 1
+  sleep 2
   echo
 }
 
@@ -1215,17 +1215,17 @@ check_containerd_status () {
         break
       fi
       echo -en "$1"
-      sleep 1
+      sleep 2
     else
       STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
       if [[ "$STATUS" =~ .*running.* ]]; then
         break
       fi
       echo -e "$1"
-      sleep 1
+      sleep 2
     fi
   done
-  sleep 1
+  sleep 2
   echo
 }
 
@@ -1342,7 +1342,7 @@ if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
     # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
     lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
-    sleep 1
+    sleep 2
     echo
   done
 fi
@@ -1350,7 +1350,7 @@ fi
 for c in "${WRKERNODES[@]}"; do
   # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
   lxc exec lxd-wrker-"$c" -- $(tail -2 kubeadm-init.out | tr -d '\\\n')
-  sleep 1
+  sleep 2
   # Ref: https://stackoverflow.com/questions/48854905/how-to-add-roles-to-nodes-in-kubernetes
   kubectl label nodes lxd-wrker-"$c" node-role.kubernetes.io/worker=
   echo
