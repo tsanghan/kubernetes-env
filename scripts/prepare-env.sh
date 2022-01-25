@@ -1433,8 +1433,14 @@ if [ "$delete"  == "true" ]; then
 
   # echo "Context to delete: $context"
   yq e "del(.contexts[] | select(.name == \"$context\"))" - < .tmp.config-user-cluster > .tmp.config-user-cluster-context
-  yq e ".current-context = \"\"" - < .tmp.config-user-cluster-context > .tmp.config-user-cluster-context-current
-  mv .tmp.config-user-cluster-context-current ~/.kube/config
+  current_context=$(yq e '.current-context' - < $KUBECONFIG)
+  if [ "$current_context" == "$context" ]; then
+    yq e ".current-context = \"\"" - < .tmp.config-user-cluster-context > .tmp.config-user-cluster-context-current
+    mv .tmp.config-user-cluster-context-current ~/.kube/config
+    rm .tmp*
+    exit
+  fi
+  mv .tmp.config-user-cluster-context ~/.kube/config
   rm .tmp*
 fi
 MYEOF
