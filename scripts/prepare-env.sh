@@ -1140,10 +1140,10 @@ check_lxd_status () {
       break
     fi
     echo -en "$3"
-    sleep 1
+    sleep 2
   done
-  sleep 1
-  echo
+  # sleep 1
+  # echo
 }
 
 check_lb_status () {
@@ -1156,8 +1156,8 @@ check_lb_status () {
     echo -en "\U0001F601"
     sleep 1
   done
-  sleep 1
-  echo
+  # sleep 1
+  # echo
 }
 
 check_cilium_status () {
@@ -1170,8 +1170,8 @@ check_cilium_status () {
     echo -en "$1"
     sleep 1
   done
-  sleep 2
-  echo
+  # sleep 2
+  # echo
 }
 
 check_calico_status () {
@@ -1184,8 +1184,8 @@ check_calico_status () {
     echo -en "$1"
     sleep 1
   done
-  sleep 2
-  echo
+  # sleep 2
+  # echo
 }
 
 update_local_etc_hosts () {
@@ -1225,8 +1225,8 @@ check_containerd_status () {
       sleep 1
     fi
   done
-  sleep 1
-  echo
+  # sleep 1
+  # echo
 }
 
 check_if_cluster_already_exists () {
@@ -1324,7 +1324,6 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-echo
 lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
