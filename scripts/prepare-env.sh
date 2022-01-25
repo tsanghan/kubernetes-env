@@ -1332,8 +1332,13 @@ if [ ! -d ~/.kube ]; then
   ln -s ~/.kube ~/.k
 fi
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
-ln -sf ~/.k/config-lxd ~/.k/config
-sleep 2
+if [ -f ~/.kube/config ]; then
+  KUBECONFIG=~/.kube/config:~/.k/config-lxd kubectl config view --flatten > /tmp/config
+  mv /tmp/config ~/.kube/config
+else
+  cp ~/.k/config-lxd ~/.k/config
+fi
+# sleep 2
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
