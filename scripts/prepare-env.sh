@@ -430,7 +430,7 @@ if [ "$iface" == "" ]; then
 fi
 IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
 while getopts "p" o; do
-    case "${o}" in
+    case "$o" in
         p)
             private="true"
             ;;
@@ -501,7 +501,7 @@ else
 fi
 
 while getopts "s" o; do
-    case "${o}" in
+    case "$o" in
         s)
             slim="true"
             ;;
@@ -1405,7 +1405,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-cluster.sh
 #!/usr/bin/env bash
 
 while getopts "d" o; do
-    case "${o}" in
+    case "$o" in
         d)
             delete="true"
             ;;
