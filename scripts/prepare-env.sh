@@ -1140,9 +1140,9 @@ check_lxd_status () {
       break
     fi
     echo -en "$3"
-    sleep 2
+    sleep 1
   done
-  sleep 2
+  sleep 1
   echo
 }
 
@@ -1154,9 +1154,9 @@ check_lb_status () {
       break
     fi
     echo -en "\U0001F601"
-    sleep 2
+    sleep 1
   done
-  sleep 2
+  sleep 1
   echo
 }
 
@@ -1168,9 +1168,9 @@ check_cilium_status () {
       break
     fi
     echo -en "$1"
-    sleep 2
+    sleep 1
   done
-  sleep 4
+  sleep 2
   echo
 }
 
@@ -1182,9 +1182,9 @@ check_calico_status () {
       break
     fi
     echo -en "$1"
-    sleep 2
+    sleep 1
   done
-  sleep 4
+  sleep 2
   echo
 }
 
@@ -1215,17 +1215,17 @@ check_containerd_status () {
         break
       fi
       echo -en "$1"
-      sleep 2
+      sleep 1
     else
       STATUS=$(lxc exec lxd-ctrlp-1 -- systemctl status containerd | grep Active | grep running)
       if [[ "$STATUS" =~ .*running.* ]]; then
         break
       fi
       echo -e "$1"
-      sleep 2
+      sleep 1
     fi
   done
-  sleep 2
+  sleep 1
   echo
 }
 
@@ -1338,13 +1338,12 @@ if [ -f ~/.kube/config ]; then
 else
   cp ~/.k/config-lxd ~/.k/config
 fi
-# sleep 2
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
     # shellcheck disable=SC2046 # code is irrelevant because lxc exec will not run commands in containers with quotes
     lxc exec lxd-ctrlp-"$c" -- $(tail -12 kubeadm-init.out | head -3 | tr -d '\\\n')
-    sleep 2
+    sleep 1
     echo
   done
 fi
