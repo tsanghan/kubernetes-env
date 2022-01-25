@@ -1537,18 +1537,18 @@ images[21]='k8s.gcr.io/ingress-nginx/kube-webhook-certgen;v1.1.1'
 
 for image in "${images[@]}"
 do
-    IFS=";" read -r -a arr <<< "${image}"
+    IFS=";" read -r -a arr <<< "$image"
     site_name="${arr[0]}"
     tag="${arr[1]}"
     site=${site_name/\/*/}
     name=${site_name/*.io\/}
-    echo "site : ${site}"
-    echo "name : ${name}"
-    echo "tag  : ${tag}"
+    echo "site : $site"
+    echo "name : $name"
+    echo "tag  : $tag"
     echo
     curl -s http://"${sites[$site]}"/v2/"$name"/manifests/"$tag"?ns="$site" | jq -r '.fsLayers[].blobSum' > "${name/\//-}"-blobsums.txt
     while read -r BLOBSUM; do
-      curl -s --location http://"${sites[$site]}"/v2/"$name"/blobs/"${BLOBSUM}" > /dev/null
+      curl -s --location http://"${sites[$site]}"/v2/"$name"/blobs/"$BLOBSUM" > /dev/null
     done < "${name/\//-}"-blobsums.txt
 done
 rm ./*.txt
