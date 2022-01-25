@@ -1693,7 +1693,7 @@ if [ ! -f ~/.local/bin/kubecolor ]; then
   curl -sSL "$KUBECOLOR" | tar -C ~/.local/bin -zxvf - kubecolor
 fi
 
-chmod +x ~/.local/bin/*
+chmod 0755 ~/.local/bin/*
 
 lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
 dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
