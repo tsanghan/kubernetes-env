@@ -1420,6 +1420,7 @@ shift $((OPTIND-1))
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
+  sudo sed -i '/lxd/d' /etc/hosts
 
   KUBECONFIG=~/.kube/config
   context=kubernetes-admin@kubernetes
