@@ -1375,7 +1375,7 @@ else
   elif [ "$n" == "calico" ]; then
     curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
     check_cni_status "\U0001F680"
-  elif [ "" == "weave" ]; then
+  elif [ "$n" == "weave" ]; then
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
     check_cni_status "\U0001F680"
   else
