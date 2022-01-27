@@ -1089,7 +1089,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-n <cilium|calico> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
@@ -1114,7 +1114,7 @@ while getopts ":rlcmn:i:" o; do
             ;;
         n)
             n=$OPTARG
-            if [ "$n" != "cilium" ] && [ "$n" != "calico" ]; then
+            if [ "$n" != "cilium" ] && [ "$n" != "calico" ] && [ "$n" != "weave" ]; then
                 usage
             fi
             ;;
@@ -1174,7 +1174,7 @@ check_cilium_status () {
   echo
 }
 
-check_calico_status () {
+check_cni_status () {
   echo -n "Wait"
   while true; do
     STATUS=$(kubectl get no | grep -c NotReady)
@@ -1374,9 +1374,12 @@ else
     check_cilium_status "\U0001F680"
   elif [ "$n" == "calico" ]; then
     curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
-    check_calico_status "\U0001F680"
+    check_cni_status "\U0001F680"
+  elif [ "$n" == "weave" ]; then
+    kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    check_cni_status "\U0001F680"
   else
-    echo "Error CNI flag exists but != <cilium|calico>!!"
+    echo "Error!! CNI flag exists but != <cilium|calico|weave>!!"
     exit
   fi
 fi
