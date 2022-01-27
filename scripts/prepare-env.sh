@@ -1379,7 +1379,7 @@ else
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
     check_cni_status "\U0001F680"
   else
-    echo "Error CNI flag exists but != <cilium|calico|weave>!!"
+    echo "Error!! CNI flag exists but != <cilium|calico|weave>!!"
     exit
   fi
 fi
