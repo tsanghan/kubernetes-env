@@ -878,6 +878,7 @@ EOF
         type: disk
 EOF
   fi
+  pull-containerd.sh
 fi
 
 YY=20
