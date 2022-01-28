@@ -1500,7 +1500,7 @@ def main():
     args = parser.parse_args()
     delete, force = args.delete, args.force
     stop_cluster(delete=delete, force=force)
-    if delete;
+    if delete:
       delete_context()
 
 
