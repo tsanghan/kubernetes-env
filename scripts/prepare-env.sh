@@ -1353,10 +1353,11 @@ do
   fi
 done
 
+KUBECONFIG=~/.kube/config
 context=kubernetes-admin@kubernetes
 while true;
 do
-  cluster=$(yq e ".clusters[] | select(.name == \"$cluster\")")
+  cluster=$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG)
   if [ "$cluster" != "" ];
     break
   fi
