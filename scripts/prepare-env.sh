@@ -1454,7 +1454,7 @@ def _load_kubeconfig(file=Path.home()/Path(".kube/config")):
     return safe_load(Path(file).read_text())
 
 def _delete_context(selected_context="kubernetes-admin@kubernetes"):
-    kubeconfig = load_kubeconfig("config")
+    kubeconfig = _load_kubeconfig("config")
     selected_user = ""
     selected_cluster = ""
     for index, context in enumerate(kubeconfig.get("contexts")):
