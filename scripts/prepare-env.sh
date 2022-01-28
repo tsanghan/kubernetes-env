@@ -1451,7 +1451,10 @@ def _get_client():
     return Client()
 
 def _load_kubeconfig(file=Path.home()/Path(".kube/config")):
-    return safe_load(Path(file).read_text())
+    try:
+      return safe_load(Path(file).read_text())
+    except FileNotFoundError:
+      print(f"Kubeconfig File {file.as_posix()} not found!!")
 
 def _delete_context(selected_context="kubernetes-admin@kubernetes"):
     kubeconfig = _load_kubeconfig()
