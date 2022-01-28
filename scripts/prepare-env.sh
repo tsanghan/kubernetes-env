@@ -1447,7 +1447,7 @@ from yaml import safe_load, dump
 urllib3.disable_warnings()
 
 
-def get_client():
+def _get_client():
     return Client()
 
 def _load_kubeconfig(file=Path.home()/Path(".kube/config")):
@@ -1480,7 +1480,8 @@ def delete_context():
     kubeconfig_file.unlink(missing_ok=True)
     kubeconfig_file.write_text(dump(kubeconfig))
 
-def stop_cluster(client, delete=False, force=False):
+def stop_cluster(delete=False, force=False):
+    client = _get_client()
     for instance in client.containers.all():
         if instance.name.startswith('lxd-'):
             instance.stop(force=force)
@@ -1498,7 +1499,7 @@ def main():
     parser.add_argument("-f", "--force", help="Delete Cluster", action="store_true")
     args = parser.parse_args()
     delete, force = args.delete, args.force
-    stop_cluster(get_client(), delete=delete, force=force)
+    stop_cluster(delete=delete, force=force)
     delete_context()
 
 
