@@ -1411,6 +1411,71 @@ popd || exit
 
 MYEOF
 
+cat <<EOF > ~/.local/bin/create-cluster.py
+#!/usr/bin/env python3
+from pylxd import Client
+from pathlib import Path
+
+
+client = Client()
+
+image_data = Path('focal-server-cloudimg-amd64.squashfs').open(mode='rb').read()
+meta_data = Path('focal-server-cloudimg-amd64-lxd.tar.xz').open(mode='rb').read()
+
+image = client.images.create(image_data, meta_data, public=True, wait=True)
+print(image.fingerprint)
+image.add_alias('my-alias', '')
+
+EOF
+
+cat <<EOF > ~/.local/bin/stop-cluster.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jan 23 15:21:37 2022
+
+@author: tsanghan
+"""
+import argparse
+from pylxd import Client
+from time import sleep
+import urllib3
+
+# Ref: https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
+urllib3.disable_warnings()
+
+
+def get_client():
+    return Client()
+
+def stop_cluster(client, delete=False, force=False):
+    for instance in client.containers.all():
+        if instance.name.startswith('lxd-'):
+            instance.stop(force=force)
+            if delete:
+                while True:
+                    now = instance.state()
+                    if now.status.startswith('Stopped'):
+                        instance.delete()
+                        break
+                    sleep(2)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--delete", help="Stop Cluster", action="store_true")
+    parser.add_argument("-f", "--force", help="Delete Cluster", action="store_true")
+    args = parser.parse_args()
+    delete, force = args.delete, args.force
+    stop_cluster(get_client(),
+                 delete=delete,
+                 force=force)
+
+
+if __name__ == "__main__":
+    main()
+
+EOF
+
 # Install kubectl
 if [ ! -f ~/.local/bin/kubectl ]; then
   KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
