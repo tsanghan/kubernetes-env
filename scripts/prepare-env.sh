@@ -1475,7 +1475,7 @@ def _delete_context(selected_context="kubernetes-admin@kubernetes"):
     return kubeconfig
 
 def delete_context():
-    context = _delete_context()
+    kubeconfig = _delete_context()
     kubeconfig_file = Path.home()/Path(".kube/config")
     kubeconfig_file.unlink(missing_ok=True)
     kubeconfig_file.write_text(dump(kubeconfig))
