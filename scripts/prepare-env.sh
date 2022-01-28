@@ -405,7 +405,6 @@ echo
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
-# curl -sSL https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml | sed '/v1beta1/s/v1beta1/v1/' | k apply -f -
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 EOF
 
@@ -1468,11 +1467,9 @@ def _delete_context(selected_context="kubernetes-admin@kubernetes"):
             del kubeconfig.get("contexts")[index]
     for index, cluster in enumerate(kubeconfig.get("clusters")):
         if cluster.get("name") == selected_cluster:
-            print(f"deleting {cluster.get('name')}")
             del kubeconfig.get("clusters")[index]
     for index, user in enumerate(kubeconfig.get("users")):
         if user.get("name") == selected_user:
-            print(f"deleting {user.get('name')}")
             del kubeconfig.get("users")[index]
     if kubeconfig.get("current-context") == selected_context:
         kubeconfig["current-context"] = ""
