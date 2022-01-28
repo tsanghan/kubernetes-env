@@ -1027,12 +1027,6 @@ usage() {
 
 while getopts ":rlcmn:i:" o; do
     case "$o" in
-        r)
-            remote_registries="true"
-            ;;
-        l)
-            local_registries="true"
-            ;;
         c)
             containersonly="true"
             ;;
@@ -1180,48 +1174,7 @@ else
 fi
 
 image=focal-cloud
-
-if [ "$local_registries" == "true" ]; then
-  if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
-    echo "Run pull-containerd.sh first!!"
-    exit 63
-  fi
-  registeries=$(docker container ls | grep -c registry)
-  if [ "$registeries" != "4" ]; then
-    echo "Are local registries running? Run create-local-registries.sh first!!"
-    exit 127
-  fi
-  iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
-  if [ "$iface" == "" ]; then
-    echo "Interface ens* no found!!"
-    exit 127
-  fi
-  IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
-  count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$IP")
-  if [ "$count" -eq 0 ]; then
-    echo -e "lxc profile not setup for local registries!!\nExciting!!"
-    exit
-  fi
-  profile=k8s-cloud-init-local-registries
-elif [ "$remote_registries" == "true" ]; then
-  if [ ! -d /home/"$USER"/Projects/kubernetes-env/.containerd ]; then
-    echo "Run pull-containerd.sh first!!"
-    exit 63
-  fi
-  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  if [ "$PROXY" == "" ]; then
-    echo -e "No Remote Registries detected!!\nExciting!!"
-    exit
-  fi
-  count=$(lxc profile show k8s-cloud-init-local-registries | grep -c "$PROXY")
-  if [ "$count" -eq 1 ]; then
-    echo -e "lxc profile not setup for remote registries!!\nExciting!!"
-    exit
-  fi
-  profile=k8s-cloud-init-local-registries
-else
-  profile=k8s-cloud-init
-fi
+profile=k8s-cloud-init
 
 for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
@@ -1257,12 +1210,12 @@ if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
   ln -s ~/.kube ~/.k
 fi
-lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.k/config-lxd
+lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config-lxd
 if [ -f ~/.kube/config ]; then
   KUBECONFIG=~/.kube/config:~/.k/config-lxd kubectl config view --flatten > /tmp/config
   mv /tmp/config ~/.kube/config
 else
-  cp ~/.k/config-lxd ~/.k/config
+  cp ~/.kube/config-lxd ~/.kube/config
 fi
 
 if [ "$multimaster" == "true" ]; then
