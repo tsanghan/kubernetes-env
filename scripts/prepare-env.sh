@@ -404,8 +404,7 @@ echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
-curl -sSL https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml | sed '/v1beta1/s/v1beta1/v1/' | k apply -f -
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 EOF
 
@@ -1411,6 +1410,106 @@ popd || exit
 
 MYEOF
 
+cat <<EOF > ~/.local/bin/create-cluster.py
+#!/usr/bin/env python3
+from pylxd import Client
+from pathlib import Path
+
+
+client = Client()
+
+image_data = Path('focal-server-cloudimg-amd64.squashfs').open(mode='rb').read()
+meta_data = Path('focal-server-cloudimg-amd64-lxd.tar.xz').open(mode='rb').read()
+
+image = client.images.create(image_data, meta_data, public=True, wait=True)
+print(image.fingerprint)
+image.add_alias('my-alias', '')
+
+EOF
+
+cat <<EOF > ~/.local/bin/stop-cluster.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jan 23 15:21:37 2022
+
+@author: tsanghan
+"""
+import argparse
+from pathlib import Path
+from pylxd import Client
+from time import sleep
+import urllib3
+from yaml import safe_load, dump
+
+# Ref: https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
+urllib3.disable_warnings()
+
+
+def _get_client():
+    return Client()
+
+def _load_kubeconfig(file=Path.home()/Path(".kube/config")):
+    try:
+      return safe_load(Path(file).read_text())
+    except FileNotFoundError:
+      print(f"Kubeconfig File {file.as_posix()} not found!!")
+      exit()
+
+def _delete_context(selected_context="kubernetes-admin@kubernetes"):
+    kubeconfig = _load_kubeconfig()
+    selected_user = ""
+    selected_cluster = ""
+    for index, context in enumerate(kubeconfig.get("contexts")):
+        if context.get("name") == selected_context:
+            selected_user = context.get("context").get("user")
+            selected_cluster = context.get("context").get("cluster")
+            del kubeconfig.get("contexts")[index]
+    for index, cluster in enumerate(kubeconfig.get("clusters")):
+        if cluster.get("name") == selected_cluster:
+            del kubeconfig.get("clusters")[index]
+    for index, user in enumerate(kubeconfig.get("users")):
+        if user.get("name") == selected_user:
+            del kubeconfig.get("users")[index]
+    if kubeconfig.get("current-context") == selected_context:
+        kubeconfig["current-context"] = ""
+    return kubeconfig
+
+def delete_context():
+    kubeconfig = _delete_context()
+    kubeconfig_file = Path.home()/Path(".kube/config")
+    kubeconfig_file.unlink(missing_ok=True)
+    kubeconfig_file.write_text(dump(kubeconfig))
+
+def stop_cluster(delete=False, force=False):
+    client = _get_client()
+    for instance in client.containers.all():
+        if instance.name.startswith('lxd-'):
+            instance.stop(force=force)
+            if delete:
+                while True:
+                    now = instance.state()
+                    if now.status.startswith('Stopped'):
+                        instance.delete()
+                        break
+                    sleep(2)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--delete", help="Stop Cluster", action="store_true")
+    parser.add_argument("-f", "--force", help="Delete Cluster", action="store_true")
+    args = parser.parse_args()
+    delete, force = args.delete, args.force
+    stop_cluster(delete=delete, force=force)
+    if delete:
+      delete_context()
+
+
+if __name__ == "__main__":
+    main()
+
+EOF
+
 # Install kubectl
 if [ ! -f ~/.local/bin/kubectl ]; then
   KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
@@ -1481,6 +1580,11 @@ if [ ! -f ~/.local/bin/kubecolor ]; then
 fi
 
 chmod 0755 ~/.local/bin/*
+
+pylxd=$(pip3 list 2> /dev/null | grep pylxd)
+if [ "$pylxd" == "" ]; then
+  pip3 install pylxd 2> /dev/null
+fi
 
 lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
 dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')

@@ -54,7 +54,14 @@ apt install -y --no-install-recommends snapd
 snap install lxd
 
 apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl gnupg lsb-release jq xz-utils
+apt-get install -y --no-install-recommends \
+                      ca-certificates \
+                      curl \
+                      gnupg \
+                      lsb-release \
+                      jq \
+                      xz-utils \
+                      python3-pip
 #
 if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
