@@ -1579,7 +1579,7 @@ fi
 
 chmod 0755 ~/.local/bin/*
 
-pylxd=$(pip3 list 2> dev/null | grep pylxd)
+pylxd=$(pip3 list 2> /dev/null | grep pylxd)
 if [ "$pylxd" == "" ]; then
   pip3 install pylxd
 fi
