@@ -487,18 +487,7 @@ CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | 
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-iface=$(ip link | egrep "ens|eth" | awk '{print $2}' | tr -d ':')
-if [ "$iface" == "" ]; then
-  echo "Interface ens* or eth* not found!!"
-  exit 127
-fi
-PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-if [ "$PROXY" != "" ]; then
-  # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-else
-  IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
-fi
+disk=$(< ~/.config/.disk)
 
 while getopts "s" o; do
     case "$o" in
@@ -511,7 +500,7 @@ while getopts "s" o; do
 done
 shift $((OPTIND-1))
 
-for profile in lb k8s-cloud-init k8s-cloud-init-local-registries;
+for profile in lb k8s-cloud-init;
 do
   exists=$(lxc profile ls | grep "$profile")
   if [ "$exists" != "" ]; then
@@ -519,440 +508,376 @@ do
   fi
 done
 
-cat <<EOF | sudo lxd init --preseed
-config: {}
-networks:
-- config:
-    ipv4.address: 10.254.254.254/24
-    ipv4.dhcp.gateway: 10.254.254.254
-    ipv4.dhcp.ranges: 10.254.254.1-10.254.254.239
-    ipv4.nat: "true"
-    ipv6.address: none
-  description: ""
-  name: lxdbr0
-  type: ""
-storage_pools:
-- config:
-  description: ""
-  name: default
-  driver: dir
-profiles:
-- config: {}
-  description: ""
-  devices:
-    eth0:
-      name: eth0
-      network: lxdbr0
-      type: nic
-    root:
-      path: /
-      pool: default
-      type: disk
-  name: default
-cluster: null
+PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
+if [ "$PROXY" == "" ]; then
+  k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
+  if [ "$k8s_cloud_init"  == "" ]; then
+    lxc profile create k8s-cloud-init
+    cat <<-EOF | lxc profile edit k8s-cloud-init
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          sources:
+            kubernetes.list:
+              source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+              keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - containerd
+          - curl
+          - kubeadm=$KUBE_VER-00
+          - kubelet=$KUBE_VER-00
+          - jq
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        write_files:
+        - content: |
+            [Unit]
+            Description=Mount Make Rshare
+
+            [Service]
+            ExecStart=/bin/mount --make-rshare /
+
+            [Install]
+            WantedBy=multi-user.target
+          owner: root:root
+          path: /etc/systemd/system/mount-make-rshare.service
+          permissions: '0644'
+        - content: |
+            runtime-endpoint: unix:///run/containerd/containerd.sock
+            image-endpoint: unix:///run/containerd/containerd.sock
+            timeout: 10
+          owner: root:root
+          path: /etc/crictl.yaml
+          permissions: '0644'
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+          - systemctl enable mount-make-rshare
+          - mkdir -p /etc/containerd
+          - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
+          - systemctl restart containerd
+          - kubeadm config images pull
+          - ctr oci spec | tee /etc/containerd/cri-base.json
+        power_state:
+          delay: "+1"
+          mode: poweroff
+          message: Bye Bye
+          timeout: 10
+          condition: True
+    description: ""
+    devices:
+      _dev_sda1:
+        path: $disk
+        source: $disk
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
 EOF
+else
+  # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
 
-k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
-if [ "$k8s_cloud_init"  == "" ]; then
-  lxc profile create k8s-cloud-init
+  k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
+  if [ "$k8s_cloud_init"  == "" ]; then
+    lxc profile create k8s-cloud-init
 
-  cat <<EOF > /tmp/lxd-profile-k8s-cloud-init
-  config:
-    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-    raw.lxc: |-
-      lxc.apparmor.profile=unconfined
-      lxc.cap.drop=
-      lxc.cgroup.devices.allow=a
-      lxc.mount.auto=proc:rw sys:rw cgroup:rw
-      lxc.seccomp.profile=
-    security.nesting: "true"
-    security.privileged: "true"
-    user.user-data: |
-      #cloud-config
-      apt:
-        preserve_sources_list: false
-        primary:
-          - arches:
-            - amd64
-            uri: "http://archive.ubuntu.com/ubuntu/"
-        security:
-          - arches:
-            - amd64
-            uri: "http://security.ubuntu.com/ubuntu"
+    cat <<-EOF | lxc profile edit k8s-cloud-init
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY"
+          sources:
+            kubernetes.list:
+              source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+              keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - containerd
+          - curl
+          - kubeadm=$KUBE_VER-00
+          - kubelet=$KUBE_VER-00
+          - jq
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        write_files:
+        - content: |
+            [Unit]
+            Description=Mount Make Rshare
+
+            [Service]
+            ExecStart=/bin/mount --make-rshare /
+
+            [Install]
+            WantedBy=multi-user.target
+          owner: root:root
+          path: /etc/systemd/system/mount-make-rshare.service
+          permissions: '0644'
+        - content: |
+            runtime-endpoint: unix:///run/containerd/containerd.sock
+            image-endpoint: unix:///run/containerd/containerd.sock
+            timeout: 10
+          owner: root:root
+          path: /etc/crictl.yaml
+          permissions: '0644'
+        - content: |
+            server = "https://docker.io"
+
+            [host."http://$IP:5000"]
+              capabilities = ["pull", "resolve"]
+          owner: root:root
+          path: /etc/containerd/certs.d/docker.io/hosts.toml
+          permissions: '0644'
+        - content: |
+            server = "https://k8s.gcr.io"
+
+            [host."http://$IP:5001"]
+              capabilities = ["pull", "resolve"]
+          owner: root:root
+          path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
+          permissions: '0644'
+        - content: |
+            server = "https://quay.io"
+
+            [host."http://$IP:5002"]
+              capabilities = ["pull", "resolve"]
+          owner: root:root
+          path: /etc/containerd/certs.d/quay.io/hosts.toml
+          permissions: '0644'
+        - content: |
+            server = "http://$IP"
+
+            [host."http://$IP:6000"]
+              capabilities = ["pull", "resolve"]
+          owner: root:root
+          path: /etc/containerd/certs.d/$IP/hosts.toml
+          permissions: '0644'
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+          - systemctl enable mount-make-rshare
+          - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
+          - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
+          - mkdir -p /etc/containerd
+          - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
+          - systemctl enable containerd
+          - systemctl start containerd
+          - kubeadm config images pull
+          - ctr oci spec | tee /etc/containerd/cri-base.json
+          - rm /etc/cni/net.d/10-containerd-net.conflist
+        power_state:
+          delay: "+1"
+          mode: poweroff
+          message: Bye Bye
+          timeout: 10
+          condition: True
+    description: ""
+    devices:
+      _dev_sda1:
+        path: $disk
+        source: $disk
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
+      containerd:
+        path: /mnt/containerd
+        source: /home/$USER/Projects/kubernetes-env/.containerd
+        type: disk
 EOF
-
-  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-  if [ "$PROXY" != "" ]; then
-    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init
   fi
 
-  cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init
-        sources:
-          kubernetes.list:
-            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-      packages:
-        - apt-transport-https
-        - ca-certificates
-        - containerd
-        - curl
-        - kubeadm=$KUBE_VER-00
-        - kubelet=$KUBE_VER-00
-        - jq
-      package_update: false
-      package_upgrade: false
-      package_reboot_if_required: false
-      locale: en_SG.UTF-8
-      locale_configfile: /etc/default/locale
-      timezone: Asia/Singapore
-      write_files:
-      - content: |
-          [Unit]
-          Description=Mount Make Rshare
-
-          [Service]
-          ExecStart=/bin/mount --make-rshare /
-
-          [Install]
-          WantedBy=multi-user.target
-        owner: root:root
-        path: /etc/systemd/system/mount-make-rshare.service
-        permissions: '0644'
-      - content: |
-          runtime-endpoint: unix:///run/containerd/containerd.sock
-          image-endpoint: unix:///run/containerd/containerd.sock
-          timeout: 10
-        owner: root:root
-        path: /etc/crictl.yaml
-        permissions: '0644'
-      runcmd:
-        - apt-get -y purge nano
-        - apt-get -y autoremove
-        - systemctl enable mount-make-rshare
-        - mkdir -p /etc/containerd
-        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | tee /etc/containerd/config.toml
-        - systemctl restart containerd
-        - kubeadm config images pull
-        - ctr oci spec | tee /etc/containerd/cri-base.json
-      power_state:
-        delay: "+1"
-        mode: poweroff
-        message: Bye Bye
-        timeout: 10
-        condition: True
-  description: ""
-  devices:
-    _dev_sda1:
-      path: /dev/sda1
-      source: /dev/sda1
-      type: unix-block
-    aadisable:
-      path: /sys/module/nf_conntrack/parameters/hashsize
-      source: /dev/null
-      type: disk
-    aadisable1:
-      path: /sys/module/apparmor/parameters/enabled
-      source: /dev/null
-      type: disk
-    boot_dir:
-      path: /boot
-      source: /boot
-      type: disk
-    dev_kmsg:
-      path: /dev/kmsg
-      source: /dev/kmsg
-      type: unix-char
-    eth0:
-      name: eth0
-      nictype: bridged
-      parent: lxdbr0
-      type: nic
-    root:
-      path: /
-      pool: default
-      type: disk
-EOF
-
-  sed "s#/dev/sda1#$(cat ~/.config/.disk)#" < /tmp/lxd-profile-k8s-cloud-init | lxc profile edit k8s-cloud-init
-  rm /tmp/lxd-profile-k8s-cloud-init
-fi
-
-k8s_cloud_init_local_registries=$(lxc profile ls | grep k8s-cloud-init-local-registries)
-if [ "$k8s_cloud_init_local_registries"  == "" ]; then
-  lxc profile create k8s-cloud-init-local-registries
-
-  cat <<EOF > /tmp/lxd-profile-k8s-cloud-init-local-registries
-  config:
-    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-    raw.lxc: |-
-      lxc.apparmor.profile=unconfined
-      lxc.cap.drop=
-      lxc.cgroup.devices.allow=a
-      lxc.mount.auto=proc:rw sys:rw cgroup:rw
-      lxc.seccomp.profile=
-    security.nesting: "true"
-    security.privileged: "true"
-    user.user-data: |
-      #cloud-config
-      apt:
-        preserve_sources_list: false
-        primary:
-          - arches:
-            - amd64
-            uri: "http://archive.ubuntu.com/ubuntu/"
-        security:
-          - arches:
-            - amd64
-            uri: "http://security.ubuntu.com/ubuntu"
-EOF
-
-  # KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
-  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-  if [ "$PROXY" != "" ]; then
-    echo "        proxy: $PROXY" >> /tmp/lxd-profile-k8s-cloud-init-local-registries
-  fi
-
-  cat <<EOF >> /tmp/lxd-profile-k8s-cloud-init-local-registries
-        sources:
-          kubernetes.list:
-            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-      packages:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - kubeadm=$KUBE_VER-00
-        - kubelet=$KUBE_VER-00
-        - jq
-      package_update: false
-      package_upgrade: false
-      package_reboot_if_required: false
-      locale: en_SG.UTF-8
-      locale_configfile: /etc/default/locale
-      timezone: Asia/Singapore
-      write_files:
-      - content: |
-          [Unit]
-          Description=Mount Make Rshare
-
-          [Service]
-          ExecStart=/bin/mount --make-rshare /
-
-          [Install]
-          WantedBy=multi-user.target
-        owner: root:root
-        path: /etc/systemd/system/mount-make-rshare.service
-        permissions: '0644'
-      - content: |
-          runtime-endpoint: unix:///run/containerd/containerd.sock
-          image-endpoint: unix:///run/containerd/containerd.sock
-          timeout: 10
-        owner: root:root
-        path: /etc/crictl.yaml
-        permissions: '0644'
-      - content: |
-          server = "https://docker.io"
-
-          [host."http://$IP:5000"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/docker.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "https://k8s.gcr.io"
-
-          [host."http://$IP:5001"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/k8s.gcr.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "https://quay.io"
-
-          [host."http://$IP:5002"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/quay.io/hosts.toml
-        permissions: '0644'
-      - content: |
-          server = "http://$IP"
-
-          [host."http://$IP:6000"]
-            capabilities = ["pull", "resolve"]
-        owner: root:root
-        path: /etc/containerd/certs.d/$IP/hosts.toml
-        permissions: '0644'
-      runcmd:
-        - apt-get -y purge nano
-        - apt-get -y autoremove
-        - systemctl enable mount-make-rshare
-        - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
-        - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
-        - mkdir -p /etc/containerd
-        - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
-        - systemctl enable containerd
-        - systemctl start containerd
-        - kubeadm config images pull
-        - ctr oci spec | tee /etc/containerd/cri-base.json
-        - rm /etc/cni/net.d/10-containerd-net.conflist
-      power_state:
-        delay: "+1"
-        mode: poweroff
-        message: Bye Bye
-        timeout: 10
-        condition: True
-  description: ""
-  devices:
-    _dev_sda1:
-      path: /dev/sda1
-      source: /dev/sda1
-      type: unix-block
-    aadisable:
-      path: /sys/module/nf_conntrack/parameters/hashsize
-      source: /dev/null
-      type: disk
-    aadisable1:
-      path: /sys/module/apparmor/parameters/enabled
-      source: /dev/null
-      type: disk
-    boot_dir:
-      path: /boot
-      source: /boot
-      type: disk
-    dev_kmsg:
-      path: /dev/kmsg
-      source: /dev/kmsg
-      type: unix-char
-    eth0:
-      name: eth0
-      nictype: bridged
-      parent: lxdbr0
-      type: nic
-    root:
-      path: /
-      pool: default
-      type: disk
-    containerd:
-      path: /mnt/containerd
-      source: /home/$USER/Projects/kubernetes-env/.containerd
-      type: disk
-EOF
-
-  sed "s#/dev/sda1#$(cat ~/.config/.disk)#" < /tmp/lxd-profile-k8s-cloud-init-local-registries | lxc profile edit k8s-cloud-init-local-registries
-  rm /tmp/lxd-profile-k8s-cloud-init-local-registries
-fi
-
-lb=$(lxc profile ls | grep lb)
+  lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
-  lxc profile create lb
+    lxc profile create lb
 
-  cat <<EOF > /tmp/lxd-profile-lb
-  config:
-    linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
-    raw.lxc: |-
-      lxc.apparmor.profile=unconfined
-      lxc.cap.drop=
-      lxc.cgroup.devices.allow=a
-      lxc.mount.auto=proc:rw sys:rw cgroup:rw
-      lxc.seccomp.profile=
-    security.nesting: "true"
-    security.privileged: "true"
-    user.user-data: |
-      #cloud-config
-      apt:
-        preserve_sources_list: false
-        primary:
-          - arches:
-            - amd64
-            uri: "http://archive.ubuntu.com/ubuntu/"
-        security:
-          - arches:
-            - amd64
-            uri: "http://security.ubuntu.com/ubuntu"
+    cat <<-EOF | lxc profile edit lb
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY"
+          sources:
+            kubernetes.list:
+              source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+              keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - nginx
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        write_files:
+        - content: |
+            stream {
+                upstream lxd-ctrlp {
+                    server lxd-ctrlp-1:6443;
+                    server lxd-ctrlp-2:6443;
+                    server lxd-ctrlp-3:6443;
+                }
+                server {
+                    listen 6443;
+                    proxy_pass lxd-ctrlp;
+                }
+            }
+          path: /etc/nginx/nginx.conf
+          append: true
+          defer: true
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+          - sleep 10
+          - nginx -s reload
+        default: none
+    description: ""
+    devices:
+      _dev_sda1:
+        path: /dev/sda1
+        source: /dev/sda1
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
 EOF
-
-  PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';')
-  if [ "$PROXY" != "" ]; then
-    echo "        proxy: $PROXY" >> /tmp/lxd-profile-lb
   fi
-
-  cat <<EOF >> /tmp/lxd-profile-lb
-        sources:
-          kubernetes.list:
-            source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-            keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-      packages:
-        - apt-transport-https
-        - ca-certificates
-        - nginx
-      package_update: false
-      package_upgrade: false
-      package_reboot_if_required: false
-      locale: en_SG.UTF-8
-      locale_configfile: /etc/default/locale
-      timezone: Asia/Singapore
-      write_files:
-      - content: |
-          stream {
-              upstream lxd-ctrlp {
-                  server lxd-ctrlp-1:6443;
-                  server lxd-ctrlp-2:6443;
-                  server lxd-ctrlp-3:6443;
-              }
-              server {
-                  listen 6443;
-                  proxy_pass lxd-ctrlp;
-              }
-          }
-        path: /etc/nginx/nginx.conf
-        append: true
-        defer: true
-      runcmd:
-        - apt-get -y purge nano
-        - apt-get -y autoremove
-        - sleep 10
-        - nginx -s reload
-      default: none
-  description: ""
-  devices:
-    _dev_sda1:
-      path: /dev/sda1
-      source: /dev/sda1
-      type: unix-block
-    aadisable:
-      path: /sys/module/nf_conntrack/parameters/hashsize
-      source: /dev/null
-      type: disk
-    aadisable1:
-      path: /sys/module/apparmor/parameters/enabled
-      source: /dev/null
-      type: disk
-    boot_dir:
-      path: /boot
-      source: /boot
-      type: disk
-    dev_kmsg:
-      path: /dev/kmsg
-      source: /dev/kmsg
-      type: unix-char
-    eth0:
-      name: eth0
-      nictype: bridged
-      parent: lxdbr0
-      type: nic
-    root:
-      path: /
-      pool: default
-      type: disk
-EOF
-
-  lxc profile edit lb < /tmp/lxd-profile-lb
-  # cat /tmp/lxd-profile-lb | lxc profile edit lb
-  rm /tmp/lxd-profile-lb
 fi
-MYEOF
-
-cat <<'MYEOF' >> ~/.local/bin/prepare-lxd.sh
 
 YY=20
 CODE_NAME=focal

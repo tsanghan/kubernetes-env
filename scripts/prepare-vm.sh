@@ -76,4 +76,37 @@ chown "$SUDO_USER"."$SUDO_USER" /tmp/.disk
 
 usermod -aG lxd,docker "$SUDO_USER"
 
+cat <<EOF | lxd init --preseed
+config: {}
+networks:
+- config:
+    ipv4.address: 10.254.254.254/24
+    ipv4.dhcp.gateway: 10.254.254.254
+    ipv4.dhcp.ranges: 10.254.254.1-10.254.254.239
+    ipv4.nat: "true"
+    ipv6.address: none
+  description: ""
+  name: lxdbr0
+  type: ""
+storage_pools:
+- config:
+  description: ""
+  name: default
+  driver: dir
+profiles:
+- config: {}
+  description: ""
+  devices:
+    eth0:
+      name: eth0
+      network: lxdbr0
+      type: nic
+    root:
+      path: /
+      pool: default
+      type: disk
+  name: default
+cluster: null
+EOF
+
 sudo -u "$SUDO_USER" ./scripts/prepare-env.sh
