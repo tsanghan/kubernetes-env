@@ -1579,7 +1579,10 @@ fi
 
 chmod 0755 ~/.local/bin/*
 
-pip3 install pylxd
+pylxd=$(pip3 list 2> dev/null | grep pylxd)
+if [ "$pylxd" == "" ]; then
+  pip3 install pylxd
+fi
 
 lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
 dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
