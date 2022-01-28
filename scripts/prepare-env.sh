@@ -621,6 +621,7 @@ if [ "$PROXY" == "" ]; then
         pool: default
         type: disk
 EOF
+  fi
 else
   # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
   IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
@@ -652,7 +653,7 @@ else
             - arches:
               - amd64
               uri: "http://security.ubuntu.com/ubuntu"
-          proxy: $PROXY"
+          proxy: $PROXY
           sources:
             kubernetes.list:
               source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
@@ -807,7 +808,7 @@ EOF
             - arches:
               - amd64
               uri: "http://security.ubuntu.com/ubuntu"
-          proxy: $PROXY"
+          proxy: $PROXY
           sources:
             kubernetes.list:
               source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
