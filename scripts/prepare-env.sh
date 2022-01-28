@@ -1437,9 +1437,11 @@ Created on Sun Jan 23 15:21:37 2022
 @author: tsanghan
 """
 import argparse
+from pathlib import Path
 from pylxd import Client
 from time import sleep
 import urllib3
+from yaml import safe_load, dump
 
 # Ref: https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
 urllib3.disable_warnings()
@@ -1447,6 +1449,30 @@ urllib3.disable_warnings()
 
 def get_client():
     return Client()
+
+def load_kubeconfig(file=Path.home()/Path(".kube/config")):
+    return safe_load(file.read_text())
+
+def delete_context(selected_context="kubernetes-admin@kubernetes"):
+    kubeconfig = load_kubeconfig("config")
+    selected_user = ""
+    selected_cluster = ""
+    for index, context in enumerate(kubeconfig.get("contexts")):
+        if context.get("name") == selected_context:
+            selected_user = context.get("context").get("user")
+            selected_cluster = context.get("context").get("cluster")
+            del kubeconfig.get("contexts")[index]
+    for index, cluster in enumerate(kubeconfig.get("clusters")):
+        if cluster.get("name") == selected_cluster:
+            print(f"deleting {cluster.get('name')}")
+            del kubeconfig.get("clusters")[index]
+    for index, user in enumerate(kubeconfig.get("users")):
+        if user.get("name") == selected_user:
+            print(f"deleting {user.get('name')}")
+            del kubeconfig.get("users")[index]
+    if kubeconfig.get("current-context") == selected_context:
+        kubeconfig["current-context"] = ""
+    return kubeconfig
 
 def stop_cluster(client, delete=False, force=False):
     for instance in client.containers.all():
@@ -1466,10 +1492,12 @@ def main():
     parser.add_argument("-f", "--force", help="Delete Cluster", action="store_true")
     args = parser.parse_args()
     delete, force = args.delete, args.force
-    stop_cluster(get_client(),
-                 delete=delete,
-                 force=force)
-
+    stop_cluster(get_client(), delete=delete, force=force)
+    kubeconfig = load_kubeconfig()
+    kubeconfig = delete_context()
+    kubeconfig_file = Path.home()/Path(".kube/config")
+    kubeconfig_file.unlink(missing_ok=true)
+    kubeconfig_file.write_text(dump(kubeconfig))
 
 if __name__ == "__main__":
     main()
@@ -1546,6 +1574,8 @@ if [ ! -f ~/.local/bin/kubecolor ]; then
 fi
 
 chmod 0755 ~/.local/bin/*
+
+pip3 install pylxd
 
 lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
 dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
