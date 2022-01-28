@@ -1352,6 +1352,15 @@ do
     break;
   fi
 done
+
+context=kubernetes-admin@kubernetes
+while true;
+do
+  cluster=$(yq e ".clusters[] | select(.name == \"$cluster\")")
+  if [ "$cluster" != "" ];
+    break
+  fi
+done
 k9s
 MYEOF
 
