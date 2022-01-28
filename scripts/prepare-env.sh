@@ -404,8 +404,8 @@ echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
-# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
-curl -sSL https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml | sed '/v1beta1/s/v1beta1/v1/' | k apply -f -
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
+# curl -sSL https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml | sed '/v1beta1/s/v1beta1/v1/' | k apply -f -
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 EOF
 
@@ -1450,10 +1450,10 @@ urllib3.disable_warnings()
 def get_client():
     return Client()
 
-def load_kubeconfig(file=Path.home()/Path(".kube/config")):
-    return safe_load(file.read_text())
+def _load_kubeconfig(file=Path.home()/Path(".kube/config")):
+    return safe_load(Path(file).read_text())
 
-def delete_context(selected_context="kubernetes-admin@kubernetes"):
+def _delete_context(selected_context="kubernetes-admin@kubernetes"):
     kubeconfig = load_kubeconfig("config")
     selected_user = ""
     selected_cluster = ""
@@ -1474,6 +1474,12 @@ def delete_context(selected_context="kubernetes-admin@kubernetes"):
         kubeconfig["current-context"] = ""
     return kubeconfig
 
+def delete_context():
+    context = _delete_context()
+    kubeconfig_file = Path.home()/Path(".kube/config")
+    kubeconfig_file.unlink(missing_ok=True)
+    kubeconfig_file.write_text(dump(kubeconfig))
+
 def stop_cluster(client, delete=False, force=False):
     for instance in client.containers.all():
         if instance.name.startswith('lxd-'):
@@ -1493,11 +1499,8 @@ def main():
     args = parser.parse_args()
     delete, force = args.delete, args.force
     stop_cluster(get_client(), delete=delete, force=force)
-    kubeconfig = load_kubeconfig()
-    kubeconfig = delete_context()
-    kubeconfig_file = Path.home()/Path(".kube/config")
-    kubeconfig_file.unlink(missing_ok=true)
-    kubeconfig_file.write_text(dump(kubeconfig))
+    delete_context()
+
 
 if __name__ == "__main__":
     main()
