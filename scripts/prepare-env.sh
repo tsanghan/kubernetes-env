@@ -1162,6 +1162,12 @@ check_if_cluster_already_exists () {
 check_if_cluster_already_exists
 
 if [ "$multimaster" == "true" ]; then
+  lb=$(lxc profile ls | grep lb)
+  if [ "$lb"  == "" ]; then
+    echo "Multi-control-plane mode not available in your current Environment state!!"
+    echo "Missing lxd lb profile."
+    exit 1
+  fi
   NODESNUM=6
   CTRLP=lxd-lb
   NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
@@ -1212,7 +1218,7 @@ if [ ! -d ~/.kube ]; then
 fi
 lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config-lxd
 if [ -f ~/.kube/config ]; then
-  KUBECONFIG=~/.kube/config:~/.k/config-lxd kubectl config view --flatten > /tmp/config
+  KUBECONFIG=~/.kube/config:~/.kube/config-lxd kubectl config view --flatten > /tmp/config
   mv /tmp/config ~/.kube/config
 else
   cp ~/.kube/config-lxd ~/.kube/config
