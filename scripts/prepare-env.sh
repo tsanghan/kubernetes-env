@@ -1646,7 +1646,10 @@ def _delete_context(selected_context="kubernetes-admin@kubernetes"):
     for index, user in enumerate(kubeconfig.get("users")):
         if user.get("name") == selected_user:
             del kubeconfig.get("users")[index]
-    if kubeconfig.get("current-context") == selected_context:
+    if (
+        kubeconfig.get("current-context") == selected_context and
+        len(kubeconfig.get("contexts")) > 0
+    ):
         kubeconfig["current-context"] = kubeconfig.get("contexts")[0].get("name")
     return kubeconfig
 
