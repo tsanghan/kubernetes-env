@@ -1446,12 +1446,12 @@ def get_client():
 
 def _wait(instance, status):
     while not instance.state().status == status:
-        print("\N{grinning face with smiling eyes}", end="")
+        print("\N{grinning face with smiling eyes}", end="", flush=True)
         sleep(5)
 
 
 def wait_for_cluster(instance_list, status):
-    print("Wait", end="")
+    print("Wait", end="", flush=True)
     for instance in instance_list:
         if status == "Stopped":
             _wait(instance, status)
@@ -1460,6 +1460,7 @@ def wait_for_cluster(instance_list, status):
             _wait(instance, status)
         else:
             raise Exception("Invalid status requested.")
+    print(flush=True)
 
 
 def create_and_start_instances(client, instance_name_list):
