@@ -1410,20 +1410,195 @@ popd || exit
 
 MYEOF
 
-cat <<EOF > ~/.local/bin/create-cluster.py
+cat <<'EOF' > ~/.local/bin/create-cluster.py
 #!/usr/bin/env python3
-from pylxd import Client
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jan 23 15:10:26 2022
+
+@author: tsanghan
+"""
+
+# import argparse
 from pathlib import Path
+from pylxd import Client
+from time import sleep
+import urllib3
+from yaml import safe_load, dump
 
 
-client = Client()
+# client = Client()
 
-image_data = Path('focal-server-cloudimg-amd64.squashfs').open(mode='rb').read()
-meta_data = Path('focal-server-cloudimg-amd64-lxd.tar.xz').open(mode='rb').read()
+# image_data = Path('focal-server-cloudimg-amd64.squashfs').open(mode='rb').read()
+# meta_data = Path('focal-server-cloudimg-amd64-lxd.tar.xz').open(mode='rb').read()
 
-image = client.images.create(image_data, meta_data, public=True, wait=True)
-print(image.fingerprint)
-image.add_alias('my-alias', '')
+# image = client.images.create(image_data, meta_data, public=True, wait=True)
+# print(image.fingerprint)
+# image.add_alias('my-alias', '')
+
+
+# Ref: https://stackoverflow.com/questions/27981545/suppress-insecurerequestwarning-unverified-https-request-is-being-made-in-pytho
+urllib3.disable_warnings()
+
+
+def get_client():
+    return Client()
+
+
+def _wait(instance, status):
+    while not instance.state().status == status:
+        print("\N{grinning face with smiling eyes}", end="", flush=True)
+        sleep(5)
+
+
+def wait_for_cluster(instance_list, status):
+    print("Wait", end="", flush=True)
+    for instance in instance_list:
+        if status == "Stopped":
+            _wait(instance, status)
+        elif status == "Running":
+            instance.start()
+            _wait(instance, status)
+        else:
+            raise Exception("Invalid status requested.")
+    print(flush=True)
+
+
+def create_and_start_instances(client, instance_name_list):
+    instance_list = []
+    for instance_name in instance_name_list:
+        if not client.instances.exists(instance_name):
+            config = {
+                "name": instance_name,
+                "source": {
+                    "type": "image",
+                    "mode": "pull",
+                    "server": "",
+                    "protocol": "simplestreams",
+                    "alias": "focal-cloud",
+                },
+                "profiles": ["k8s-cloud-init"],
+            }
+            print(f"Creating {instance_name}")
+            instance = client.instances.create(config, wait=True)
+            instance_list.append(instance)
+            print(f"Starting {instance_name}")
+            instance.start()
+        else:
+            print(
+                f"Instance: {instance_name} exists!!\nNothing to do here for {instance_name}.\n"
+            )
+    return instance_list
+
+
+def _check_containerd(instance):
+    _, stdout, _ = instance.execute(
+        ["/bin/bash", "-c", "systemctl status containerd | grep running"]
+    )
+    return str(stdout)
+
+
+def check_containerd(instance):
+    print("Wait", end="", flush=True)
+    while not _check_containerd(instance):
+        print("\N{grinning face with smiling eyes}", end="", flush=True)
+        sleep(1)
+    print(flush=True)
+
+
+def kubeadm_init(instance):
+    for address in instance.state().network["eth0"]["addresses"]:
+        if address["family"] == "inet":
+            ip = address["address"]
+            print(f"Instance {instance.name} has eth0 IP Address {ip}")
+
+            _, stdout, _ = instance.execute(
+                [
+                    "/bin/bash",
+                    "-c",
+                    f"kubeadm init \
+                    --control-plane-endpoint {ip}:6443 \
+                    --upload-certs |\
+                    tee kubeadm-init.out",
+                ]
+            )
+            print(stdout)
+            init_out = stdout.splitlines()
+            return init_out[-2].strip("\\") + init_out[-1].strip("\t")
+
+
+def kubeadm_join(instance, kube_join_command):
+    _, stdout, _ = instance.execute(
+        [
+            "/bin/bash",
+            "-c",
+            f"{kube_join_command}",
+        ]
+    )
+    return str(stdout)
+
+
+def load_kubeconfig(file=Path.home() / Path(".kube/config")):
+    return safe_load(Path(file).read_text())
+
+
+def merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file):
+    kubeconfig = load_kubeconfig(kubeconfig_file)
+    kubeconfig_lxd = load_kubeconfig(kubeconfig_lxd_file)
+    kubeconfig["clusters"].append(kubeconfig_lxd.get("clusters")[0])
+    kubeconfig["contexts"].append(kubeconfig_lxd.get("contexts")[0])
+    kubeconfig["users"].append(kubeconfig_lxd.get("users")[0])
+    kubeconfig["current-context"] = kubeconfig_lxd.get("contexts")[0].get("name")
+    kubeconfig_file.unlink(missing_ok=True)
+    kubeconfig_file.write_text(dump(kubeconfig))
+
+
+def pull_admin_conf(instance):
+    kubeconfig_file = Path.home() / Path(".kube/config")
+    if kubeconfig_file.exists():
+        kubeconfig_lxd_file = Path.home() / Path(".kube/config-lxd")
+        kubeconfig_lxd_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+        merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file)
+    else:
+        kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+
+
+def start_cluster(client, instance_name_list):
+
+    kubeadm_join_command = ""
+    instance_list = create_and_start_instances(client, instance_name_list)
+    if not instance_list:
+        exit()
+
+    wait_for_cluster(instance_list, "Stopped")
+
+    wait_for_cluster(instance_list, "Running")
+
+    for instance in instance_list:
+        print(f"Instance {instance.name}")
+        if instance.name == "lxd-ctrlp-1":
+            check_containerd(instance)
+            kubeadm_join_command = kubeadm_init(instance)
+            print(kubeadm_join_command)
+            pull_admin_conf(instance)
+        elif instance.name != "lxd-ctrlp-1":
+            stdout = kubeadm_join(instance, kubeadm_join_command)
+            print(stdout)
+        else:
+            raise Exception("Unknown Instance name")
+
+
+def main():
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("-d", "--delete", help="Stop Cluster", action="store_true")
+    # parser.add_argument("-f", "--force", help="Delete Cluster", action="store_true")
+    # args = parser.parse_args()
+    # delete, force = args.delete, args.force
+    start_cluster(get_client(), ["lxd-ctrlp-1", "lxd-wrker-1", "lxd-wrker-2"])
+
+
+if __name__ == "__main__":
+    main()
 
 EOF
 
@@ -1472,7 +1647,7 @@ def _delete_context(selected_context="kubernetes-admin@kubernetes"):
         if user.get("name") == selected_user:
             del kubeconfig.get("users")[index]
     if kubeconfig.get("current-context") == selected_context:
-        kubeconfig["current-context"] = ""
+        kubeconfig["current-context"] = kubeconfig.get("contexts")[0].get("name")
     return kubeconfig
 
 def delete_context():
