@@ -1445,17 +1445,16 @@ def get_client():
 
 
 def _wait(instance, status):
-    print(f"_wait {instance.name} {status}")
+    print("\N{grinning face with smiling eyes}", end="")
     while not instance.state().status == status:
         print(f"Waiting for {instance.name} to {status}")
         sleep(5)
 
 
 def wait_for_cluster(instance_list, status):
-    print(f"wait_for_cluster {status}")
+    print("Wait", end="")
     for instance in instance_list:
         if status == "Stopped":
-            # instance.stop()
             _wait(instance, status)
         elif status == "Running":
             instance.start()
@@ -1512,7 +1511,8 @@ def kubeadm_init(instance):
                     tee kubeadm-init.out",
                 ]
             )
-            return stdout.splitlines()[-2].strip("\\") + stdout.splitlines()[-1].strip('\t')
+            init_out = stdout.splitlines()
+            return init_out[-2].strip("\\") + init_out[-1].strip("\t")
 
 
 def kubeadm_join(instance, kube_join_command):
@@ -1530,7 +1530,6 @@ def pull_admin_conf(instance):
     kubeconfig_file = Path.home() / Path(".kube/config-lxd")
     if kubeconfig_file.exists():
         kubeconfig_file.unlink(missing_ok=True)
-    print(instance.files.get("/etc/kubernetes/admin.conf"))
     kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
 
 
