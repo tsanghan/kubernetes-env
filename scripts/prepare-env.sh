@@ -1514,6 +1514,7 @@ def kubeadm_init(instance):
                     tee kubeadm-init.out",
                 ]
             )
+            print(stdout)
             init_out = stdout.splitlines()
             return init_out[-2].strip("\\") + init_out[-1].strip("\t")
 
