@@ -1531,7 +1531,7 @@ def pull_admin_conf(instance):
     if kubeconfig_file.exists():
         kubeconfig_file.unlink(missing_ok=True)
     print(instance.files.get("/etc/kubernetes/admin.conf"))
-    kubeconfig_file.write_byte(instance.files.get("/etc/kubernetes/admin.conf"))
+    kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
 
 
 def start_cluster(client, instance_name_list):
