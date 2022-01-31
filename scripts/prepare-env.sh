@@ -1512,9 +1512,7 @@ def kubeadm_init(instance):
                     tee kubeadm-init.out",
                 ]
             )
-            return stdout.splitlines()[-2].strip("\\") + stdout.splitlines()[-1].strip(
-                '\t'
-            )
+            return stdout.splitlines()[-2].strip("\\") + stdout.splitlines()[-1].strip('\t')
 
 
 def kubeadm_join(instance, kube_join_command):
