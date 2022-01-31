@@ -1424,6 +1424,7 @@ from pathlib import Path
 from pylxd import Client
 from time import sleep
 import urllib3
+from yaml import safe_load, dump
 
 
 # client = Client()
@@ -1446,12 +1447,12 @@ def get_client():
 
 def _wait(instance, status):
     while not instance.state().status == status:
-        print("\N{grinning face with smiling eyes}", end="", flush=True)
+        print("\N{grinning face with smiling eyes}", end="")
         sleep(5)
 
 
 def wait_for_cluster(instance_list, status):
-    print("Wait", end="", flush=True)
+    print("Wait", end="")
     for instance in instance_list:
         if status == "Stopped":
             _wait(instance, status)
@@ -1460,7 +1461,6 @@ def wait_for_cluster(instance_list, status):
             _wait(instance, status)
         else:
             raise Exception("Invalid status requested.")
-    print(flush=True)
 
 
 def create_and_start_instances(client, instance_name_list):
@@ -1484,7 +1484,9 @@ def create_and_start_instances(client, instance_name_list):
             print(f"Starting {instance_name}")
             instance.start()
         else:
-            print(f"Instance: {instance_name} exists!!\nNothing to do here fo {instance}.\n")
+            print(
+                f"Instance: {instance_name} exists!!\nNothing to do here fo {instance}.\n"
+            )
     return instance_list
 
 
@@ -1526,11 +1528,28 @@ def kubeadm_join(instance, kube_join_command):
     return str(stdout)
 
 
+def load_kubeconfig(file=Path.home() / Path(".kube/config")):
+    return safe_load(Path(file).read_text())
+
+
+def merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file):
+    kubeconfig = load_kubeconfig(kubeconfig_file)
+    kubeconfig_lxd = load_kubeconfig(kubeconfig_lxd_file)
+    kubeconfig["clusters"].append(kubeconfig_lxd.get("clusters")[0])
+    kubeconfig["contexts"].append(kubeconfig_lxd.get("contexts")[0])
+    kubeconfig["users"].append(kubeconfig_lxd.get("userss")[0])
+    kubeconfig_file.unlinked(missing_ok=True)
+    kubeconfig_file.write_text(dump(kubeconfig))
+
+
 def pull_admin_conf(instance):
-    kubeconfig_file = Path.home() / Path(".kube/config-lxd")
+    kubeconfig_file = Path.home() / Path(".kube/config")
     if kubeconfig_file.exists():
-        kubeconfig_file.unlink(missing_ok=True)
-    kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+        kubeconfig_lxd_file = Path.home() / Path(".kube/config-lxd")
+        kubeconfig_lxd_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+        merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file)
+    else:
+        kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
 
 
 def start_cluster(client, instance_name_list):
@@ -1552,7 +1571,8 @@ def start_cluster(client, instance_name_list):
             print(kubeadm_join_command)
             pull_admin_conf(instance)
         elif instance.name != "lxd-ctrlp-1":
-            kubeadm_join(instance, kubeadm_join_command)
+            stdout = kubeadm_join(instance, kubeadm_join_command)
+            print(stdout.splitlines())
         else:
             raise Exception("Unknown Instance name")
 
