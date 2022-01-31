@@ -1485,7 +1485,7 @@ def create_and_start_instances(client, instance_name_list):
             instance.start()
         else:
             print(
-                f"Instance: {instance_name} exists!!\nNothing to do here fo {instance}.\n"
+                f"Instance: {instance_name} exists!!\nNothing to do here for {instance_name}.\n"
             )
     return instance_list
 
