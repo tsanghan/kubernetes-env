@@ -1461,7 +1461,7 @@ def wait_for_cluster(instance_list, status):
             _wait(instance, status)
         else:
             raise Exception("Invalid status requested.")
-    print(flush=true)
+    print(flush=True)
 
 
 def create_and_start_instances(client, instance_name_list):
