@@ -1491,11 +1491,18 @@ def create_and_start_instances(client, instance_name_list):
     return instance_list
 
 
-def check_containerd(instance):
+def _check_containerd(instance):
     _, stdout, _ = instance.execute(
         ["/bin/bash", "-c", "systemctl status containerd | grep running"]
     )
     return str(stdout)
+
+
+def check_containerd(instance):
+    print("Wait", end="", flush=True)
+    while not _check_containerd(instance):
+        print("\N{grinning face with smiling eyes}", end="", flush=True)
+        sleep(1)
 
 
 def kubeadm_init(instance):
@@ -1569,9 +1576,7 @@ def start_cluster(client, instance_name_list):
     for instance in instance_list:
         print(f"Instance {instance.name}")
         if instance.name == "lxd-ctrlp-1":
-            while not check_containerd(instance):
-                print(f"Waiting for containerd on {instance.name}")
-                sleep(1)
+            check_containerd(instance)
             kubeadm_join_command = kubeadm_init(instance)
             print(kubeadm_join_command)
             pull_admin_conf(instance)
