@@ -1652,7 +1652,7 @@ def _delete_context(selected_context="kubernetes-admin@kubernetes"):
     ):
         kubeconfig["current-context"] = kubeconfig.get("contexts")[0].get("name")
     else:
-        kubeconfig["current-context"] = None
+        kubeconfig["current-context"] = ''
     return kubeconfig
 
 def delete_context():
