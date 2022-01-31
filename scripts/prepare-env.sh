@@ -1538,7 +1538,7 @@ def merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file):
     kubeconfig_lxd = load_kubeconfig(kubeconfig_lxd_file)
     kubeconfig["clusters"].append(kubeconfig_lxd.get("clusters")[0])
     kubeconfig["contexts"].append(kubeconfig_lxd.get("contexts")[0])
-    kubeconfig["users"].append(kubeconfig_lxd.get("userss")[0])
+    kubeconfig["users"].append(kubeconfig_lxd.get("users")[0])
     kubeconfig_file.unlinked(missing_ok=True)
     kubeconfig_file.write_text(dump(kubeconfig))
 
