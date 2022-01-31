@@ -1445,9 +1445,8 @@ def get_client():
 
 
 def _wait(instance, status):
-    print("\N{grinning face with smiling eyes}", end="")
     while not instance.state().status == status:
-        print(f"Waiting for {instance.name} to {status}")
+        print("\N{grinning face with smiling eyes}", end="")
         sleep(5)
 
 
