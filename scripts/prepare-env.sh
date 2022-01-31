@@ -1575,7 +1575,7 @@ def start_cluster(client, instance_name_list):
             pull_admin_conf(instance)
         elif instance.name != "lxd-ctrlp-1":
             stdout = kubeadm_join(instance, kubeadm_join_command)
-            print(stdout.splitlines())
+            print(stdout)
         else:
             raise Exception("Unknown Instance name")
 
