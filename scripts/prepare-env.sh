@@ -1503,6 +1503,7 @@ def check_containerd(instance):
     while not _check_containerd(instance):
         print("\N{grinning face with smiling eyes}", end="", flush=True)
         sleep(1)
+    print(flush=True)
 
 
 def kubeadm_init(instance):
