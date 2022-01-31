@@ -1556,6 +1556,8 @@ def start_cluster(client, instance_name_list):
 
     kubeadm_join_command = ""
     instance_list = create_and_start_instances(client, instance_name_list)
+    if not instance_list:
+        exit()
 
     wait_for_cluster(instance_list, "Stopped")
 
