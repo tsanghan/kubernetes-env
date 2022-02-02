@@ -1760,7 +1760,8 @@ if [ ! -f ~/.local/bin/kubecolor ]; then
 fi
 
 chmod 0755 ~/.local/bin/*
-
+pip3 uninstall cryptography
+pip3 install cryptography
 pylxd=$(pip3 list 2> /dev/null | grep pylxd)
 if [ "$pylxd" == "" ]; then
   pip3 install pylxd 2> /dev/null
