@@ -116,6 +116,4 @@ profiles:
 cluster: null
 EOF
 
-pip3 install pylxd
-
 sudo -u "$SUDO_USER" ./scripts/prepare-env.sh
