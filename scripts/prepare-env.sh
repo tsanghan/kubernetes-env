@@ -882,6 +882,95 @@ EOF
         type: disk
 EOF
   fi
+  nfs=$(lxc profile ls | grep nfs)
+  if [ "$nfs"  == "" ]; then
+    lxc profile create nfs-server
+
+    cat <<-EOF | lxc profile edit nfs-server
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      raw.apparmor: "mount fstype=rpc_pipefs,\nmount fstype=nfsd,"
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY
+          sources:
+            kubernetes.list:
+              source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+              keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - nfs-kernel-server
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        write_files:
+        - content: |
+              /mnt/nfs_share  10.254.254.0/24(rw,sync,no_subtree_check)
+          path: /etc/exports
+          append: true
+          defer: true
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+          - mkdir -p /mnt/nfs_share
+          - chown -R nobody:nogroup /mnt/nfs_share/
+          - chmod 777 /mnt/nfs_share/
+        default: none
+    description: ""
+    devices:
+      _dev_sda1:
+        path: /dev/sda1
+        source: /dev/sda1
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
+EOF
+  fi
   pull-containerd.sh
 fi
 
