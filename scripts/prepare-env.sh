@@ -937,6 +937,8 @@ EOF
           - mkdir -p /mnt/nfs_share
           - chown -R nobody:nogroup /mnt/nfs_share/
           - chmod 777 /mnt/nfs_share/
+          - exportfs -a
+          - systemctl restart nfs-kernel-server
         default: none
     description: ""
     devices:
