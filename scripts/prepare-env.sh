@@ -884,6 +884,9 @@ EOF
   fi
   nfs=$(lxc profile ls | grep nfs)
   if [ "$nfs"  == "" ]; then
+    # Ref: https://github.com/lxc/lxd/issues/2703
+    # Ref: https://www.tecmint.com/install-nfs-server-on-ubuntu/
+    # Ref: https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-20-04
     lxc profile create nfs-server
 
     cat <<-EOF | lxc profile edit nfs-server
