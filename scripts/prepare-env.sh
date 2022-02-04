@@ -1278,8 +1278,22 @@ else
   WRKERNODES=(1 2)
 fi
 
-image=focal-cloud
-profile=k8s-cloud-init
+image=$(lxc image ls | grep focal-cloud)
+if [ "$image" == "" ]; then
+  echo "LXD Image focal-cloud not found!! Exiting!!"
+  exit 1
+else
+  image=focal-cloud
+fi
+
+profile=$(lxc profile ls | grep k8s-cloud-init)
+if [ "$profile" == "" ]; then
+  echo "LXD Profile k8s-cloud-init not found!! Exiting!!"
+  exit 1
+else
+  profile=k8s-cloud-init
+fi
+
 
 for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
