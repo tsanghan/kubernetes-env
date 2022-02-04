@@ -1562,6 +1562,7 @@ else
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
     --set nfs.path=/mnt/nfs_share
+  kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
 
@@ -1573,7 +1574,9 @@ if [ "$nfs_server" == "" ]; then
   echo "nfs-server not running!! Exiting!!"
   exit 1
 else
-  lxc stop nfs-server --force
+  if [[ ! "$nfs_server" =~ .*STOP.* ]]; then
+    lxc stop nfs-server --force
+  fi
   lxc delete nfs-server
 fi
 MYEOF
