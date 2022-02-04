@@ -1521,17 +1521,6 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/start-nfs-server.sh
 #!/usr/bin/env bash
 
-while getopts "s" o; do
-    case "$o" in
-        d)
-            stop="true"
-            ;;
-        *)
-            ;;
-    esac
-done
-shift $((OPTIND-1))
-
 check_nfs_status () {
   echo -n "Wait"
   while true; do
@@ -1560,7 +1549,11 @@ check_cloud_init_status () {
   echo
 }
 
-
+cluster_running=$(kubectl cluster-info | head -1)
+if [[ ! "$cluster_running" =~ .*running.* ]];
+  echo "No Kubernetes Cluster running!! Start a Kubernetes Cluster first!!"
+  exit 1
+fi
 nfs=$(lxc profile ls | grep nfs)
 if [ "$nfs"  == "" ]; then
   echo "LXD Profile nfs-server not found!! Exiting!!"
