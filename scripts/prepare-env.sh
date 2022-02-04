@@ -1457,7 +1457,7 @@ cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
 
 while true;
 do
-  if [ -e ~/.k/config ]; then
+  if [ -e ~/.kube/config ]; then
     break
   fi
 done
@@ -1467,7 +1467,7 @@ context=kubernetes-admin@kubernetes
 while true;
 do
   cluster=$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG)
-  if [ "$cluster" != "" ];
+  if [ "$cluster" != "" ]; then
     break
   fi
 done
