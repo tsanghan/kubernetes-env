@@ -1550,6 +1550,12 @@ check_cloud_init_status () {
   echo
 }
 
+helm_install () {
+  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --set nfs.server=nfs-server \
+    --set nfs.path=/mnt/nfs_share
+}
+
 cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
 if [[ ! "$cluster_running" =~ .*running.* ]]; then
   echo "No Kubernetes Cluster running!! Start a Kubernetes Cluster first!!"
@@ -1561,19 +1567,25 @@ if [ "$nfs"  == "" ]; then
   echo "LXD Profile nfs-server not found!! Exiting!!"
   exit 1
 else
-  lxc launch -p nfs-server focal-cloud nfs-server
-  check_nfs_status
-  check_cloud_init_status
-  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
-    get-helm.sh
-  fi
-  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
-  if [ "repo_nfs" == "" ]; then
-    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  fi
-  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-    --set nfs.server=nfs-server \
-    --set nfs.path=/mnt/nfs_share
+  nfs_server=$(lxc ls | grep nfs-server)
+  if [ "$nfs_server" == "" ]; then
+    lxc launch -p nfs-server focal-cloud nfs-server
+    check_nfs_status
+    check_cloud_init_status
+    if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
+      get-helm.sh
+    fi
+    repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
+    if [ "repo_nfs" == "" ]; then
+      helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+    fi
+    nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
+    if [ "$nfs_installed" == "" ]; then
+      helm_install
+    else
+      helm uninstall nfs-subdir-external-provisioner
+      helm_install
+    fi
   kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
@@ -1583,7 +1595,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 
 nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
 if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
-  kubectl delete deployment nfs-subdir-external-provisioner
+  kubectl delete deployment nfs-subdir-external-provisioner --grace-period=0 --force
 fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
