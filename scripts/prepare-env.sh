@@ -1519,7 +1519,7 @@ curl -L --remote-name-all "$CRUN_URL"{,.asc}
 popd || exit
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/start-nfs-server.sh
+cat <<'MYEOF' > ~/.local/bin/create-nfs-server.sh
 #!/usr/bin/env bash
 
 check_nfs_status () {
@@ -1572,20 +1572,21 @@ else
     lxc launch -p nfs-server focal-cloud nfs-server
     check_nfs_status
     check_cloud_init_status
-    if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
-      get-helm.sh
-    fi
-    repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
-    if [ "repo_nfs" == "" ]; then
-      helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-    fi
-    nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
-    if [ "$nfs_installed" == "" ]; then
-      helm_install
-    else
-      helm uninstall nfs-subdir-external-provisioner
-      helm_install
-    fi
+  fi
+  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
+    get-helm.sh
+  fi
+  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
+  if [ "repo_nfs" == "" ]; then
+    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  fi
+  nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
+  if [ "$nfs_installed" == "" ]; then
+    helm_install
+  else
+    helm uninstall nfs-subdir-external-provisioner
+    helm_install
+  fi
   kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
