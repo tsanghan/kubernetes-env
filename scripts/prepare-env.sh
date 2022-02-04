@@ -1504,8 +1504,19 @@ curl -L --remote-name-all "$CRUN_URL"{,.asc}
 popd || exit
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/start-nfs.sh
+cat <<'MYEOF' > ~/.local/bin/nfs-server.sh
 #!/usr/bin/env bash
+
+while getopts "s" o; do
+    case "$o" in
+        d)
+            stop="true"
+            ;;
+        *)
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 check_nfs_status () {
   echo -n "Wait"
@@ -1535,21 +1546,32 @@ check_cloud_init_status () {
   echo
 }
 
-nfs=$(lxc profile ls | grep nfs)
-if [ "$nfs"  == "" ]; then
-  echo "LXD Profile nfs-server not found!! Exiting!!"
-  exit 1
-else
-  lxc launch -p nfs-server focal-cloud nfs-server
-  check_nfs_status
-  check_cloud_init_status
-  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
-    get-helm.sh
+if [ "stop" == "" ]; then
+  nfs=$(lxc profile ls | grep nfs)
+  if [ "$nfs"  == "" ]; then
+    echo "LXD Profile nfs-server not found!! Exiting!!"
+    exit 1
+  else
+    lxc launch -p nfs-server focal-cloud nfs-server
+    check_nfs_status
+    check_cloud_init_status
+    if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
+      get-helm.sh
+    fi
+    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+    helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+      --set nfs.server=nfs-server \
+      --set nfs.path=/mnt/nfs_share
   fi
-  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-    --set nfs.server=nfs-server \
-    --set nfs.path=/mnt/nfs_share
+else
+  nfs_server=$(lxc ls | grep nfs)
+  if [ "$nfs_server" == "" ]; then
+    echo "nfs-server not running!! Exiting!!"
+    exit 1
+  else
+    lxc stop nfs-server --force
+    lxc delete nfs-server
+  fi
 fi
 MYEOF
 
