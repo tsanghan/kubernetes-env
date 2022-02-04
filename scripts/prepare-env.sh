@@ -1336,6 +1336,7 @@ if [ -f ~/.kube/config ]; then
 else
   cp ~/.kube/config-lxd ~/.kube/config
 fi
+chmod 0600 ~/.kube/config*
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
@@ -1577,6 +1578,7 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 #!/usr/bin/env bash
 
+kubectl delete deployment nfs-subdir-external-provisioner
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
   echo "nfs-server not running!! Exiting!!"
