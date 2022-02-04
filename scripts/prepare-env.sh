@@ -1596,7 +1596,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 
 nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
 if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
-  heml uninstall nfs-subdir-external-provisioner
+  helm uninstall nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
