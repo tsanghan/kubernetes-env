@@ -61,7 +61,8 @@ apt-get install -y --no-install-recommends \
                       lsb-release \
                       jq \
                       xz-utils \
-                      python3-pip
+                      python3-pip \
+                      nfs-kernel-server
 #
 if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg

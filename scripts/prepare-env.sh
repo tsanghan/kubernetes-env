@@ -670,6 +670,7 @@ else
           - kubeadm=$KUBE_VER-00
           - kubelet=$KUBE_VER-00
           - jq
+          - nfs-common
         package_update: false
         package_upgrade: false
         package_reboot_if_required: false
@@ -1501,7 +1502,55 @@ CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | gre
 curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
 popd || exit
+MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/start-nfs.sh
+#!/usr/bin/env bash
+
+check_nfs_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep nfs | grep eth0)
+    if [ ! "$STATUS" = "" ]; then
+      break
+    fi
+    echo -en "\U0001F601"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+check_cloud_init_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc exec nfs-server -- cloud-init status)
+    if [[ "$STATUS" =~ .*done$ ]]; then
+      break
+    fi
+    echo -en "\U0001F601"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+nfs=$(lxc profile ls | grep nfs)
+if [ "$nfs"  == "" ]; then
+  echo "LXD Profile nfs-server not found!! Exiting!!"
+  exit 1
+else
+  lxc launch -p nfs-server focal-cloud nfs-server
+  check_nfs_status
+  check_cloud_init_status
+  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
+    get-helm.sh
+  fi
+  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --set nfs.server=nfs-server \
+    --set nfs.path=/mnt/nfs_share
+fi
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
