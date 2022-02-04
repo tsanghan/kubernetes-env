@@ -1160,7 +1160,7 @@ check_lxd_status () {
       break
     fi
     echo -en "$3"
-    sleep 2
+    sleep 5
   done
   sleep 2
   echo
@@ -1567,7 +1567,10 @@ else
   if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
     get-helm.sh
   fi
-  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
+  if [ "repo_nfs" == "" ]; then
+    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  fi
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
     --set nfs.path=/mnt/nfs_share
@@ -1578,7 +1581,10 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 #!/usr/bin/env bash
 
-kubectl delete deployment nfs-subdir-external-provisioner
+nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner)
+if [[ ! "$nfs_deploy" =~ .*not found$ ]]; then
+  kubectl delete deployment nfs-subdir-external-provisioner
+fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
   echo "nfs-server not running!! Exiting!!"
