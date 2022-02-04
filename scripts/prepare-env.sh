@@ -1581,8 +1581,8 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 #!/usr/bin/env bash
 
-nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner)
-if [[ ! "$nfs_deploy" =~ .*not found$ ]]; then
+nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
+if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
   kubectl delete deployment nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
