@@ -1458,7 +1458,7 @@ cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
 while true;
 do
   if [ -e ~/.k/config ]; then
-    break;
+    break
   fi
 done
 
