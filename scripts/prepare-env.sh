@@ -1549,7 +1549,7 @@ check_cloud_init_status () {
   echo
 }
 
-cluster_running=$(kubectl cluster-info | head -1 2>&1 > /dev/null)
+cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
 if [[ ! "$cluster_running" =~ .*running.* ]]; then
   echo "No Kubernetes Cluster running!! Start a Kubernetes Cluster first!!"
   exit 1
