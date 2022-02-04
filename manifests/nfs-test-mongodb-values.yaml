@@ -1,0 +1,6 @@
+architecture: replicaset
+replicaCount: 3
+persistence:
+    storageClass: "nfs-client"
+auth:
+    rootPassword: secret-root-pwd

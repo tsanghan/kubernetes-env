@@ -670,6 +670,7 @@ else
           - kubeadm=$KUBE_VER-00
           - kubelet=$KUBE_VER-00
           - jq
+          - nfs-common
         package_update: false
         package_upgrade: false
         package_reboot_if_required: false
@@ -848,6 +849,100 @@ EOF
           - apt-get -y autoremove
           - sleep 10
           - nginx -s reload
+        default: none
+    description: ""
+    devices:
+      _dev_sda1:
+        path: /dev/sda1
+        source: /dev/sda1
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
+EOF
+  fi
+  nfs=$(lxc profile ls | grep nfs)
+  if [ "$nfs"  == "" ]; then
+    # Ref: https://github.com/lxc/lxd/issues/2703
+    # Ref: https://www.tecmint.com/install-nfs-server-on-ubuntu/
+    # Ref: https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-20-04
+    lxc profile create nfs-server
+
+    cat <<-EOF | lxc profile edit nfs-server
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      raw.apparmor: "mount fstype=rpc_pipefs,\nmount fstype=nfsd,"
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY
+          sources:
+            kubernetes.list:
+              source: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+              keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - nfs-kernel-server
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        write_files:
+        - content: |
+              /mnt/nfs_share  10.254.254.0/24(rw,sync,no_subtree_check)
+          path: /etc/exports
+          append: true
+          defer: true
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+          - mkdir -p /mnt/nfs_share
+          - chown -R nobody:nogroup /mnt/nfs_share/
+          - chmod 777 /mnt/nfs_share/
+          - exportfs -a
+          - systemctl restart nfs-kernel-server
         default: none
     description: ""
     devices:
@@ -1065,7 +1160,7 @@ check_lxd_status () {
       break
     fi
     echo -en "$3"
-    sleep 2
+    sleep 5
   done
   sleep 2
   echo
@@ -1183,8 +1278,22 @@ else
   WRKERNODES=(1 2)
 fi
 
-image=focal-cloud
-profile=k8s-cloud-init
+image=$(lxc image ls | grep focal-cloud)
+if [ "$image" == "" ]; then
+  echo "LXD Image focal-cloud not found!! Exiting!!"
+  exit 1
+else
+  image=focal-cloud
+fi
+
+profile=$(lxc profile ls | grep k8s-cloud-init)
+if [ "$profile" == "" ]; then
+  echo "LXD Profile k8s-cloud-init not found!! Exiting!!"
+  exit 1
+else
+  profile=k8s-cloud-init
+fi
+
 
 for c in "${NODES[@]}"; do
   lxc launch -p "$profile" "$image" lxd-"$c"
@@ -1227,6 +1336,7 @@ if [ -f ~/.kube/config ]; then
 else
   cp ~/.kube/config-lxd ~/.kube/config
 fi
+chmod 0600 ~/.kube/config*
 
 if [ "$multimaster" == "true" ]; then
   for c in 2 3; do
@@ -1347,8 +1457,8 @@ cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
 
 while true;
 do
-  if [ -e ~/.k/config ]; then
-    break;
+  if [ -e ~/.kube/config ]; then
+    break
   fi
 done
 
@@ -1357,7 +1467,7 @@ context=kubernetes-admin@kubernetes
 while true;
 do
   cluster=$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG)
-  if [ "$cluster" != "" ];
+  if [ "$cluster" != "" ]; then
     break
   fi
 done
@@ -1407,7 +1517,97 @@ CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | gre
 curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
 popd || exit
+MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/create-nfs-server.sh
+#!/usr/bin/env bash
+
+check_nfs_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc ls | grep nfs | grep eth0)
+    if [ ! "$STATUS" = "" ]; then
+      break
+    fi
+    echo -en "\U0001F601"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+check_cloud_init_status () {
+  echo -n "Wait"
+  while true; do
+    STATUS=$(lxc exec nfs-server -- cloud-init status)
+    if [[ "$STATUS" =~ .*done$ ]]; then
+      break
+    fi
+    echo -en "\U0001F601"
+    sleep 2
+  done
+  sleep 2
+  echo
+}
+
+helm_install () {
+  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --set nfs.server=nfs-server \
+    --set nfs.path=/mnt/nfs_share
+}
+
+cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
+if [[ ! "$cluster_running" =~ .*running.* ]]; then
+  echo "No Kubernetes Cluster running!! Start a Kubernetes Cluster first!!"
+  exit 1
+fi
+
+nfs=$(lxc profile ls | grep nfs)
+if [ "$nfs"  == "" ]; then
+  echo "LXD Profile nfs-server not found!! Exiting!!"
+  exit 1
+else
+  nfs_server=$(lxc ls | grep nfs-server)
+  if [ "$nfs_server" == "" ]; then
+    lxc launch -p nfs-server focal-cloud nfs-server
+    check_nfs_status
+    check_cloud_init_status
+  fi
+  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
+    get-helm.sh
+  fi
+  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
+  if [ "repo_nfs" == "" ]; then
+    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  fi
+  nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
+  if [ "$nfs_installed" == "" ]; then
+    helm_install
+  else
+    helm uninstall nfs-subdir-external-provisioner
+    helm_install
+  fi
+  kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
+fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
+#!/usr/bin/env bash
+
+nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
+if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
+  helm uninstall nfs-subdir-external-provisioner
+fi
+nfs_server=$(lxc ls | grep nfs)
+if [ "$nfs_server" == "" ]; then
+  echo "nfs-server not running!! Exiting!!"
+  exit 1
+else
+  if [[ ! "$nfs_server" =~ .*STOP.* ]]; then
+    lxc stop nfs-server --force
+  fi
+  lxc delete nfs-server
+fi
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
