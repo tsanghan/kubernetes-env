@@ -196,6 +196,7 @@ curl -L --remote-name-all "$LATEST"{,.sha256}
 OK=$(sed "s#bin/##" < arkade.sha256 | sha256sum --check)
 if [[ ! "$OK" == .*OK$ ]]; then
   echo "Arkade checksum NOT OK!! Exiting!!"
+  rm arkade*
   exit 1
 fi
 chmod +x arkade
