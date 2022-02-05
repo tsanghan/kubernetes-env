@@ -1650,7 +1650,7 @@ cat <<'MYEOF' > ~/.local/bin/helm-install-mongodb.sh
 #!/usr/bin/env bash
 
 helm_install () {
-  helm install my-mongodb bitnami/mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
+  helm install my-mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
 }
 
 bitnami=$(helm repo list 2> /dev/null | grep bitnami)
