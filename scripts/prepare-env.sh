@@ -442,6 +442,7 @@ kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resource
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -1425,7 +1426,7 @@ kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 k-apply.sh
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
   echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'"
