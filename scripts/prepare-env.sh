@@ -194,7 +194,7 @@ cd /tmp || exit
 LATEST=$(curl -s https://api.github.com/repos/alexellis/arkade/releases/latest | jq ".assets[].browser_download_url" | egrep -v "arm|darwin|\.exe|sha" | tr -d '"')
 curl -L --remote-name-all "$LATEST"{,.sha256}
 OK=$(sed "s#bin/##" < arkade.sha256 | sha256sum --check)
-if [[ ! "" == .*OK$ ]]; then
+if [[ ! "$OK" == .*OK$ ]]; then
   echo "Arkade checksum NOT OK!! Exiting!!"
   exit 1
 fi
