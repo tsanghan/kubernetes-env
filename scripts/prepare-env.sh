@@ -1649,6 +1649,21 @@ else
 fi
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/helm-install-mongodb.sh
+#!/usr/bin/env bash
+
+bitnami=$(helm repo list 2> /dev/null | grep bitnami)
+if [ "$bitnami" == "" ]; then
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm install my-mongodb bitnami/mongodb
+else
+  mongodb=$(helm list | grep mongodb)
+  if [ "$mongodb" == "" ]; then
+    helm install my-mongodb bitnami/mongodb
+  fi
+fi
+MYEOF
+
 cat <<'EOF' > ~/.local/bin/create-cluster.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-

@@ -25,7 +25,7 @@ spec:
         - name: ME_CONFIG_MONGODB_SERVER
           value: my-mongodb-0.my-mongodb-headless
         - name: ME_CONFIG_MONGODB_ADMINPASSWORD
-          valueFrom: 
+          valueFrom:
             secretKeyRef:
               name: my-mongodb
               key: mongodb-root-password
