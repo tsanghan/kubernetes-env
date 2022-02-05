@@ -1612,7 +1612,7 @@ else
   if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
     get-helm.sh
   fi
-  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
+  repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
   if [ "repo_nfs" == "" ]; then
     helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
   fi
@@ -1632,6 +1632,9 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 
 nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
 if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
+  helm uninstall nfs-subdir-external-provisioner
+else
+  kubectl delete deployment nfs-subdir-external-provisioner --grace-period=0 --force
   helm uninstall nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
