@@ -1613,7 +1613,7 @@ else
     get-helm.sh
   fi
   repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
-  if [ "repo_nfs" == "" ]; then
+  if [ "$repo_nfs" == "" ]; then
     helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
   fi
   nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
