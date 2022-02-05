@@ -1659,7 +1659,7 @@ if [ "$bitnami" == "" ]; then
 else
   mongodb=$(helm list | grep mongodb)
   if [ "$mongodb" == "" ]; then
-    helm install my-mongodb bitnami/mongodb
+    helm install my-mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
   fi
 fi
 MYEOF
