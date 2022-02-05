@@ -442,6 +442,7 @@ kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resource
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -1425,7 +1426,7 @@ kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
 k-apply.sh
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
   echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'"
@@ -1612,8 +1613,8 @@ else
   if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
     get-helm.sh
   fi
-  repo_nfs=$(helm repo list | grep nfs-subdir-external-provisioner)
-  if [ "repo_nfs" == "" ]; then
+  repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
+  if [ "$repo_nfs" == "" ]; then
     helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
   fi
   nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
@@ -1630,8 +1631,8 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 #!/usr/bin/env bash
 
-nfs_deploy=$(kubectl get deployment nfs-subdir-external-provisioner 2>&1)
-if [[ ! "$nfs_deploy" =~ ^Error.* ]]; then
+helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
+if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
@@ -1643,6 +1644,25 @@ else
     lxc stop nfs-server --force
   fi
   lxc delete nfs-server
+fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/helm-install-mongodb.sh
+#!/usr/bin/env bash
+
+helm_install () {
+  helm install my-mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
+}
+
+bitnami=$(helm repo list 2> /dev/null | grep bitnami)
+if [ "$bitnami" == "" ]; then
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm_install
+else
+  mongodb=$(helm list | grep mongodb)
+  if [ "$mongodb" == "" ]; then
+    helm_install
+  fi
 fi
 MYEOF
 
