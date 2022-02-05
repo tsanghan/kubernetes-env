@@ -170,6 +170,42 @@ popd || exit
 vagrant plugin install vagrant-vbguest
 EOF
 
+# Install arkade
+cat <<'EOF' > ~/.local/bin/get-arkade.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+
+echo
+echo "*******************************"
+echo "*                             *"
+echo "* Download and Install Arkade *"
+echo "*                             *"
+echo "*******************************"
+echo
+pushd .
+cd /tmp || exit
+LATEST=$(curl -s https://api.github.com/repos/alexellis/arkade/releases/latest | jq ".assets[].browser_download_url" | egrep -v "arm|darwin|\.exe|sha" | tr -d '"')
+curl -L --remote-name-all "$LATEST"{,.sha256}
+OK=$(sed "s#bin/##" < arkade.sha256 | sha256sum --check)
+if [[ ! "$OK" =~ .*OK$ ]]; then
+  echo "Arkade checksum NOT OK!! Exiting!!"
+  rm arkade*
+  exit 1
+fi
+chmod +x arkade
+mv arkade ~/.local/bin
+ln -s ~/.local/bin/arkade ~/.local/bin/ark
+rm arkade*
+popd || exit
+EOF
+
 # Create VBX cluster
 cat <<'EOF' > ~/.local/bin/create-vbx-cluster.sh
 #!/usr/bin/env bash
