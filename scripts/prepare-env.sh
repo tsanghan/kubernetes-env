@@ -1057,7 +1057,7 @@ fi
 
 if [ -x ~/.local/bin/helm ]
 then
-  source <(kubectl completion helm)
+  source <(helm completion bash)
   complete -F __start_helm helm
 fi
 
@@ -1596,7 +1596,8 @@ check_cloud_init_status () {
 helm_install () {
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
-    --set nfs.path=/mnt/nfs_share
+    --set nfs.path=/mnt/nfs_share \
+    --set replicaCount=2
 }
 
 cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
@@ -1633,7 +1634,7 @@ else
     helm uninstall nfs-subdir-external-provisioner
     helm_install
   fi
-  kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
+  # kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
 
