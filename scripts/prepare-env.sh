@@ -1617,8 +1617,10 @@ else
     check_cloud_init_status
   fi
   repo_stable=$(helm repo list 2> /dev/null | grep stable)
-  if [ "$repo_stable" == "" ]; then
-    helm repo add stable https://charts.helm.sh/stable
+  # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
+  repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
+  if [ "$repo_bitnami" == "" ]; then
+    helm repo add bitnami https://charts.bitnami.com/bitnami
   fi
   repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
   if [ "$repo_nfs" == "" ]; then
