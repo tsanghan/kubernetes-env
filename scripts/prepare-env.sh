@@ -1965,8 +1965,8 @@ fi
 # Install helm
 if [ ! -f ~/.local/bin/helm ]; then
   HELM_VER=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq ".tag_name" | tr -d '"')
-  curl -L --remote-name-all https://get.helm.sh/helm-"$HELM_VER"-linux-arm64.tar.gz{,.sha256sum}
-  OK=$(sha256sum --check helm-"$HELM_VER"-linux-arm64.tar.gz.sha256sum)
+  curl -L --remote-name-all https://get.helm.sh/helm-"$HELM_VER"-linux-amd64.tar.gz{,.sha256sum}
+  OK=$(sha256sum --check helm-"$HELM_VER"-linux-amd64.tar.gz.sha256sum)
   if [[ ! "$OK" =~ .*OK$ ]]; then
     echo "heml tarball does not match sha256 checksum, aborting!!"
     rm helm*
