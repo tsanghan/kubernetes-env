@@ -1962,6 +1962,25 @@ if [ ! -f ~/.local/bin/kubectl ]; then
   fi
 fi
 
+# Install helm
+if [ ! -f ~/.local/bin/helm ]; then
+  HELM_VER=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq ".tag_name" | tr -d '"')
+  curl -L --remote-name-all https://get.helm.sh/helm-"$HELM_VER"-linux-arm64.tar.gz{,.sha256sum}
+  OK=$(sha256sum --check helm-"$HELM_VER"-linux-arm64.tar.gz.sha256sum)
+  if [[ ! "$OK" =~ .*OK$ ]]; then
+    echo "heml tarball does not match sha256 checksum, aborting!!"
+    rm helm*
+    exit $?
+  else
+    echo "Installing helm verion=$HELM_VER"
+    tmp_dir=$(mktemp -d -q)
+    tar -C "$tmp_dir" -zxvf helm-"$HELM_VER"-linux-arm64.tar.gz linux-arm64/helm
+    mv "$tmp_dir"/linux-arm64/helm ~/.local/bin
+    rm helm*
+    rm -rf "$temp_dir"
+  fi
+fi
+
 # Install kind
 if [ ! -f ~/.local/bin/kind ]; then
   curl -sSL -o ~/.local/bin/kind \
@@ -2013,25 +2032,6 @@ fi
 if [ ! -f ~/.local/bin/kubecolor ]; then
   KUBECOLOR=$(curl -s https://api.github.com/repos/hidetatz/kubecolor/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep Linux | tr -d '"')
   curl -sSL "$KUBECOLOR" | tar -C ~/.local/bin -zxvf - kubecolor
-fi
-
-# Install helm
-if [ ! -f ~/.local/bin/helm ]; then
-  HELM_VER=$(curl -s https://api.github.com/repos/helm/helm/releases/latest | jq ".tag_name" | tr -d '"')
-  curl -L --remote-name-all https://get.helm.sh/helm-"$HELM_VER"-linux-arm64.tar.gz{,.sha256sum}
-  OK=$(sha256sum --check helm-"$HELM_VER"-linux-arm64.tar.gz.sha256sum)
-  if [[ ! "$OK" =~ .*OK$ ]]; then
-    echo "heml tarball does not match sha256 checksum, aborting!!"
-    rm helm*
-    exit $?
-  else
-    echo "Installing helm verion=$HELM_VER"
-    tmp_dir=$(mktemp -d -q)
-    tar -C "$tmp_dir" -zxvf helm-"$HELM_VER"-linux-arm64.tar.gz linux-arm64/helm
-    mv "$tmp_dir"/linux-arm64/helm ~/.local/bin
-    rm helm*
-    rm -rf "$temp_dir"
-  fi
 fi
 
 chmod 0755 ~/.local/bin/*
