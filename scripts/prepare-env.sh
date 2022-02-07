@@ -1055,6 +1055,12 @@ then
   complete -F __start_kubectl k
 fi
 
+if [ -x ~/.local/bin/helm ]
+then
+  source <(kubectl completion helm)
+  complete -F __start_helm helm
+fi
+
 if [ -x ~/.local/bin/kind ]
 then
   source <(kind completion bash)
@@ -1610,8 +1616,9 @@ else
     check_nfs_status
     check_cloud_init_status
   fi
-  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
-    get-helm.sh
+  repo_stable=$(helm repo list 2> /dev/null | grep stable)
+  if [ "$repo_stable" == "" ]; then
+    helm repo add stable https://charts.helm.sh/stable
   fi
   repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
   if [ "$repo_nfs" == "" ]; then
