@@ -1634,7 +1634,6 @@ else
     helm uninstall nfs-subdir-external-provisioner
     helm_install
   fi
-  # kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
 
