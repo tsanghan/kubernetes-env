@@ -2027,7 +2027,7 @@ if [ ! -f ~/.local/bin/helm ]; then
   else
     echo "Installing helm verion=$HELM_VER"
     tmp_dir=$(mktemp -d -q)
-    tar -C "$tmp_dir" helm-"$HELM_VER"-linux-arm64.tar.gz linux-arm64/helm
+    tar -C "$tmp_dir" -zxvf helm-"$HELM_VER"-linux-arm64.tar.gz linux-arm64/helm
     mv "$tmp_dir"/linux-arm64/helm ~/.local/bin
     rm helm*
     rm -rf "$temp_dir"
