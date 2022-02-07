@@ -1055,6 +1055,12 @@ then
   complete -F __start_kubectl k
 fi
 
+if [ -x ~/.local/bin/helm ]
+then
+  source <(helm completion bash)
+  complete -F __start_helm helm
+fi
+
 if [ -x ~/.local/bin/kind ]
 then
   source <(kind completion bash)
@@ -1360,7 +1366,7 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs | tee kubeadm-init.out
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver."$IPADDRESS".nip.io | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
@@ -1590,7 +1596,8 @@ check_cloud_init_status () {
 helm_install () {
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
-    --set nfs.path=/mnt/nfs_share
+    --set nfs.path=/mnt/nfs_share \
+    --set replicaCount=2
 }
 
 cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
@@ -1610,8 +1617,11 @@ else
     check_nfs_status
     check_cloud_init_status
   fi
-  if [ ! -f ~/.local/bin/get-helm-3.sh ]; then
-    get-helm.sh
+  repo_stable=$(helm repo list 2> /dev/null | grep stable)
+  # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
+  repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
+  if [ "$repo_bitnami" == "" ]; then
+    helm repo add bitnami https://charts.bitnami.com/bitnami
   fi
   repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
   if [ "$repo_nfs" == "" ]; then
@@ -1624,7 +1634,6 @@ else
     helm uninstall nfs-subdir-external-provisioner
     helm_install
   fi
-  kubectl scale deployment nfs-subdir-external-provisioner --replicas=2
 fi
 MYEOF
 
