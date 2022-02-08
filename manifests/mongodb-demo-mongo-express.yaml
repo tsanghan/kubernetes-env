@@ -16,6 +16,15 @@ spec:
       labels:
         app: mongo-express
     spec:
+      # Ref: https://stackoverflow.com/questions/15443106/how-to-check-if-mongodb-is-up-and-ready-to-accept-connections-from-bash-script#:~:text=log%20%2D%2Dlogappend%20%26%20%23%20Wait%20until,%2Fvar%2Flog%2Fmongodb.
+      initContainers:
+      - name: check-mongo-ready
+        image: busybox:1.35.0
+        command:
+          - sh
+        args:
+          - -c
+          - "until nc -z mongodb-0.mongodb-headless 27017; do echo waiting for mongodb; sleep 2; done;'"
       containers:
       - name: mongo-express
         image: mongo-express
