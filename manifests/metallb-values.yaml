@@ -3,4 +3,4 @@ configInline:
    - name: default
      protocol: layer2
      addresses:
-     - 10.254.254.0/24
+     - 10.254.254.240-10.254.254.250
