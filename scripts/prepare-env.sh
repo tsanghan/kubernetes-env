@@ -1633,21 +1633,6 @@ else
     check_cloud_init_status
   fi
   # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
-  # repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
-  # if [ "$repo_bitnami" == "" ]; then
-  #   helm repo add bitnami https://charts.bitnami.com/bitnami
-  # fi
-  # repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
-  # if [ "$repo_nfs" == "" ]; then
-  #   helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  # fi
-  # nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
-  # if [ "$nfs_installed" == "" ]; then
-  #   helm_install
-  # else
-  #   helm uninstall nfs-subdir-external-provisioner
-  #   helm_install
-  # fi
   helm upgrade --install nfs-subdir-external-provisioner nfs-subdir-external-provisioner \
     --repo https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ \
     --set nfs.server=nfs-server \
