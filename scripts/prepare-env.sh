@@ -439,10 +439,12 @@ echo "**************************************************************************
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+
+helm upgrade --install metallb metallb \
+  --repo https://metallb.github.io/metallb \
+  --namespace metallb --create-namespace \
+  --values metallb-values.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -455,7 +457,10 @@ echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
 echo "*                                                                                       *"
 echo "*****************************************************************************************"
 echo
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
+# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
@@ -541,7 +546,7 @@ while getopts "s" o; do
 done
 shift $((OPTIND-1))
 
-for profile in lb k8s-cloud-init;
+for profile in lb k8s-cloud-init nfs-server;
 do
   exists=$(lxc profile ls | grep "$profile")
   if [ "$exists" != "" ]; then
@@ -771,9 +776,10 @@ else
           - apt-get -y autoremove
           - systemctl enable mount-make-rshare
           - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
-          - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
+          # - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
           - mkdir -p /etc/containerd
-          - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
+          # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
+          # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/default_runtime_name/s#runc#crun#' | tee /etc/containerd/config.toml
           - systemctl enable containerd
           - systemctl start containerd
           - kubeadm config images pull
@@ -1366,7 +1372,7 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver."$IPADDRESS".nip.io | tee kubeadm-init.out
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver."$IPADDR".nip.io | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
@@ -1417,6 +1423,10 @@ else
     check_cilium_status "\U0001F680"
   elif [ "$n" == "calico" ]; then
     curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
+    # Ref: https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
+    # DOES NOT WORK
+    # helm upgrade --install calico tigera-operator \
+    #   --repo https://projectcalico.docs.tigera.io/charts
     check_cni_status "\U0001F680"
   elif [ "$n" == "weave" ]; then
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
@@ -1461,12 +1471,13 @@ while getopts "d" o; do
 done
 shift $((OPTIND-1))
 
+KUBECONFIG=~/.kube/config
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
   sudo sed -i '/lxd/d' /etc/hosts
 
-  KUBECONFIG=~/.kube/config
   context=kubernetes-admin@kubernetes
   if [ ! -f $KUBECONFIG ]; then
     printf "%s" "$KUBECONFIG file not found!!"
@@ -1486,13 +1497,14 @@ if [ "$delete"  == "true" ]; then
   current_context=$(yq e '.current-context' - < $KUBECONFIG)
   if [ "$current_context" == "$context" ]; then
     yq e ".current-context = \"\"" - < .tmp.config-user-cluster-context > .tmp.config-user-cluster-context-current
-    mv .tmp.config-user-cluster-context-current ~/.kube/config
+    mv .tmp.config-user-cluster-context-current $KUBECONFIG
     rm .tmp*
-    exit
+  else
+    mv .tmp.config-user-cluster-context $KUBECONFIG
+    rm .tmp*
   fi
-  mv .tmp.config-user-cluster-context ~/.kube/config
-  rm .tmp*
 fi
+chmod 0600 $KUBECONFIG
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
@@ -1543,21 +1555,28 @@ CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/r
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Containerd v$CONTAINERD_VER..."
 echo
-echo "**********************************"
-echo "*                                *"
+echo "*********************************"
+echo "*                               *"
 echo "* Downloading Containerd v$CONTAINERD_VER *"
-echo "*                                *"
-echo "**********************************"
+echo "*                               *"
+echo "*********************************"
 echo
 CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
 sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
-CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
-CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-echo "Downloading Crun v$CRUN_VER..."
-CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | grep -v systemd | tr -d '"')
-curl -L --remote-name-all "$CRUN_URL"{,.asc}
+# CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+# CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+# echo "Downloading Crun v$CRUN_VER..."
+# echo
+# echo "***************************"
+# echo "*                         *"
+# echo "* Downloading Crun v$CRUN_VER *"
+# echo "*                         *"
+# echo "***************************"
+# echo
+# CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | grep -v systemd | tr -d '"')
+# curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
 popd || exit
 MYEOF
@@ -1593,13 +1612,6 @@ check_cloud_init_status () {
   echo
 }
 
-helm_install () {
-  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-    --set nfs.server=nfs-server \
-    --set nfs.path=/mnt/nfs_share \
-    --set replicaCount=2
-}
-
 cluster_running=$(kubectl cluster-info 2> /dev/null| head -1)
 if [[ ! "$cluster_running" =~ .*running.* ]]; then
   echo "No Kubernetes Cluster running!! Start a Kubernetes Cluster first!!"
@@ -1617,23 +1629,17 @@ else
     check_nfs_status
     check_cloud_init_status
   fi
-  repo_stable=$(helm repo list 2> /dev/null | grep stable)
   # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
-  repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
-  if [ "$repo_bitnami" == "" ]; then
-    helm repo add bitnami https://charts.bitnami.com/bitnami
-  fi
-  repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
-  if [ "$repo_nfs" == "" ]; then
-    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  fi
-  nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
-  if [ "$nfs_installed" == "" ]; then
-    helm_install
-  else
-    helm uninstall nfs-subdir-external-provisioner
-    helm_install
-  fi
+  # helm upgrade --install nfs-subdir-external-provisioner nfs-subdir-external-provisioner \
+  #   --repo https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ \
+  #   --set nfs.server=nfs-server \
+  #   --set nfs.path=/mnt/nfs_share \
+  #   --set replicaCount=2
+  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+    --set nfs.server=nfs-server \
+    --set nfs.path=/mnt/nfs_share \
+    --set replicaCount=2
 fi
 MYEOF
 
@@ -1643,6 +1649,8 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
 if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
+  sleep 3
+  helm repo remove nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
@@ -1656,23 +1664,30 @@ else
 fi
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/helm-install-mongodb.sh
+cat <<'MYEOF' > ~/.local/bin/create-storage-demo.sh
 #!/usr/bin/env bash
 
-helm_install () {
-  helm install my-mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
-}
+create-nfs-server.sh
+# helm upgrade --install mongodb mongodb \
+#   --repo https://charts.bitnami.com/bitnami \
+#   --namespace mongodb --create-namespace \
+#   --values mongodb-values.yaml
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install mongodb bitnami/mongodb --namespace mongodb --create-namespace --values mongodb-values.yaml
+k apply -f mongodb-demo-mongo-express.yaml
+k apply -f mongodb-demo-ingress.yaml
+MYEOF
 
-bitnami=$(helm repo list 2> /dev/null | grep bitnami)
-if [ "$bitnami" == "" ]; then
-  helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm_install
-else
-  mongodb=$(helm list | grep mongodb)
-  if [ "$mongodb" == "" ]; then
-    helm_install
-  fi
-fi
+cat <<'MYEOF' > ~/.local/bin/stop-storage-demo.sh
+#!/usr/bin/env bash
+
+k delete -f mongodb-demo-ingress.yaml
+k delete -f mongodb-demo-mongo-express.yaml
+helm --namespace mongodb uninstall mongodb
+helm repo remove bitnami
+PVCS=($(kubectl -n mongodb get pvc --no-headers | awk '{print $1}'))
+for pvc in "${PVCS[@]}"; do kubectl -n mongodb delete pvc "$pvc"; done
+stop-nfs-server.sh
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
@@ -1826,6 +1841,7 @@ def pull_admin_conf(instance):
         merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file)
     else:
         kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+    kubeconfig_file.chmod(0o600)
 
 
 def start_cluster(client, instance_name_list):
