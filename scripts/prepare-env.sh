@@ -1469,12 +1469,13 @@ while getopts "d" o; do
 done
 shift $((OPTIND-1))
 
+KUBECONFIG=~/.kube/config
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
   sudo sed -i '/lxd/d' /etc/hosts
 
-  KUBECONFIG=~/.kube/config
   context=kubernetes-admin@kubernetes
   if [ ! -f $KUBECONFIG ]; then
     printf "%s" "$KUBECONFIG file not found!!"
@@ -1500,8 +1501,8 @@ if [ "$delete"  == "true" ]; then
   fi
   mv .tmp.config-user-cluster-context $KUBECONFIG
   rm .tmp*
-  chmod 0600 $KUBECONFIG
 fi
+chmod 0600 $KUBECONFIG
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
