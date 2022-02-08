@@ -1423,7 +1423,7 @@ else
     check_cilium_status "\U0001F680"
   elif [ "$n" == "calico" ]; then
     # curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
-    helm upgrade install calico calico \
+    helm upgrade --install calico calico \
       --repo https://projectcalico.docs.tigera.io/charts
     check_cni_status "\U0001F680"
   elif [ "$n" == "weave" ]; then
