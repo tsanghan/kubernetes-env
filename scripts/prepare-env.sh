@@ -1630,8 +1630,13 @@ else
     check_cloud_init_status
   fi
   # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
-  helm upgrade --install nfs-subdir-external-provisioner nfs-subdir-external-provisioner \
-    --repo https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ \
+  # helm upgrade --install nfs-subdir-external-provisioner nfs-subdir-external-provisioner \
+  #   --repo https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ \
+  #   --set nfs.server=nfs-server \
+  #   --set nfs.path=/mnt/nfs_share \
+  #   --set replicaCount=2
+  helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
     --set nfs.path=/mnt/nfs_share \
     --set replicaCount=2
@@ -1644,6 +1649,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
 if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
+  helm repo remove nfs
 fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
@@ -1661,10 +1667,12 @@ cat <<'MYEOF' > ~/.local/bin/create-storage-demo.sh
 #!/usr/bin/env bash
 
 create-nfs-server.sh
-helm upgrade --install mongodb mongodb \
-  --repo https://charts.bitnami.com/bitnami \
-  --namespace mongodb --create-namespace \
-  --values mongodb-values.yaml
+# helm upgrade --install mongodb mongodb \
+#   --repo https://charts.bitnami.com/bitnami \
+#   --namespace mongodb --create-namespace \
+#   --values mongodb-values.yaml
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install mongodb bitnami/mongodb --namespace mongodb --create-namespace --values mongodb-values.yaml
 k apply -f mongodb-demo-mongo-express.yaml
 k apply -f mongodb-demo-ingress.yaml
 MYEOF
@@ -1674,7 +1682,8 @@ cat <<'MYEOF' > ~/.local/bin/stop-storage-demo.sh
 
 k delete -f mongodb-demo-ingress.yaml
 k delete -f mongodb-demo-mongo-express.yaml
-helm uninstall mongodb-demo
+helm uninstall mongodb
+helm repo remove bitnami
 PVCS=($(kubectl get pcv --no-headers | awk '{print $1}'))
 for pvc in "${PVCS[@]}"; do kubectl delete pvc "$pvc"; done
 stop-nfs-server.sh
