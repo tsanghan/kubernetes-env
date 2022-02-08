@@ -4,7 +4,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
   name: mongo-demo-express
-  namespace: mongode-demo
+  namespace: mongodb-demo
 spec:
   ingressClassName: nginx
   rules:
