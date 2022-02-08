@@ -445,12 +445,8 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 # sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 helm upgrade --install metallb metallb \
   --repo https://metallb.github.io/metallb \
+  --namespace metallb --create-namespace
   --values metallb-values.yaml
-# repo_metallb=$(helm repo list 2> /dev/null | grep metallb)
-# if [ "$repo_metallb" == "" ]; then
-#   helm repo add metallb https://metallb.github.io/metallb
-#   helm install metallb metallb/metallb -f metallb-values.yaml
-# fi
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -1690,7 +1686,7 @@ k apply -f nfs-test-mongo-express.yaml
 k apply -f nfs-test-ingress.yaml
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/delete-storage-demo.sh
+cat <<'MYEOF' > ~/.local/bin/stop-storage-demo.sh
 #!/usr/bin/env bash
 
 k delete -f nfs-test-ingress.yaml
