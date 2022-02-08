@@ -1649,6 +1649,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
 if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
+  sleep 5
   helm repo remove nfs
 fi
 nfs_server=$(lxc ls | grep nfs)
@@ -1682,10 +1683,10 @@ cat <<'MYEOF' > ~/.local/bin/stop-storage-demo.sh
 
 k delete -f mongodb-demo-ingress.yaml
 k delete -f mongodb-demo-mongo-express.yaml
-helm uninstall mongodb
+helm --namespace mongodb uninstall mongodb
 helm repo remove bitnami
-PVCS=($(kubectl get pcv --no-headers | awk '{print $1}'))
-for pvc in "${PVCS[@]}"; do kubectl delete pvc "$pvc"; done
+PVCS=($(kubectl -n mongodb get pvc --no-headers | awk '{print $1}'))
+for pvc in "${PVCS[@]}"; do kubectl -n mongodb delete pvc "$pvc"; done
 stop-nfs-server.sh
 MYEOF
 
