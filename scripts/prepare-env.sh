@@ -1649,7 +1649,7 @@ cat <<'MYEOF' > ~/.local/bin/stop-nfs-server.sh
 helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
 if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
-  sleep 5
+  sleep 3
   helm repo remove nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
