@@ -1839,6 +1839,7 @@ def pull_admin_conf(instance):
         merge_kubeocnfig_files(kubeconfig_file, kubeconfig_lxd_file)
     else:
         kubeconfig_file.write_bytes(instance.files.get("/etc/kubernetes/admin.conf"))
+    kubeconfig_file.chmod(0o600)
 
 
 def start_cluster(client, instance_name_list):
