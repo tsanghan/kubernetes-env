@@ -1650,7 +1650,7 @@ helm_nfs=$(helm list | grep nfs-subdir-external-provisioner)
 if [ ! "$helm_nfs" == "" ]; then
   helm uninstall nfs-subdir-external-provisioner
   sleep 5
-  helm repo remove nfs
+  helm repo remove nfs-subdir-external-provisioner
 fi
 nfs_server=$(lxc ls | grep nfs)
 if [ "$nfs_server" == "" ]; then
