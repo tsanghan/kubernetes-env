@@ -1661,19 +1661,19 @@ cat <<'MYEOF' > ~/.local/bin/create-storage-demo.sh
 #!/usr/bin/env bash
 
 create-nfs-server.sh
-helm upgrade --install mongodb-demo mongodb \
+helm upgrade --install mongodb mongodb \
   --repo https://charts.bitnami.com/bitnami \
-  --namespace mongodb-demo --create-namespace \
+  --namespace mongodb --create-namespace \
   --values mongodb-values.yaml
-k apply -f nfs-test-mongo-express.yaml
-k apply -f nfs-test-ingress.yaml
+k apply -f mongodb-demo-mongo-express.yaml
+k apply -f mongodb-demo-ingress.yaml
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-storage-demo.sh
 #!/usr/bin/env bash
 
-k delete -f nfs-test-ingress.yaml
-k delete -f nfs-test-mongo-express.yaml
+k delete -f mongodb-demo-ingress.yaml
+k delete -f mongodb-demo-mongo-express.yaml
 helm uninstall mongodb-demo
 PVCS=($(kubectl get pcv --no-headers | awk '{print $1}'))
 for pvc in "${PVCS[@]}"; do kubectl delete pvc "$pvc"; done
