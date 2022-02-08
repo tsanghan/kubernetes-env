@@ -1494,13 +1494,13 @@ if [ "$delete"  == "true" ]; then
   current_context=$(yq e '.current-context' - < $KUBECONFIG)
   if [ "$current_context" == "$context" ]; then
     yq e ".current-context = \"\"" - < .tmp.config-user-cluster-context > .tmp.config-user-cluster-context-current
-    mv .tmp.config-user-cluster-context-current ~/.kube/config
-    chmod 0600 ~/.kube/config
+    mv .tmp.config-user-cluster-context-current $KUBECONFIG
     rm .tmp*
     exit
   fi
-  mv .tmp.config-user-cluster-context ~/.kube/config
+  mv .tmp.config-user-cluster-context $KUBECONFIG
   rm .tmp*
+  chmod 0600 $KUBECONFIG
 fi
 MYEOF
 
