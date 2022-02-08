@@ -445,6 +445,7 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 # sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
 repo_metallb=$(helm repo list 2> /dev/null | grep metallb)
 if [ "$repo_metallb" == "" ]; then
+  helm repo add metallb https://metallb.github.io/metallb
   helm install metallb metallb/metallb -f metallb-values.yaml
 fi
 EOF
