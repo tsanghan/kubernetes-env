@@ -443,11 +443,14 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 # sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
-repo_metallb=$(helm repo list 2> /dev/null | grep metallb)
-if [ "$repo_metallb" == "" ]; then
-  helm repo add metallb https://metallb.github.io/metallb
-  helm install metallb metallb/metallb -f metallb-values.yaml
-fi
+helm upgrade --install metallb metallb \
+  --repo https://metallb.github.io/metallb \
+  --values metallb-values.yaml
+# repo_metallb=$(helm repo list 2> /dev/null | grep metallb)
+# if [ "$repo_metallb" == "" ]; then
+#   helm repo add metallb https://metallb.github.io/metallb
+#   helm install metallb metallb/metallb -f metallb-values.yaml
+# fi
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -1634,21 +1637,26 @@ else
     check_cloud_init_status
   fi
   # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
-  repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
-  if [ "$repo_bitnami" == "" ]; then
-    helm repo add bitnami https://charts.bitnami.com/bitnami
-  fi
-  repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
-  if [ "$repo_nfs" == "" ]; then
-    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  fi
-  nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
-  if [ "$nfs_installed" == "" ]; then
-    helm_install
-  else
-    helm uninstall nfs-subdir-external-provisioner
-    helm_install
-  fi
+  # repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
+  # if [ "$repo_bitnami" == "" ]; then
+  #   helm repo add bitnami https://charts.bitnami.com/bitnami
+  # fi
+  # repo_nfs=$(helm repo list 2> /dev/null | grep nfs-subdir-external-provisioner)
+  # if [ "$repo_nfs" == "" ]; then
+  #   helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+  # fi
+  # nfs_installed=$(helm list | grep nfs-subdir-external-provisioner)
+  # if [ "$nfs_installed" == "" ]; then
+  #   helm_install
+  # else
+  #   helm uninstall nfs-subdir-external-provisioner
+  #   helm_install
+  # fi
+  helm upgrade --install nfs-subdir-external-provisioner nfs-subdir-external-provisioner \
+    --repo https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ \
+    --set nfs.server=nfs-server \
+    --set nfs.path=/mnt/nfs_share \
+    --set replicaCount=2
 fi
 MYEOF
 
@@ -1671,23 +1679,27 @@ else
 fi
 MYEOF
 
-cat <<'MYEOF' > ~/.local/bin/helm-install-mongodb.sh
+cat <<'MYEOF' > ~/.local/bin/create-storage-demo.sh
 #!/usr/bin/env bash
 
-helm_install () {
-  helm install my-mongodb --values nfs-test-mongodb-values.yaml bitnami/mongodb
-}
+create-nfs-server.sh
+helm upgrade --install my-mongodb mongodb \
+  --repo https://charts.bitnami.com/bitnami \
+  --values mongodb-values.yaml
+k apply -f nfs-test-mongo-express.yaml
+k apply -f nfs-test-ingress.yaml
 
-bitnami=$(helm repo list 2> /dev/null | grep bitnami)
-if [ "$bitnami" == "" ]; then
-  helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm_install
-else
-  mongodb=$(helm list | grep mongodb)
-  if [ "$mongodb" == "" ]; then
-    helm_install
-  fi
-fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/delete-storage-demo.sh
+#!/usr/bin/env bash
+
+k delete -f nfs-test-ingress.yaml
+k delete -f nfs-test-mongo-express.yaml
+helm uninstall my-mongodb
+helm repo remove bitnami
+delete-nfs-server.sh
+
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
