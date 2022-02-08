@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongo-express
+  namespace: mongodb-demo
   labels:
     app: mongo-express
 spec:
@@ -11,29 +12,38 @@ spec:
       app: mongo-express
   template:
     metadata:
+      namespace: mongodb-demo
       labels:
         app: mongo-express
     spec:
       containers:
       - name: mongo-express
         image: mongo-express
-        ports: 
+        ports:
         - containerPort: 8081
         env:
         - name: ME_CONFIG_MONGODB_ADMINUSERNAME
           value: root
         - name: ME_CONFIG_MONGODB_SERVER
-          value: my-mongodb-0.my-mongodb-headless
+          value: mongodb-demo-0.my-mongodb-headless
         - name: ME_CONFIG_MONGODB_ADMINPASSWORD
           valueFrom:
             secretKeyRef:
-              name: my-mongodb
+              name: mongodb-demo
               key: mongodb-root-password
+        resources:
+          request:
+            cpu: "250m"
+            memory: "64Mi"
+          limits:
+            cpu: "500m"
+            memory: "128Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo-express-service
+  namespace: mongodb-demo
 spec:
   selector:
     app: mongo-express
