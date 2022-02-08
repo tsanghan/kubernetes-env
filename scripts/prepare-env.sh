@@ -1688,7 +1688,6 @@ helm upgrade --install my-mongodb mongodb \
   --values mongodb-values.yaml
 k apply -f nfs-test-mongo-express.yaml
 k apply -f nfs-test-ingress.yaml
-
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/delete-storage-demo.sh
@@ -1699,7 +1698,6 @@ k delete -f nfs-test-mongo-express.yaml
 helm uninstall my-mongodb
 helm repo remove bitnami
 stop-nfs-server.sh
-
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
