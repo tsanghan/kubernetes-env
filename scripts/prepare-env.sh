@@ -439,10 +439,14 @@ echo "**************************************************************************
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
+# kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml
+# sed "/replace/s/{{ replace-me }}/10.254.254/g" < metallab-configmap.yaml.tmpl | kubectl apply -f -
+repo_metallb=$(helm repo list 2> /dev/null | grep metallb)
+if [ "$repo_metallb" == "" ]; then
+  helm install metallb metallb/metallb -f metallb-values.yaml
+fi
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
@@ -1556,6 +1560,13 @@ sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
 echo "Downloading Crun v$CRUN_VER..."
+echo
+echo "**********************************"
+echo "*                                *"
+echo "* Downloading Containerd v$CRUN_VER *"
+echo "*                                *"
+echo "**********************************"
+echo
 CRUN_URL=$(echo -E "$CRUN_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v asc | grep -v systemd | tr -d '"')
 curl -L --remote-name-all "$CRUN_URL"{,.asc}
 
@@ -1617,7 +1628,6 @@ else
     check_nfs_status
     check_cloud_init_status
   fi
-  repo_stable=$(helm repo list 2> /dev/null | grep stable)
   # Ref: https://stackoverflow.com/questions/65642967/why-almost-all-helm-packages-are-deprecated#:~:text=helm%2Fcharts%20has%20been%20deprecated,at%20datawire%2Fambassador%2Dchart.
   repo_bitnami=$(helm repo list 2> /dev/null | grep bitnami)
   if [ "$repo_bitnami" == "" ]; then
