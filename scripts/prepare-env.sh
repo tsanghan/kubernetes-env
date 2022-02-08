@@ -1698,7 +1698,7 @@ k delete -f nfs-test-ingress.yaml
 k delete -f nfs-test-mongo-express.yaml
 helm uninstall my-mongodb
 helm repo remove bitnami
-delete-nfs-server.sh
+stop-nfs-server.sh
 
 MYEOF
 
