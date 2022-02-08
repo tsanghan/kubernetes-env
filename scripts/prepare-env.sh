@@ -548,7 +548,7 @@ while getopts "s" o; do
 done
 shift $((OPTIND-1))
 
-for profile in lb k8s-cloud-init;
+for profile in lb k8s-cloud-init nfs-server;
 do
   exists=$(lxc profile ls | grep "$profile")
   if [ "$exists" != "" ]; then
