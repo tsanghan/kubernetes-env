@@ -1663,7 +1663,7 @@ cat <<'MYEOF' > ~/.local/bin/create-storage-demo.sh
 create-nfs-server.sh
 helm upgrade --install mongodb-demo mongodb \
   --repo https://charts.bitnami.com/bitnami \
-  --namespace mongodb-demo --create-namespace
+  --namespace mongodb-demo --create-namespace \
   --values mongodb-values.yaml
 k apply -f nfs-test-mongo-express.yaml
 k apply -f nfs-test-ingress.yaml
