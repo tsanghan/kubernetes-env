@@ -789,7 +789,7 @@ else
             # This eventually leads to kubelet failing to start, see: https://github.com/kubernetes-sigs/kind/issues/2323
             ExecStartPre=/bin/sh -euc "if [ ! -f /sys/fs/cgroup/cgroup.controllers ] && [ ! -d /sys/fs/cgroup/systemd/kubelet ]; then mkdir -p /sys/fs/cgroup/systemd/kubelet; fi"
             ExecStart=
-            ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS --cgroup-root=/kubelet
+            ExecStart=/usr/bin/kubelet \$KUBELET_KUBECONFIG_ARGS \$KUBELET_CONFIG_ARGS \$KUBELET_KUBEADM_ARGS \$KUBELET_EXTRA_ARGS --cgroup-root=/kubelet
           owner: root:root
           path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
           permissions: '0644'
