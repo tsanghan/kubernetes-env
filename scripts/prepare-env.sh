@@ -826,10 +826,6 @@ else
         path: /mnt/containerd
         source: /home/$USER/Projects/kubernetes-env/.containerd
         type: disk
-      lib_modules:
-        path: /usr/lib/modules
-        source: /usr/lib/modules
-        type: disk
 EOF
   fi
 
