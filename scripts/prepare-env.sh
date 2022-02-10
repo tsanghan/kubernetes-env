@@ -1521,7 +1521,7 @@ while getopts "c:" o; do
     case "$o" in
         c)
             context=$OPTARG
-            if [ "$c" != "kind-kind" ] && [ "$c" != "kubernetes-admin@kubernetes" ]; then
+            if [ "$context" != "kind-kind" ] && [ "$context" != "kubernetes-admin@kubernetes" ]; then
                 usage
             fi
             ;;
