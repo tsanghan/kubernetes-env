@@ -899,8 +899,8 @@ else
         source: /home/$USER/Projects/kubernetes-env/.containerd
         type: disk
       lib_modules:
-        path: /lib/modules/5.15.0-18-generic
-        source: /lib/modules/5.15.0-18-generic
+        path: /lib/modules
+        source: /lib/modules
         type: disk
 EOF
   fi
