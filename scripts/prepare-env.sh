@@ -1520,7 +1520,7 @@ usage() {
 while getopts "c:" o; do
     case "$o" in
         c)
-            c=$OPTARG
+            context=$OPTARG
             if [ "$c" != "kind-kind" ] && [ "$c" != "kubernetes-admin@kubernetes" ]; then
                 usage
             fi
@@ -1533,7 +1533,7 @@ shift $((OPTIND-1))
 
 
 KUBECONFIG=~/.kube/config
-if [ "$c" == "" ]; then
+if [ "$context" == "" ]; then
   context=kubernetes-admin@kubernetes
 fi
 
