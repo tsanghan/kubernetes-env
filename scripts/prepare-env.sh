@@ -771,6 +771,78 @@ else
           owner: root:root
           path: /etc/containerd/certs.d/$IP/hosts.toml
           permissions: '0644'
+        - content: |
+            # https://github.com/kubernetes/kubernetes/blob/ba8fcafaf8c502a454acd86b728c857932555315/build/debs/10-kubeadm.conf
+            # Note: This dropin only works with kubeadm and kubelet v1.11+
+            [Service]
+            Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+            Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
+            # This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
+            EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
+            # This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
+            # the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
+            EnvironmentFile=-/etc/default/kubelet
+            # On cgroup v1, the /kubelet cgroup is created in the entrypoint script before running systemd.
+            # On cgroup v2, the /kubelet cgroup is created here. (See the comments in the entrypoint script for the reason.)
+            ExecStartPre=/bin/sh -euc "if [ -f /sys/fs/cgroup/cgroup.controllers ]; then create-kubelet-cgroup-v2; fi"
+            # on WSL2 (and potentially other distros without systemd) /sys/fs/cgroup/systemd is created after the entrypoint, during /sbin/init.
+            # This eventually leads to kubelet failing to start, see: https://github.com/kubernetes-sigs/kind/issues/2323
+            ExecStartPre=/bin/sh -euc "if [ ! -f /sys/fs/cgroup/cgroup.controllers ] && [ ! -d /sys/fs/cgroup/systemd/kubelet ]; then mkdir -p /sys/fs/cgroup/systemd/kubelet; fi"
+            ExecStart=
+            ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS --cgroup-root=/kubelet
+          owner: root:root
+          path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+          permissions: '0644'
+        - content: |
+            #!/bin/bash
+
+            # Copyright 2021 The Kubernetes Authors.
+            #
+            # Licensed under the Apache License, Version 2.0 (the "License");
+            # you may not use this file except in compliance with the License.
+            # You may obtain a copy of the License at
+            #
+            #     http://www.apache.org/licenses/LICENSE-2.0
+            #
+            # Unless required by applicable law or agreed to in writing, software
+            # distributed under the License is distributed on an "AS IS" BASIS,
+            # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+            # See the License for the specific language governing permissions and
+            # limitations under the License.
+
+            set -o errexit
+            set -o nounset
+            set -o pipefail
+            if [[ ! -f "/sys/fs/cgroup/cgroup.controllers" ]]; then
+              echo 'ERROR: this script should not be called on cgroup v1 hosts' >&2
+              exit 1
+            fi
+
+            # NOTE: we can't use `test -s` because cgroup.procs is not a regular file.
+            if grep -qv '^0$' /sys/fs/cgroup/cgroup.procs ; then
+              echo 'ERROR: this script needs /sys/fs/cgroup/cgroup.procs to be empty (for writing the top-level cgroup.subtree_control)' >&2
+              # So, this script needs to be called after launching systemd.
+              # This script cannot be called from /usr/local/bin/entrypoint.
+              exit 1
+            fi
+
+            ensure_subtree_control() {
+              local group=$1
+              # When cgroup.controllers is like "cpu cpuset memory io pids",
+              # cgroup.subtree_control is written with "+cpu +cpuset +memory +io +pids" .
+              sed -e 's/ / +/g' -e 's/^/+/' <"/sys/fs/cgroup/$group/cgroup.controllers" >"/sys/fs/cgroup/$group/cgroup.subtree_control"
+            }
+
+            # kubelet requires all the controllers (including hugetlb) in /sys/fs/cgroup/cgroup.controllers to be available in
+            # /sys/fs/cgroup/kubelet/cgroup.subtree_control.
+            #
+            # We need to update the top-level cgroup.subtree_controllers as well, because hugetlb is not present in the file by default.
+            ensure_subtree_control /
+            mkdir -p /sys/fs/cgroup/kubelet
+            ensure_subtree_control /kubelet
+          owner: root:root
+          path: /usr/local/bin/create-kubelet-cgroup-v2
+          permissions: '0755'
         runcmd:
           - apt-get -y purge nano
           - apt-get -y autoremove
