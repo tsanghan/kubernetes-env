@@ -1510,22 +1510,41 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/record-k9s.sh
 #!/usr/bin/env bash
 
-while true;
-do
-  if [ -e ~/.kube/config ]; then
-    break
-  fi
+usage() {
+  echo "Usage: $(basename $0) [-c <kind-kind|kubernetes-admin@kubernetes>" 1>&2
+  echo '       -c   "which Cluster only kind-kind or kubernetes-admin@kubernetes"'
+  echo
+  exit 1
+}
+
+while getopts "c:" o; do
+    case "$o" in
+        c)
+            c=$OPTARG
+            if [ "$c" != "kind-kind" ] && [ "$c" != "kubernetes-admin@kubernetes" ]; then
+                usage
+            fi
+            ;;
+        *)
+            ;;
+    esac
 done
+shift $((OPTIND-1))
+
 
 KUBECONFIG=~/.kube/config
-context=kubernetes-admin@kubernetes
-while true;
-do
-  cluster=$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG)
-  if [ "$cluster" != "" ]; then
-    break
-  fi
+if [ "$c" == "" ]; then
+  context=kubernetes-admin@kubernetes
+fi
+
+until [ -e "$KUBECONFIG" ]; do
+    sleep 2
 done
+
+until [ $(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG) != "" ]; do
+  sleep 2
+done
+
 k9s
 MYEOF
 
