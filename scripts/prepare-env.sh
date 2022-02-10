@@ -1541,7 +1541,7 @@ until [ -e "$KUBECONFIG" ]; do
     sleep 2
 done
 
-until [ $(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG) != "" ]; do
+until [ x$(yq e ".contexts[] | select(.name == \"$context\") | .context.cluster" - < $KUBECONFIG) != "x" ]; do
   sleep 2
 done
 
