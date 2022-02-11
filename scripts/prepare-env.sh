@@ -1024,7 +1024,7 @@ EOF
 fi
 
 YY=20
-CODE_NAME=focal
+CODE_NAMES=(focal impish jammy)
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
@@ -1041,12 +1041,14 @@ if [ "$image" == "" ]; then
     lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
     rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
   else
-    VERSION=$(curl -sSL https://us.lxd.images.canonical.com/streams/v1/images.json | \
-              jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
-    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
-    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
-    lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
-    rm lxd.tar.xz rootfs.squashfs
+    for CODE_NAME in "${CODE_NAMES[@]}"; do
+      VERSION=$(curl -sSL https://us.lxd.images.canonical.com/streams/v1/images.json | \
+                jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
+      curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/"$CODE_NAME"/amd64/cloud/"$VERSION"/lxd.tar.xz
+      curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/"$CODE_NAME"/amd64/cloud/"$VERSION"/rootfs.squashfs
+      lxc image import lxd.tar.xz rootfs.squashfs --alias "$CODE_NAME"-cloud
+      rm lxd.tar.xz rootfs.squashfs
+    done
   fi
 fi
 MYEOF
@@ -1173,7 +1175,7 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmn:i:" o; do
+while getopts ":rlcmn:i:d:" o; do
     case "$o" in
         c)
             containersonly="true"
@@ -1191,6 +1193,14 @@ while getopts ":rlcmn:i:" o; do
             i=$OPTARG
             if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
+            fi
+            ;;
+        d)
+            d=$OPTARG
+            if [ "$d" != "focal" ] && [ "$d" != "impish" ] && [ "$d" != "jammy" ]; then
+                usage
+            else
+              code_name=$d
             fi
             ;;
         *)
@@ -1327,12 +1337,12 @@ else
   WRKERNODES=(1 2)
 fi
 
-image=$(lxc image ls | grep focal-cloud)
+image=$(lxc image ls | grep "$code_name"-cloud)
 if [ "$image" == "" ]; then
-  echo "LXD Image focal-cloud not found!! Exiting!!"
+  echo "LXD Image "$code_name"-cloud not found!! Exiting!!"
   exit 1
 else
-  image=focal-cloud
+  image="$code_name"-cloud
 fi
 
 profile=$(lxc profile ls | grep k8s-cloud-init)
@@ -1366,7 +1376,7 @@ if [ "$containersonly" == "true" ]; then
 fi
 
 if [ "$multimaster" == "true" ]; then
-  lxc launch -p lb focal-cloud lxd-lb
+  lxc launch -p lb "$code_name"-cloud lxd-lb
   check_lb_status
   IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
   update_local_etc_hosts "$IPADDR"
@@ -1644,7 +1654,7 @@ if [ "$nfs"  == "" ]; then
 else
   nfs_server=$(lxc ls | grep nfs-server)
   if [ "$nfs_server" == "" ]; then
-    lxc launch -p nfs-server focal-cloud nfs-server
+    lxc launch -p nfs-server "$code_name"-cloud nfs-server
     check_nfs_status
     check_cloud_init_status
   fi
