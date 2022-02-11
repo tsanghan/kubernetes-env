@@ -780,6 +780,7 @@ else
           - mkdir -p /etc/containerd
           # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
           # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/default_runtime_name/s#runc#crun#' | tee /etc/containerd/config.toml
+          - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/SystemdCgroup/s/false/true/' | tee /etc/containerd/config.toml
           - systemctl enable containerd
           - systemctl start containerd
           - kubeadm config images pull
@@ -1024,8 +1025,7 @@ EOF
 fi
 
 YY=20
-# CODE_NAMES=(focal impish jammy)
-CODE_NAMES=(focal)
+CODE_NAMES=(focal impish jammy)
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
