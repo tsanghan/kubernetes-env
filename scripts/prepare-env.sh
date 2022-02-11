@@ -1209,6 +1209,7 @@ while getopts ":rlcmn:i:d:w:" o; do
               usage
             fi
             number=$w
+            ;;
         *)
             usage
             ;;
