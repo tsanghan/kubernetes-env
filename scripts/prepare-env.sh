@@ -1187,6 +1187,8 @@ while getopts ":rlcmn:i:d:w:" o; do
             n=$OPTARG
             if [ "$n" != "cilium" ] && [ "$n" != "calico" ] && [ "$n" != "weave" ]; then
                 usage
+            else
+                cni="$n"
             fi
             ;;
         i)
@@ -1439,26 +1441,26 @@ done
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
-if [ -z "$n" ]; then
+if [ -z "$cni" ]; then
   echo "No CNI specified!! Doing nothing for CNI plugin!!"
   echo "You might want to deploy Calico. 'kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml'"
   echo -e "Will exit here!!\ncreate-cluster.sh -h for help!!"
   exit
 else
-  if [ "$n" == "cilium" ]; then
+  if [ "$cni" == "cilium" ]; then
     if ! command  -v cilium &> /dev/null; then
       get-cilium.sh
     fi
     cilium install
     check_cilium_status "\U0001F680"
-  elif [ "$n" == "calico" ]; then
+  elif [ "$cni" == "calico" ]; then
     curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
     # Ref: https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
     # DOES NOT WORK
     # helm upgrade --install calico tigera-operator \
     #   --repo https://projectcalico.docs.tigera.io/charts
     check_cni_status "\U0001F680"
-  elif [ "$n" == "weave" ]; then
+  elif [ "$cni" == "weave" ]; then
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
     check_cni_status "\U0001F680"
   else
