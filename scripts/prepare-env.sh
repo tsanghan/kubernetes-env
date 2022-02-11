@@ -1347,7 +1347,7 @@ else
   # WRKERNODES=(1 2 3)
   NODES=(ctrlp-1)
   WRKERNODES=()
-  for n in {1..$(($number-1))}; do
+  for n in $(seq $(($number-1))); do
     NODES+=(wrker-"$n")
     WRKERNODES+=("$n")
   done
