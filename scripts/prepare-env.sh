@@ -1024,7 +1024,8 @@ EOF
 fi
 
 YY=20
-CODE_NAME=focal
+# CODE_NAMES=(focal impish jammy)
+CODE_NAMES=(focal)
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
@@ -1041,12 +1042,14 @@ if [ "$image" == "" ]; then
     lxc image import focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs --alias focal-cloud
     rm focal-server-cloudimg-amd64-lxd.tar.xz focal-server-cloudimg-amd64.squashfs
   else
-    VERSION=$(curl -sSL https://us.lxd.images.canonical.com/streams/v1/images.json | \
-              jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
-    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/lxd.tar.xz
-    curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/focal/amd64/cloud/"$VERSION"/rootfs.squashfs
-    lxc image import lxd.tar.xz rootfs.squashfs --alias focal-cloud
-    rm lxd.tar.xz rootfs.squashfs
+    for CODE_NAME in "${CODE_NAMES[@]}"; do
+      VERSION=$(curl -sSL https://us.lxd.images.canonical.com/streams/v1/images.json | \
+                jq ".products.\"ubuntu:$CODE_NAME:amd64:cloud\".versions | keys[]" | sort -r | head -1 | tr -d '"')
+      curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/"$CODE_NAME"/amd64/cloud/"$VERSION"/lxd.tar.xz
+      curl -SLO https://us.lxd.images.canonical.com/images/ubuntu/"$CODE_NAME"/amd64/cloud/"$VERSION"/rootfs.squashfs
+      lxc image import lxd.tar.xz rootfs.squashfs --alias "$CODE_NAME"-cloud
+      rm lxd.tar.xz rootfs.squashfs
+    done
   fi
 fi
 MYEOF
@@ -1164,7 +1167,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
@@ -1173,7 +1176,7 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmn:i:" o; do
+while getopts ":rlcmn:i:d:w:" o; do
     case "$o" in
         c)
             containersonly="true"
@@ -1185,6 +1188,8 @@ while getopts ":rlcmn:i:" o; do
             n=$OPTARG
             if [ "$n" != "cilium" ] && [ "$n" != "calico" ] && [ "$n" != "weave" ]; then
                 usage
+            else
+                cni="$n"
             fi
             ;;
         i)
@@ -1192,6 +1197,21 @@ while getopts ":rlcmn:i:" o; do
             if [ "$i" != "ingress-ngx" ] && [ "$n" != "nic-ap" ] || [ -z "$n" ]; then
                 usage
             fi
+            ;;
+        d)
+            d=$OPTARG
+            if [ "$d" != "focal" ] && [ "$d" != "impish" ] && [ "$d" != "jammy" ]; then
+                usage
+            else
+              code_name=$d
+            fi
+            ;;
+        w)
+            w=$OPTARG
+            if [ "$w" != 2 ] && [ "$w" != 3 ]; then
+              usage
+            fi
+            number=$w
             ;;
         *)
             usage
@@ -1321,18 +1341,31 @@ if [ "$multimaster" == "true" ]; then
   NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
   WRKERNODES=(1 2 3)
 else
-  NODESNUM=3
+  if [ "$number" == "" ]; then
+    number=3
+  fi
+  NODESNUM="$number"
   CTRLP=lxd-ctrlp-1
-  NODES=(ctrlp-1 wrker-1 wrker-2)
-  WRKERNODES=(1 2)
+  # NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
+  # WRKERNODES=(1 2 3)
+  NODES=(ctrlp-1)
+  WRKERNODES=()
+  for n in $(seq $(($number-1))); do
+    NODES+=(wrker-"$n")
+    WRKERNODES+=("$n")
+  done
 fi
 
-image=$(lxc image ls | grep focal-cloud)
+if [ "$code_name" == "" ]; then
+  code_name=focal
+fi
+
+image=$(lxc image ls | grep "$code_name"-cloud)
 if [ "$image" == "" ]; then
-  echo "LXD Image focal-cloud not found!! Exiting!!"
+  echo "LXD Image "$code_name"-cloud not found!! Exiting!!"
   exit 1
 else
-  image=focal-cloud
+  image="$code_name"-cloud
 fi
 
 profile=$(lxc profile ls | grep k8s-cloud-init)
@@ -1366,7 +1399,7 @@ if [ "$containersonly" == "true" ]; then
 fi
 
 if [ "$multimaster" == "true" ]; then
-  lxc launch -p lb focal-cloud lxd-lb
+  lxc launch -p lb "$code_name"-cloud lxd-lb
   check_lb_status
   IPADDR=$(lxc ls | grep lxd-lb | awk '{print $6}')
   update_local_etc_hosts "$IPADDR"
@@ -1409,26 +1442,26 @@ done
 kubectl get no -owide | GREP_COLORS="ms=1;91;107" grep --color STATUS
 kubectl get no -owide | grep --color NotReady
 echo
-if [ -z "$n" ]; then
+if [ -z "$cni" ]; then
   echo "No CNI specified!! Doing nothing for CNI plugin!!"
   echo "You might want to deploy Calico. 'kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml'"
   echo -e "Will exit here!!\ncreate-cluster.sh -h for help!!"
   exit
 else
-  if [ "$n" == "cilium" ]; then
+  if [ "$cni" == "cilium" ]; then
     if ! command  -v cilium &> /dev/null; then
       get-cilium.sh
     fi
     cilium install
     check_cilium_status "\U0001F680"
-  elif [ "$n" == "calico" ]; then
+  elif [ "$cni" == "calico" ]; then
     curl -sSL https://docs.projectcalico.org/manifests/calico.yaml | sed 's#policy/v1beta1#policy/v1#' | kubectl apply -f -
     # Ref: https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
     # DOES NOT WORK
     # helm upgrade --install calico tigera-operator \
     #   --repo https://projectcalico.docs.tigera.io/charts
     check_cni_status "\U0001F680"
-  elif [ "$n" == "weave" ]; then
+  elif [ "$cni" == "weave" ]; then
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
     check_cni_status "\U0001F680"
   else
@@ -1644,7 +1677,7 @@ if [ "$nfs"  == "" ]; then
 else
   nfs_server=$(lxc ls | grep nfs-server)
   if [ "$nfs_server" == "" ]; then
-    lxc launch -p nfs-server focal-cloud nfs-server
+    lxc launch -p nfs-server "$code_name"-cloud nfs-server
     check_nfs_status
     check_cloud_init_status
   fi
