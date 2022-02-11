@@ -1166,7 +1166,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
@@ -1175,7 +1175,7 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmn:i:d:" o; do
+while getopts ":rlcmn:i:d:w:" o; do
     case "$o" in
         c)
             containersonly="true"
@@ -1203,6 +1203,12 @@ while getopts ":rlcmn:i:d:" o; do
               code_name=$d
             fi
             ;;
+        w)
+            w=$OPTARG
+            if [ "$w" != 2 ] && [ "$w" != 3 ]; then
+              usage
+            fi
+            number=$w
         *)
             usage
             ;;
@@ -1331,10 +1337,14 @@ if [ "$multimaster" == "true" ]; then
   NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
   WRKERNODES=(1 2 3)
 else
-  NODESNUM=3
+  NODESNUM=4
   CTRLP=lxd-ctrlp-1
-  NODES=(ctrlp-1 wrker-1 wrker-2)
-  WRKERNODES=(1 2)
+  NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
+  WRKERNODES=(1 2 3)
+fi
+
+if [ "$code_name" == "" ]; then
+  code_name=focal
 fi
 
 image=$(lxc image ls | grep "$code_name"-cloud)
