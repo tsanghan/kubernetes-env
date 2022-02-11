@@ -1338,10 +1338,19 @@ if [ "$multimaster" == "true" ]; then
   NODES=(ctrlp-1 ctrlp-2 ctrlp-3 wrker-1 wrker-2 wrker-3)
   WRKERNODES=(1 2 3)
 else
-  NODESNUM=4
+  if [ "$number" == "" ]; then
+    number=3
+  fi
+  NODESNUM="$number"
   CTRLP=lxd-ctrlp-1
-  NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
-  WRKERNODES=(1 2 3)
+  # NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
+  # WRKERNODES=(1 2 3)
+  NODES=(ctrlp-1)
+  WRKERNODES=()
+  for n in {1..$(($number-1))}; do
+    NODES+=(wrker-"$n")
+    WRKERNODES+=("$n")
+  done
 fi
 
 if [ "$code_name" == "" ]; then
