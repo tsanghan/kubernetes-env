@@ -1,1 +1,1 @@
-../manifests/metallb-values.yaml
+../manifests/metallb-values-lxd.yaml
