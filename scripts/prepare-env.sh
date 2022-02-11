@@ -1677,7 +1677,7 @@ if [ "$nfs"  == "" ]; then
 else
   nfs_server=$(lxc ls | grep nfs-server)
   if [ "$nfs_server" == "" ]; then
-    lxc launch -p nfs-server "$code_name"-cloud nfs-server
+    lxc launch -p nfs-server focal-cloud nfs-server
     check_nfs_status
     check_cloud_init_status
   fi
