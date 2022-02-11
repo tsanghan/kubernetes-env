@@ -1025,8 +1025,7 @@ EOF
 fi
 
 YY=20
-# CODE_NAMES=(focal impish jammy)
-CODE_NAMES=(focal)
+CODE_NAMES=(focal impish jammy)
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
