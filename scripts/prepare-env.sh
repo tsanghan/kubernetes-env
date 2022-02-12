@@ -1337,7 +1337,7 @@ check_if_cluster_already_exists
 if [ "$multimaster" == "true" ]; then
   lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
-    echo "Multi-control-plane mode not available in your current Environment state!!"
+    echo "Multi-control-plane mode not available in your current Environment!!"
     echo "Missing lxd lb profile."
     exit 1
   fi
