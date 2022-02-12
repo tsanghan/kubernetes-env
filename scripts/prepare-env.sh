@@ -2117,7 +2117,7 @@ pylxd=$(pip3 list 2> /dev/null | grep pylxd)
 if [ "$pylxd" == "" ]; then
   pip3 install pylxd 2> /dev/null
   codename=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
-  if [ "$codename" != "jammy"]; then
+  if [ "$codename" != "jammy" ]; then
     pip3 uninstall -y cryptography 2> /dev/null
   fi
 fi
