@@ -1327,12 +1327,17 @@ check_if_cluster_already_exists () {
   fi
 }
 
+change_current_context () {
+  yq e ".current-context = \"$1\"" - < ~/.kube/config > .tmp.config-new-context-current
+  mv .tmp.config-new-context-current ~/.kube/config
+}
+
 check_if_cluster_already_exists
 
 if [ "$multimaster" == "true" ]; then
   lb=$(lxc profile ls | grep lb)
   if [ "$lb"  == "" ]; then
-    echo "Multi-control-plane mode not available in your current Environment state!!"
+    echo "Multi-control-plane mode not available in your current Environment!!"
     echo "Missing lxd lb profile."
     exit 1
   fi
@@ -1357,7 +1362,11 @@ else
 fi
 
 if [ "$code_name" == "" ]; then
-  code_name=focal
+  code_name=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
+  if [ "$code_name" != "focal" ] && [ "$code_name" != "impish" ] && [ "$code_name" != "jammy" ]; then
+    echo "Unsupported Ubuntu Release $code_name!! Exiting!!"
+    exit 1
+  fi
 fi
 
 image=$(lxc image ls | grep "$code_name"-cloud)
@@ -1405,7 +1414,7 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver."$IPADDR".nip.io | tee kubeadm-init.out
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(echo "$IPADDR" | sed 's/\./-/g').nip.io | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
@@ -1415,6 +1424,7 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config-lxd
 if [ -f ~/.kube/config ]; then
   KUBECONFIG=~/.kube/config:~/.kube/config-lxd kubectl config view --flatten > /tmp/config
   mv /tmp/config ~/.kube/config
+  change_current_context kubernetes-admin@kubernetes
 else
   cp ~/.kube/config-lxd ~/.kube/config
 fi
@@ -2116,12 +2126,15 @@ chmod 0755 ~/.local/bin/*
 pylxd=$(pip3 list 2> /dev/null | grep pylxd)
 if [ "$pylxd" == "" ]; then
   pip3 install pylxd 2> /dev/null
-  pip3 uninstall -y cryptography 2> /dev/null
+  codename=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
+  if [ "$codename" != "jammy" ]; then
+    pip3 uninstall -y cryptography 2> /dev/null
+  fi
 fi
 
-lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
-dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
-if [ "$lxdg" == "" ] || [ "$dockerg" == "" ]; then
+lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
   echo -e "\n"
   echo "*************************************************************************************"
   echo "*                                                                                   *"

@@ -64,11 +64,20 @@ apt-get install -y --no-install-recommends \
                       python3-pip \
                       nfs-kernel-server
 #
-if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+codename=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
+if [ "$codename" == "focal" ] || [ "$codename" == "impish" ]; then
+  if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  fi
+  apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
+elif [ "$codename" == "jammy" ]; then
+  apt-get install -y --no-install-recommends docker.io containerd
+else
+  echo "Unsupported Ubuntu Release $codename!! Exiting!!"
+  exit 1
 fi
 #
 curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -77,7 +86,7 @@ echo \
   | tee /etc/apt/sources.list.d/kubernetes.list
 #
 apt-get update
-apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl httpie
+apt-get install -y --no-install-recommends kubectl httpie
 
 fdisk -l | grep Linux | awk '{print $1}' > /tmp/.disk
 chown "$SUDO_USER"."$SUDO_USER" /tmp/.disk
