@@ -2122,9 +2122,9 @@ if [ "$pylxd" == "" ]; then
   fi
 fi
 
-lxdg=$(id | sed 's/^.*\(lxd\).*$/\1/')
-dockerg=$(id | sed 's/^.*\(lxd\).*$/\1/')
-if [ "$lxdg" == "" ] || [ "$dockerg" == "" ]; then
+lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
   echo -e "\n"
   echo "*************************************************************************************"
   echo "*                                                                                   *"
