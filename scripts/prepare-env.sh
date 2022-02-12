@@ -1357,7 +1357,7 @@ else
 fi
 
 if [ "$code_name" == "" ]; then
-  code_name=focal
+  code_name=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
 fi
 
 image=$(lxc image ls | grep "$code_name"-cloud)
