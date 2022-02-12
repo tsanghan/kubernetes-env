@@ -86,7 +86,7 @@ echo \
   | tee /etc/apt/sources.list.d/kubernetes.list
 #
 apt-get update
-apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io kubectl httpie
+apt-get install -y --no-install-recommends kubectl httpie
 
 fdisk -l | grep Linux | awk '{print $1}' > /tmp/.disk
 chown "$SUDO_USER"."$SUDO_USER" /tmp/.disk
