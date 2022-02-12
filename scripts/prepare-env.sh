@@ -1364,8 +1364,9 @@ fi
 if [ "$code_name" == "" ]; then
   code_name=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
   if [ "$code_name" != "focal" ] && [ "$code_name" != "impish" ] && [ "$code_name" != "jammy" ]; then
-  echo "Unsupported Ubuntu Release $code_name!! Exiting!!"
-  exit 1
+    echo "Unsupported Ubuntu Release $code_name!! Exiting!!"
+    exit 1
+  fi
 fi
 
 image=$(lxc image ls | grep "$code_name"-cloud)
