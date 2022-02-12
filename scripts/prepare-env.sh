@@ -1328,8 +1328,8 @@ check_if_cluster_already_exists () {
 }
 
 change_current_context () {
-  yq e ".current-context = $1" - < ~/.kind/config > .tmp.config-new-context-current
-  mv .tmp.config-new-context-current ~/.kind/config
+  yq e ".current-context = $1" - < ~/.kube/config > .tmp.config-new-context-current
+  mv .tmp.config-new-context-current ~/.kube/config
 }
 
 check_if_cluster_already_exists
