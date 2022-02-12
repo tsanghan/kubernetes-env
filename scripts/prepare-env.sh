@@ -1327,6 +1327,11 @@ check_if_cluster_already_exists () {
   fi
 }
 
+change_current_context () {
+  yq e ".current-context = $1" - < ~/.kind/config > .tmp.config-new-context-current
+  mv .tmp.config-new-context-current ~/.kind/config
+}
+
 check_if_cluster_already_exists
 
 if [ "$multimaster" == "true" ]; then
@@ -1418,6 +1423,7 @@ lxc file pull lxd-ctrlp-1/etc/kubernetes/admin.conf ~/.kube/config-lxd
 if [ -f ~/.kube/config ]; then
   KUBECONFIG=~/.kube/config:~/.kube/config-lxd kubectl config view --flatten > /tmp/config
   mv /tmp/config ~/.kube/config
+  change_current_context kubernetes-admin@kubernetes
 else
   cp ~/.kube/config-lxd ~/.kube/config
 fi
