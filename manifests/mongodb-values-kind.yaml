@@ -1,6 +1,6 @@
 architecture: replicaset
 replicaCount: 2
 persistence:
-    storageClass: "standard"
+    storageClass: "nfs-client"
 auth:
     rootPassword: secret-root-pwd
