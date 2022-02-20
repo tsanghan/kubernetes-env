@@ -713,6 +713,8 @@ else
           - kubelet=$KUBE_VER-00
           - jq
           - nfs-common
+          - lsof
+          - psmisc
         package_update: false
         package_upgrade: false
         package_reboot_if_required: false
