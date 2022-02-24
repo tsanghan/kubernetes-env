@@ -2098,6 +2098,19 @@ if [ ! -f ~/.local/bin/bat ]; then
   rm -rf /tmp/"$BAT_DIR"
 fi
 
+# Install exa
+if [ ! -f ~/.local/bin/exa ]; then
+  EXA=$(curl -s https://api.github.com/repos/ogham/exa/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | grep -v musl | tr -d '"')
+  EXA_ZIP=$(basename "$EXA")
+  curl -sSL -o /tmp/"$EXA_ZIP" "$EXA"
+  unzip /tmp/"${EXA_ZIP}" -d /tmp/exa_unzip
+  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/completions
+  mv /tmp/exa_unzip/man/exa.1 /home/${USER}/.local/man/man1
+  mv /tmp/exa_unzip/man/exa_colors.5 /home/${USER}/.local/man/man5
+  mv /tmp/exa_unzip/bin/exa /home/${USER}/.local/bin
+  rm -rf /tmp/exa_unzip
+fi
+
 # Install shellcheck
 if [ ! -f ~/.local/bin/shellcheck ]; then
   SHELLCHECK=$(curl -s https://api.github.com/repos/koalaman/shellcheck/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | tr -d '"')
