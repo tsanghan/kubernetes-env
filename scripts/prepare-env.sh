@@ -1625,7 +1625,7 @@ echo "* Downloading Containerd v$CONTAINERD_VER *"
 echo "*                               *"
 echo "*********************************"
 echo
-CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep -v sha256 | tr -d '"')
+CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep cni | grep -v sha256 | tr -d '"')
 curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
 sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
@@ -2096,6 +2096,19 @@ if [ ! -f ~/.local/bin/bat ]; then
   mv /tmp/"$BAT_DIR"/"$BAT_BIN".1 ~/.local/man/man1
   mv /tmp/"$BAT_DIR"/autocomplete/* ~/.local/share/completions
   rm -rf /tmp/"$BAT_DIR"
+fi
+
+# Install exa
+if [ ! -f ~/.local/bin/exa ]; then
+  EXA=$(curl -s https://api.github.com/repos/ogham/exa/releases/latest | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | grep -v musl | tr -d '"')
+  EXA_ZIP=$(basename "$EXA")
+  curl -sSL -o /tmp/"$EXA_ZIP" "$EXA"
+  unzip /tmp/"${EXA_ZIP}" -d /tmp/exa_unzip
+  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/completions
+  mv /tmp/exa_unzip/man/exa.1 /home/${USER}/.local/man/man1
+  mv /tmp/exa_unzip/man/exa_colors.5 /home/${USER}/.local/man/man5
+  mv /tmp/exa_unzip/bin/exa /home/${USER}/.local/bin
+  rm -rf /tmp/exa_unzip
 fi
 
 # Install shellcheck
