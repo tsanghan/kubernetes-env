@@ -14,10 +14,10 @@ if [ ! -f ~/.config/.disk ]; then
   fi
 fi
 curl -sSL -o ~/.config/k9s/skin.yml https://raw.githubusercontent.com/derailed/k9s/master/skins/dracula.yml
-CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
-CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+# CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+# CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+# CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
+# CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"')
 
 # Install get-fzf.sh
 
@@ -203,6 +203,40 @@ chmod +x arkade
 mv arkade ~/.local/bin
 ln -s ~/.local/bin/arkade ~/.local/bin/ark
 rm arkade*
+popd || exit
+EOF
+
+# Install get-step.sh
+
+cat <<'EOF' > ~/.local/bin/get-step.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+echo
+echo "*****************************"
+echo "*                           *"
+echo "* Download and Install Step *"
+echo "*                           *"
+echo "*****************************"
+echo
+pushd .
+cd /tmp || exit
+# Ref: https://github.com/smallstep/cli/releases/
+STEP_VER=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".tag_name" | tr -d '"')
+STEP=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sig | tr -d '"')
+CHECKSUM=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep checksum | grep -v sig | tr -d '"')
+curl -L --remote-name-all "$STEP" "$CHECKSUM"
+sha256sum --ignore-missing --check $(basename "$CHECKSUM")
+tar xzvf $(basename "$STEP")
+mv step_"${STEP_VER:1}"/bin/step ~/.local/bin/step
+mv step_"${STEP_VER:1}"/autocomplete/* ~/.local/share/completions
+rm -rf step_*
 popd || exit
 EOF
 
@@ -525,10 +559,10 @@ cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
 #!/usr/bin/env bash
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
 CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
-CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/v\(.*\)/\1/')
+CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"')
+KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 if [ -f ~/.config/.disk ]; then
   disk=$(< ~/.config/.disk)
 else
@@ -591,8 +625,8 @@ if [ "$PROXY" == "" ]; then
           - ca-certificates
           - containerd
           - curl
-          - kubeadm=$KUBE_VER-00
-          - kubelet=$KUBE_VER-00
+          - kubeadm=${KUBE_VER:1}-00
+          - kubelet=${KUBE_VER:1}-00
           - jq
         package_update: false
         package_upgrade: false
@@ -709,8 +743,8 @@ else
           - ca-certificates
           - containerd
           - curl
-          - kubeadm=$KUBE_VER-00
-          - kubelet=$KUBE_VER-00
+          - kubeadm=${KUBE_VER:1}-00
+          - kubelet=${KUBE_VER:1}-00
           - jq
           - nfs-common
           - lsof
@@ -777,8 +811,8 @@ else
           - apt-get -y purge nano
           - apt-get -y autoremove
           - systemctl enable mount-make-rshare
-          - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-$CONTAINERD_VER-linux-amd64.tar.gz
-          # - cp /mnt/containerd/crun-$CRUN_VER-linux-amd64 /usr/local/sbin/crun
+          - tar -C / -zxvf /mnt/containerd/cri-containerd-cni-${CONTAINERD_VER:1}-linux-amd64.tar.gz
+          # - cp /mnt/containerd/crun-${CRUN_VER:1}-linux-amd64 /usr/local/sbin/crun
           - mkdir -p /etc/containerd
           # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/plugins.*linux/{n;n;s#runc#crun#}' | tee /etc/containerd/config.toml
           # - containerd config default | sed '/config_path/s#""#"/etc/containerd/certs.d"#' | sed '/default_runtime_name/s#runc#crun#' | tee /etc/containerd/config.toml
@@ -1023,6 +1057,84 @@ EOF
         type: disk
 EOF
   fi
+  step=$(lxc profile ls | grep step)
+  if [ "$step"  == "" ]; then
+    # Ref: https://github.com/lxc/lxd/issues/2703
+    # Ref: https://github.com/smallstep/mongo-tls/blob/main/0-step-ca.sh
+    lxc profile create step-ca
+
+    cat <<-EOF | lxc profile edit step-ca
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - jq
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+        default: none
+    description: ""
+    devices:
+      _dev_sda1:
+        path: /dev/sda1
+        source: /dev/sda1
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
+EOF
+  fi
   pull-containerd.sh
 fi
 
@@ -1105,24 +1217,23 @@ if [ ! -x ~/.local/bin/kubectl ]; then
   exit
 fi
 
-OLD_KUBECTL_VER=$(kubectl version --short --client | sed 's/.*v\(.*\)/\1/')
-NEW_KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt | sed 's/.*v\(.*\)/\1/')
+OLD_KUBECTL_VER=$(kubectl version --short --client)
+NEW_KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 
-verlt "$OLD_KUBECTL_VER" "$NEW_KUBECTL_VER"
+verlt "${OLD_KUBECTL_VER:1}" "${NEW_KUBECTL_VER:1}"
 if [ "$?"  = 1 ]; then
   echo "No upgrade required!!"
   exit
 else
-  KUBECTL_VER=v"$NEW_KUBECTL_VER"
-  curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$KUBECTL_VER/bin/linux/amd64/kubectl"
-  KUBECTL_SHA256=$(curl -sSL https://dl.k8s.io/"$KUBECTL_VER"/bin/linux/amd64/kubectl.sha256)
+  curl -sSL -o /tmp/kubectl "https://dl.k8s.io/$NEW_KUBECTL_VER/bin/linux/amd64/kubectl"
+  KUBECTL_SHA256=$(curl -sSL https://dl.k8s.io/"$NEW_KUBECTL_VER"/bin/linux/amd64/kubectl.sha256)
   OK=$(echo "$KUBECTL_SHA256" /tmp/kubectl | sha256sum --check)
   if [[ ! "$OK" =~ .*OK$ ]]; then
     echo "kubectl binary does not match sha256 checksum, aborting!!"
     rm /tmp/kubectl
     exit $?
   else
-    echo "Installing kubectl verion=$KUBECTL_VER"
+    echo "Installing kubectl verion=$NEW_KUBECTL_VER"
     mv /tmp/kubectl ~/.local/bin/kubectl
     chmod +x ~/.local/bin/kubectl
   fi
@@ -1149,11 +1260,11 @@ if [ ! -x ~/.local/bin/k9s ]; then
   exit
 fi
 
-OLD_K9S_VER=$(k9s version | grep Version | sed 's/.*v\(.*\)/\1/')
+OLD_K9S_VER=$(k9s version | grep Version)
 K9S_LATEST=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest)
-NEW_K9S_VER=$(echo -E "$K9S_LATEST" | jq ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
+NEW_K9S_VER=$(echo -E "$K9S_LATEST" | jq ".tag_name" | tr -d '"')
 
-verlt "$OLD_K9S_VER" "$NEW_K9S_VER"
+verlt "${OLD_K9S_VER:1}" "${NEW_K9S_VER:1}"
 if [ "$?"  = 1 ]; then
   echo "No upgrade required!!"
   exit
@@ -1616,12 +1727,12 @@ mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
 cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-echo "Downloading Containerd v$CONTAINERD_VER..."
+CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+echo "Downloading Containerd $CONTAINERD_VER..."
 echo
 echo "*********************************"
 echo "*                               *"
-echo "* Downloading Containerd v$CONTAINERD_VER *"
+echo "* Downloading Containerd $CONTAINERD_VER *"
 echo "*                               *"
 echo "*********************************"
 echo
@@ -1630,12 +1741,12 @@ curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
 sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
 # CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
-# CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"' | sed 's/.*v\(.*\)/\1/')
-# echo "Downloading Crun v$CRUN_VER..."
+# CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"')
+# echo "Downloading Crun $CRUN_VER..."
 # echo
 # echo "***************************"
 # echo "*                         *"
-# echo "* Downloading Crun v$CRUN_VER *"
+# echo "* Downloading Crun $CRUN_VER *"
 # echo "*                         *"
 # echo "***************************"
 # echo
@@ -2104,7 +2215,7 @@ if [ ! -f ~/.local/bin/exa ]; then
   EXA_ZIP=$(basename "$EXA")
   curl -sSL -o /tmp/"$EXA_ZIP" "$EXA"
   unzip /tmp/"${EXA_ZIP}" -d /tmp/exa_unzip
-  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/completions
+  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/share/completions/exa.zsh
   mv /tmp/exa_unzip/man/exa.1 /home/${USER}/.local/man/man1
   mv /tmp/exa_unzip/man/exa_colors.5 /home/${USER}/.local/man/man5
   mv /tmp/exa_unzip/bin/exa /home/${USER}/.local/bin
