@@ -206,6 +206,40 @@ rm arkade*
 popd || exit
 EOF
 
+# Install get-step.sh
+
+cat <<'EOF' > ~/.local/bin/get-step.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+echo
+echo "*****************************"
+echo "*                           *"
+echo "* Download and Install Step *"
+echo "*                           *"
+echo "*****************************"
+echo
+pushd .
+cd /tmp || exit
+# Ref: https://github.com/smallstep/cli/releases/
+STEP_VER=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].tag_name" | | tr -d '"')
+STEP=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sig | tr -d '"')
+CHECKSUM=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep checksum | grep -v sig | tr -d '"')
+curl -L --remote-name-all "$STEP" "$CHECKSUM"
+sha256sum --ignore-missing --check $(basename "$CHECKSUM")
+tar xzvf $(basename "$STEP")
+mv step_"$STEP_VER"/bin/step ~/.local/bin/step
+mv step_"$STEP_VER"/autocomplete/* ~/.local/completions
+rm -rf step_*
+popd || exit
+EOF
+
 # Create VBX cluster
 cat <<'EOF' > ~/.local/bin/create-vbx-cluster.sh
 #!/usr/bin/env bash
@@ -2104,7 +2138,7 @@ if [ ! -f ~/.local/bin/exa ]; then
   EXA_ZIP=$(basename "$EXA")
   curl -sSL -o /tmp/"$EXA_ZIP" "$EXA"
   unzip /tmp/"${EXA_ZIP}" -d /tmp/exa_unzip
-  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/completions
+  mv /tmp/exa_unzip/completions/exa.zsh /home/${USER}/.local/completions/exa.zsh
   mv /tmp/exa_unzip/man/exa.1 /home/${USER}/.local/man/man1
   mv /tmp/exa_unzip/man/exa_colors.5 /home/${USER}/.local/man/man5
   mv /tmp/exa_unzip/bin/exa /home/${USER}/.local/bin
