@@ -1057,6 +1057,82 @@ EOF
         type: disk
 EOF
   fi
+  step=$(lxc profile ls | grep step)
+  if [ "$step"  == "" ]; then
+    # Ref: https://github.com/lxc/lxd/issues/2703
+    # Ref: https://github.com/smallstep/mongo-tls/blob/main/0-step-ca.sh
+    lxc profile create step-ca
+
+    cat <<-EOF | lxc profile edit step-ca
+    config:
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
+        lxc.seccomp.profile=
+      security.nesting: "true"
+      security.privileged: "true"
+      user.user-data: |
+        #cloud-config
+        apt:
+          preserve_sources_list: false
+          primary:
+            - arches:
+              - amd64
+              uri: "http://archive.ubuntu.com/ubuntu/"
+          security:
+            - arches:
+              - amd64
+              uri: "http://security.ubuntu.com/ubuntu"
+          proxy: $PROXY
+        packages:
+          - apt-transport-https
+          - ca-certificates
+        package_update: false
+        package_upgrade: false
+        package_reboot_if_required: false
+        locale: en_SG.UTF-8
+        locale_configfile: /etc/default/locale
+        timezone: Asia/Singapore
+        runcmd:
+          - apt-get -y purge nano
+          - apt-get -y autoremove
+        default: none
+    description: ""
+    devices:
+      _dev_sda1:
+        path: /dev/sda1
+        source: /dev/sda1
+        type: unix-block
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
+      boot_dir:
+        path: /boot
+        source: /boot
+        type: disk
+      dev_kmsg:
+        path: /dev/kmsg
+        source: /dev/kmsg
+        type: unix-char
+      eth0:
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+      root:
+        path: /
+        pool: default
+        type: disk
+EOF
+  fi
   pull-containerd.sh
 fi
 
