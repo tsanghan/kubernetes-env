@@ -62,7 +62,8 @@ apt-get install -y --no-install-recommends \
                       jq \
                       xz-utils \
                       python3-pip \
-                      nfs-kernel-server
+                      nfs-kernel-server \
+                      unzip
 #
 codename=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
 if [ "$codename" == "focal" ] || [ "$codename" == "impish" ]; then
