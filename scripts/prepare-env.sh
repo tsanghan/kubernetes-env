@@ -228,7 +228,7 @@ echo
 pushd .
 cd /tmp || exit
 # Ref: https://github.com/smallstep/cli/releases/
-STEP_VER=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".tag_name" | tr -d '"')
+STEP_VER=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".tag_name" | tr -d '"' | tr -d 'v')
 STEP=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sig | tr -d '"')
 CHECKSUM=$(curl -s https://api.github.com/repos/smallstep/cli/releases/latest | jq ".assets[].browser_download_url" | grep checksum | grep -v sig | tr -d '"')
 curl -L --remote-name-all "$STEP" "$CHECKSUM"
