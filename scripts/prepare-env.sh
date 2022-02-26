@@ -1650,7 +1650,7 @@ cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
-echo "Downloading Containerd v$CONTAINERD_VER..."
+echo "Downloading Containerd $CONTAINERD_VER..."
 echo
 echo "*********************************"
 echo "*                               *"
