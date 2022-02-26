@@ -1090,6 +1090,8 @@ EOF
         packages:
           - apt-transport-https
           - ca-certificates
+          - curl
+          - jq
         package_update: false
         package_upgrade: false
         package_reboot_if_required: false
