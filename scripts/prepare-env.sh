@@ -254,7 +254,7 @@ echo "**********************************"
 echo
 # Ref: https://projectcalico.docs.tigera.io/maintenance/clis/calicoctl/install#install-calicoctl-as-a-binary-on-a-single-host
 curl -L https://github.com/projectcalico/calico/releases/download/v3.22.0/calicoctl-linux-amd64 -o ~/.local/bin/calicoctl
-curl -L https://github.com/projectcalico/calico/releases/download/v3.22.0/calicoctl-linux-arm64 -o ~/.local/bin/kubectl-calico
+curl -L https://github.com/projectcalico/calico/releases/download/v3.22.0/calicoctl-linux-amd64 -o ~/.local/bin/kubectl-calico
 chmod +x ~/.local/bin/calicoctl ~/.local/bin/kubectl-calico
 EOF
 
