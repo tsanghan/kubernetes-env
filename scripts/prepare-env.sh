@@ -242,7 +242,7 @@ EOF
 
 # Install calicoctl
 
-cat <<'EOF' > ~/.local/bin/get-step.sh
+cat <<'EOF' > ~/.local/bin/get-calicoctl.sh
 #!/usr/bin/env bash
 
 echo
