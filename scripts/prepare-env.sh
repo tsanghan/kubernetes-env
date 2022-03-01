@@ -206,7 +206,7 @@ rm arkade*
 popd || exit
 EOF
 
-# Install get-step.sh
+# Install step
 
 cat <<'EOF' > ~/.local/bin/get-step.sh
 #!/usr/bin/env bash
@@ -238,6 +238,24 @@ mv step_"${STEP_VER:1}"/bin/step ~/.local/bin/step
 mv step_"${STEP_VER:1}"/autocomplete/* ~/.local/share/completions
 rm -rf step_*
 popd || exit
+EOF
+
+# Install calicoctl
+
+cat <<'EOF' > ~/.local/bin/get-step.sh
+#!/usr/bin/env bash
+
+echo
+echo "**********************************"
+echo "*                                *"
+echo "* Download and Install Calicoctl *"
+echo "*                                *"
+echo "**********************************"
+echo
+# Ref: https://projectcalico.docs.tigera.io/maintenance/clis/calicoctl/install#install-calicoctl-as-a-binary-on-a-single-host
+curl -L https://github.com/projectcalico/calico/releases/download/v3.22.0/calicoctl-linux-amd64 -o ~/.local/bin/calicoctl
+curl -L https://github.com/projectcalico/calico/releases/download/v3.22.0/calicoctl-linux-arm64 -o ~/.local/bin/kubectl-calico
+chmod +x ~/.local/bin/calicoctl ~/.local/bin/kubectl-calico
 EOF
 
 # Create VBX cluster
