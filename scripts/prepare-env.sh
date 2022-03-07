@@ -491,7 +491,7 @@ echo "**************************************************************************
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
-kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+# kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 
 helm upgrade --install metallb metallb \
   --repo https://metallb.github.io/metallb \
@@ -510,9 +510,13 @@ echo "*                                                                         
 echo "*****************************************************************************************"
 echo
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
+# helm upgrade --install ingress-nginx ingress-nginx \
+#   --repo https://kubernetes.github.io/ingress-nginx \
+#   --namespace ingress-nginx --create-namespace
+# Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install main nginx-stable/nginx-ingress \
+  --set controller.watchIngressWithoutClass=true
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
@@ -1194,6 +1198,7 @@ then
   source <(kubectl completion bash)
   alias k=kubectl
   complete -F __start_kubectl k
+  alias k=kubecolor
 fi
 
 if [ -x ~/.local/bin/helm ]
@@ -1832,7 +1837,8 @@ else
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
     --set nfs.path=/mnt/nfs_share \
-    --set replicaCount=2
+    --set replicaCount=2 \
+    --set storageClass.defaultClass=true
 fi
 MYEOF
 
