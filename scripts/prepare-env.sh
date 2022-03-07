@@ -1837,7 +1837,8 @@ else
   helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=nfs-server \
     --set nfs.path=/mnt/nfs_share \
-    --set replicaCount=2
+    --set replicaCount=2 \
+    --set storageClass.defaultClass=true
 fi
 MYEOF
 
