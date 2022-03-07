@@ -510,9 +510,13 @@ echo "*                                                                         
 echo "*****************************************************************************************"
 echo
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
+# helm upgrade --install ingress-nginx ingress-nginx \
+#   --repo https://kubernetes.github.io/ingress-nginx \
+#   --namespace ingress-nginx --create-namespace
+# Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install main nginx-stable/nginx-ingress \
+  --set controller.watchIngressWithoutClass=true
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
