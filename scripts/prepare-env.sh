@@ -520,7 +520,7 @@ echo
 helm repo add nginx-stable https://helm.nginx.com/stable
 helm install main nginx-stable/nginx-ingress \
   --set controller.watchIngressWithoutClass=true \
-  --set controller.service.externalTrafficPolicy=Global
+  --set controller.service.externalTrafficPolicy=Cluster
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
