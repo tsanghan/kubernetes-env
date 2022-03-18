@@ -499,7 +499,7 @@ kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resource
 #   --namespace metallb --create-namespace \
 #   --values metallb-values.yaml
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install metallb --namespace metallb --create-namespace --values metallb-values.yaml
+helm install metallb bitnami/metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
