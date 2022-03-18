@@ -516,11 +516,15 @@ echo
 # helm upgrade --install ingress-nginx ingress-nginx \
 #   --repo https://kubernetes.github.io/ingress-nginx \
 #   --namespace ingress-nginx --create-namespace
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace
 # Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
-helm repo add nginx-stable https://helm.nginx.com/stable
-helm install main nginx-stable/nginx-ingress \
-  --set controller.watchIngressWithoutClass=true \
-  --set controller.service.externalTrafficPolicy=Cluster
+# helm repo add nginx-stable https://helm.nginx.com/stable
+# helm install main nginx-stable/nginx-ingress \
+#   --set controller.watchIngressWithoutClass=true \
+#   --set controller.service.externalTrafficPolicy=Cluster
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
@@ -1890,6 +1894,36 @@ helm --namespace mongodb uninstall mongodb
 helm repo remove bitnami
 PVCS=($(kubectl -n mongodb get pvc --no-headers | awk '{print $1}'))
 for pvc in "${PVCS[@]}"; do kubectl -n mongodb delete pvc "$pvc"; done
+stop-nfs-server.sh
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/create-mm-lab-one-demo.sh
+#!/usr/bin/env bash
+
+create-nfs-server.sh
+
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install main nginx-stable/nginx-ingress \
+  --set controller.watchIngressWithoutClass=true
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus \
+  --set server.service.type=LoadBalancer
+#  --set server.service.type=NodePort --set server.service.nodePort=30010
+
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/stop-mm-lab-one-demo.sh
+#!/usr/bin/env bash
+
+kubectl delete service locust
+kubectl delete deployment locust
+kubectl delete configmap locust-script
+
+helm uninstall prometheus
+
+helm uninstall main
+
 stop-nfs-server.sh
 MYEOF
 
