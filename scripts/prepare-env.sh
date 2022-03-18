@@ -506,11 +506,11 @@ cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
 #!/usr/bin/env bash
 
 echo
-echo "*****************************************************************************************"
-echo "*                                                                                       *"
+echo "********************************************************"
+echo "*                                                      *"
 echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
-echo "*                                                                                       *"
-echo "*****************************************************************************************"
+echo "*                                                      *"
+echo "********************************************************"
 echo
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
 # helm upgrade --install ingress-nginx ingress-nginx \
