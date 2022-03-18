@@ -493,10 +493,13 @@ echo
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 # kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 
-helm upgrade --install metallb metallb \
-  --repo https://metallb.github.io/metallb \
-  --namespace metallb --create-namespace \
-  --values metallb-values.yaml
+# Deprecated Chart: Ref: https://github.com/helm/charts/tree/master/stable/metallb
+# helm upgrade --install metallb metallb \
+#   --repo https://metallb.github.io/metallb \
+#   --namespace metallb --create-namespace \
+#   --values metallb-values.yaml
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
