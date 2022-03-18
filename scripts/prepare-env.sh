@@ -519,7 +519,8 @@ echo
 # Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
 helm repo add nginx-stable https://helm.nginx.com/stable
 helm install main nginx-stable/nginx-ingress \
-  --set controller.watchIngressWithoutClass=true
+  --set controller.watchIngressWithoutClass=true \
+  --set controller.service.externalTrafficPolicy=Global
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
