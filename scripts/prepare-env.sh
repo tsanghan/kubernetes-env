@@ -1909,6 +1909,10 @@ MYEOF
 cat <<'MYEOF' > ~/.local/bin/create-mm-lab-one-demo.sh
 #!/usr/bin/env bash
 
+# Start test: curl -X POST http://10.254.254.244:8089/swarm -d 'user_count=1000&spawn_rate=10&host=http%3A%2F%2Fmain-nginx-ingress'
+# Get status: curl -s -X GET http://10.254.254.244:8089/stats/requests | jq ".user_count"
+# Stop test: curl -X GET http://10.254.254.244:8089/stop
+
 create-nfs-server.sh
 
 helm repo add nginx-stable https://helm.nginx.com/stable
