@@ -1227,6 +1227,9 @@ then
   alias kc=kubecolor
 fi
 
+alias less=bat
+alias cat=bat
+
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/update_kubectl.sh
