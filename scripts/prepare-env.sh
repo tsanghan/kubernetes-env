@@ -519,7 +519,8 @@ echo
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
-  --create-namespace
+  --create-namespace \
+  --set ingressClass=ingress-nginx
 # Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
 # helm repo add nginx-stable https://helm.nginx.com/stable
 # helm install main nginx-stable/nginx-ingress \
