@@ -1664,6 +1664,11 @@ shift $((OPTIND-1))
 
 KUBECONFIG=~/.kube/config
 
+nfs=$(lxc ls | grep nfs)
+if [ ! "$nfs" == "" ]; then
+  stop-nfs-server.sh
+fi
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
