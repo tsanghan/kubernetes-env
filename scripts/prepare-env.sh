@@ -1931,6 +1931,9 @@ cat <<'MYEOF' > ~/.local/bin/stop-mm-lab-one-demo.sh
 kubectl delete service locust
 kubectl delete deployment locust
 kubectl delete configmap locust-script
+kubectl delete scaledobject nginx-scale
+
+helm uninstall keda
 
 helm uninstall prometheus
 
