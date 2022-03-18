@@ -1920,6 +1920,9 @@ helm install prometheus prometheus-community/prometheus \
   --set server.service.type=LoadBalancer
 #  --set server.service.type=NodePort --set server.service.nodePort=30010
 
+helm repo add kedacore https://kedacore.github.io/charts
+helm install keda kedacore/keda
+
 MYEOF
 
 cat <<'MYEOF' > ~/.local/bin/stop-mm-lab-one-demo.sh
