@@ -493,30 +493,39 @@ echo
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
 # kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
 
-helm upgrade --install metallb metallb \
-  --repo https://metallb.github.io/metallb \
-  --namespace metallb --create-namespace \
-  --values metallb-values.yaml
+# Deprecated Chart: Ref: https://github.com/helm/charts/tree/master/stable/metallb
+# helm upgrade --install metallb metallb \
+#   --repo https://metallb.github.io/metallb \
+#   --namespace metallb --create-namespace \
+#   --values metallb-values.yaml
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install metallb bitnami/metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
 cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
 #!/usr/bin/env bash
 
 echo
-echo "*****************************************************************************************"
-echo "*                                                                                       *"
+echo "********************************************************"
+echo "*                                                      *"
 echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
-echo "*                                                                                       *"
-echo "*****************************************************************************************"
+echo "*                                                      *"
+echo "********************************************************"
 echo
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
 # helm upgrade --install ingress-nginx ingress-nginx \
 #   --repo https://kubernetes.github.io/ingress-nginx \
 #   --namespace ingress-nginx --create-namespace
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.ingressClassResource.name=ingress-nginx
 # Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
-helm repo add nginx-stable https://helm.nginx.com/stable
-helm install main nginx-stable/nginx-ingress \
-  --set controller.watchIngressWithoutClass=true
+# helm repo add nginx-stable https://helm.nginx.com/stable
+# helm install main nginx-stable/nginx-ingress \
+#   --set controller.watchIngressWithoutClass=true \
+#   --set controller.service.externalTrafficPolicy=Cluster
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
@@ -1218,6 +1227,9 @@ then
   alias kc=kubecolor
 fi
 
+alias less=bat
+alias cat=bat
+
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/update_kubectl.sh
@@ -1652,6 +1664,11 @@ shift $((OPTIND-1))
 
 KUBECONFIG=~/.kube/config
 
+nfs=$(lxc ls | grep nfs)
+if [ ! "$nfs" == "" ]; then
+  stop-nfs-server.sh
+fi
+
 lxc stop --all --force
 if [ "$delete"  == "true" ]; then
   for c in $(lxc ls | grep lxd | awk '{print $2}'); do lxc delete "$c"; done
@@ -1886,6 +1903,46 @@ helm --namespace mongodb uninstall mongodb
 helm repo remove bitnami
 PVCS=($(kubectl -n mongodb get pvc --no-headers | awk '{print $1}'))
 for pvc in "${PVCS[@]}"; do kubectl -n mongodb delete pvc "$pvc"; done
+stop-nfs-server.sh
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/create-mm-lab-one-demo.sh
+#!/usr/bin/env bash
+
+# Start test: curl -X POST http://10.254.254.244:8089/swarm -d 'user_count=1000&spawn_rate=10&host=http%3A%2F%2Fmain-nginx-ingress'
+# Get status: curl -s -X GET http://10.254.254.244:8089/stats/requests | jq ".user_count"
+# Stop test: curl -X GET http://10.254.254.244:8089/stop
+
+create-nfs-server.sh
+
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install main nginx-stable/nginx-ingress \
+  --set controller.watchIngressWithoutClass=true
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus \
+  --set server.service.type=LoadBalancer
+#  --set server.service.type=NodePort --set server.service.nodePort=30010
+
+helm repo add kedacore https://kedacore.github.io/charts
+helm install keda kedacore/keda
+
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/stop-mm-lab-one-demo.sh
+#!/usr/bin/env bash
+
+kubectl delete service locust
+kubectl delete deployment locust
+kubectl delete configmap locust-script
+kubectl delete scaledobject nginx-scale
+
+helm uninstall keda
+
+helm uninstall prometheus
+
+helm uninstall main
+
 stop-nfs-server.sh
 MYEOF
 
