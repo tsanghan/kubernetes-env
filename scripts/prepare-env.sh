@@ -1252,7 +1252,7 @@ if [ ! -x ~/.local/bin/kubectl ]; then
   exit
 fi
 
-OLD_KUBECTL_VER=$(kubectl version --short --client)
+OLD_KUBECTL_VER=$(kubectl version --short --client | awk '{print $3}')
 NEW_KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 
 verlt "${OLD_KUBECTL_VER:1}" "${NEW_KUBECTL_VER:1}"
