@@ -1500,7 +1500,7 @@ else
   if [ "$number" == "" ]; then
     number=2
   fi
-  NODESNUM=$(($number +1))NODESNUM
+  NODESNUM=$(($number + 1))
   CTRLP=lxd-ctrlp-1
   # NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
   # WRKERNODES=(1 2 3)
