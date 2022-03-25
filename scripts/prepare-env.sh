@@ -1320,7 +1320,7 @@ usage() {
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -d   "Ubuntu version <focal|jammy> default follow base OS"'
-  echo "       -w   "Number of worker nodes <2|3> default=2"'
+  echo '       -w   "Number of worker nodes <2|3> default=2"'
   echo '       -n   "Install CNI <cilium|calico|weave> no default"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo
@@ -1359,7 +1359,7 @@ while getopts ":rlcmn:i:d:w:" o; do
             ;;
         w)
             w=$OPTARG
-            if [ "$w" != 2 ] && [ "$w" != 3 ] && [ "$w" != 4 ]; then
+            if [ "$w" != 2 ] && [ "$w" != 3 ]; then
               usage
             fi
             number=$w
