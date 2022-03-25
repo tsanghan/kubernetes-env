@@ -1315,7 +1315,7 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3|4>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
   echo '       -n   "Install CNI. Only 2 options"'
@@ -1356,7 +1356,7 @@ while getopts ":rlcmn:i:d:w:" o; do
             ;;
         w)
             w=$OPTARG
-            if [ "$w" != 2 ] && [ "$w" != 3 ]; then
+            if [ "$w" != 2 ] && [ "$w" != 3 ] && [ "$w" != 4 ]; then
               usage
             fi
             number=$w
