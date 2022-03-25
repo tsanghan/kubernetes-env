@@ -1316,10 +1316,12 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3|4>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|jammy>] [-w <2|3>] [-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
-  echo '       -n   "Install CNI. Only 2 options"'
+  echo '       -d   "Ubuntu version <focal|jammy> default follow base OS"'
+  echo "       -w   "Number of worker nodes <2|3> default=2"'
+  echo '       -n   "Install CNI <cilium|calico|weave> no default"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo
   exit 1
@@ -1496,7 +1498,7 @@ if [ "$multimaster" == "true" ]; then
   WRKERNODES=(1 2 3)
 else
   if [ "$number" == "" ]; then
-    number=3
+    number=2
   fi
   NODESNUM="$number"
   CTRLP=lxd-ctrlp-1
@@ -1504,7 +1506,7 @@ else
   # WRKERNODES=(1 2 3)
   NODES=(ctrlp-1)
   WRKERNODES=()
-  for n in $(seq $(($number-1))); do
+  for n in $(seq $number); do
     NODES+=(wrker-"$n")
     WRKERNODES+=("$n")
   done
@@ -1512,7 +1514,7 @@ fi
 
 if [ "$code_name" == "" ]; then
   code_name=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
-  if [ "$code_name" != "focal" ] && [ "$code_name" != "impish" ] && [ "$code_name" != "jammy" ]; then
+  if [ "$code_name" != "focal" ] && [ "$code_name" != "jammy" ]; then
     echo "Unsupported Ubuntu Release $code_name!! Exiting!!"
     exit 1
   fi
