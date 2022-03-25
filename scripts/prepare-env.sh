@@ -1295,7 +1295,8 @@ if [ ! -x ~/.local/bin/k9s ]; then
   exit
 fi
 
-OLD_K9S_VER=$(k9s version | grep Version)
+#Ref: https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+OLD_K9S_VER=$(k9s version | grep Version | sed 's/\x1b\[[0-9;]*m//g' | awk '{print $2}')
 K9S_LATEST=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest)
 NEW_K9S_VER=$(echo -E "$K9S_LATEST" | jq ".tag_name" | tr -d '"')
 
