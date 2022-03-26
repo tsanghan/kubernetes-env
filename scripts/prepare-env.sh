@@ -1252,7 +1252,7 @@ if [ ! -x ~/.local/bin/kubectl ]; then
   exit
 fi
 
-OLD_KUBECTL_VER=$(kubectl version --short --client)
+OLD_KUBECTL_VER=$(kubectl version --short --client | awk '{print $3}')
 NEW_KUBECTL_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 
 verlt "${OLD_KUBECTL_VER:1}" "${NEW_KUBECTL_VER:1}"
@@ -1295,7 +1295,8 @@ if [ ! -x ~/.local/bin/k9s ]; then
   exit
 fi
 
-OLD_K9S_VER=$(k9s version | grep Version)
+#Ref: https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+OLD_K9S_VER=$(k9s version | grep Version | sed 's/\x1b\[[0-9;]*m//g' | awk '{print $2}')
 K9S_LATEST=$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest)
 NEW_K9S_VER=$(echo -E "$K9S_LATEST" | jq ".tag_name" | tr -d '"')
 
@@ -1315,10 +1316,12 @@ cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 USER=$(whoami)
 
 usage() {
-  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|impish|jammy>] [-w <2|3>][-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
+  echo "Usage: $(basename $0) [-c] [-m] [-d <focal|jammy>] [-w <2|3>] [-n <cilium|calico|weave> [-i <ingress-ngx|nic-ap> ]]" 1>&2
   echo '       -c   "Create lxc/lxd containers only"'
   echo '       -m   "Multi-control-plane mode"'
-  echo '       -n   "Install CNI. Only 2 options"'
+  echo '       -d   "Ubuntu version <focal|jammy> default follow base OS"'
+  echo '       -w   "Number of worker nodes <2|3> default=2"'
+  echo '       -n   "Install CNI <cilium|calico|weave> no default"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
   echo
   exit 1
@@ -1495,15 +1498,15 @@ if [ "$multimaster" == "true" ]; then
   WRKERNODES=(1 2 3)
 else
   if [ "$number" == "" ]; then
-    number=3
+    number=2
   fi
-  NODESNUM="$number"
+  NODESNUM=$(($number + 1))
   CTRLP=lxd-ctrlp-1
   # NODES=(ctrlp-1 wrker-1 wrker-2 wrker-3)
   # WRKERNODES=(1 2 3)
   NODES=(ctrlp-1)
   WRKERNODES=()
-  for n in $(seq $(($number-1))); do
+  for n in $(seq $number); do
     NODES+=(wrker-"$n")
     WRKERNODES+=("$n")
   done
@@ -1511,7 +1514,7 @@ fi
 
 if [ "$code_name" == "" ]; then
   code_name=$(lsb_release -a 2> /dev/null | grep Codename | awk '{print $2}')
-  if [ "$code_name" != "focal" ] && [ "$code_name" != "impish" ] && [ "$code_name" != "jammy" ]; then
+  if [ "$code_name" != "focal" ] && [ "$code_name" != "jammy" ]; then
     echo "Unsupported Ubuntu Release $code_name!! Exiting!!"
     exit 1
   fi
