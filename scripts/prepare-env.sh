@@ -1310,6 +1310,56 @@ else
 fi
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/update_bat.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+if [ ! -x ~/.local/bin/bat ]; then
+  echo "bat not found or not executable!!"
+  exit
+fi
+
+OLD_BAT_VER=$(bat --version | awk '{print $2}')
+BAT_LATEST=$(curl -s https://api.github.com/repos/sharkdp/bat/releases/latest)
+NEW_BAT_VER=$(echo -E "$BAT_LATEST" | jq ".tag_name" | tr -d '"')
+
+verlt "${OLD_BAT_VER}" "${NEW_BAT_VER:1}"
+if [ "$?"  = 1 ]; then
+  echo "No upgrade required!!"
+  exit
+else
+  BAT=$(echo -E "$BAT_LATEST" | jq ".assets[].browser_download_url" | grep x86_64 | grep linux | grep gnu | tr -d '"')
+  pushd $(pwd) || exit
+  cd /tmp
+  curl -sSLO "$BAT"
+  BAT_TGZ="$(basename $BAT)"
+  BAT_PATHNAME="$(basename $BAT | sed 's/^\(.*\)\.tar\.gz$/\1/')"
+  tar -C ~/.local/bin -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat --strip-components=1
+  tar -C ~/.local/man/man1 -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat.1 --strip-components=1
+  rm "$BAT_TGZ"
+  popd || exit
+fi
+MYEOF
+
 cat <<'MYEOF' > ~/.local/bin/create-cluster.sh
 #!/usr/bin/env bash
 
