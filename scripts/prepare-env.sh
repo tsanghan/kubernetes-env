@@ -1353,8 +1353,8 @@ else
   curl -sSLO "$BAT"
   BAT_TGZ="$(basename $BAT)"
   BAT_PATHNAME="$(basename $BAT | sed 's/^\(.*\)\.tar\.gz$/\1/')"
-  tar -C ~/.local/bin -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat
-  tar -C ~/.local/man/man1 -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat.1
+  tar -C ~/.local/bin -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat --strip-components=1
+  tar -C ~/.local/man/man1 -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat.1 --strip-components=1
   rm "$BAT_TGZ"
   popd || exit
 fi
