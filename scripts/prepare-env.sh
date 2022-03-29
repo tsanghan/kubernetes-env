@@ -1199,7 +1199,7 @@ if [ "$image" == "" ]; then
 fi
 MYEOF
 
-cat <<'EOF' > ~/.bash_complete
+cat <<'EOF' > ~/.bash_env
 # For kubernetes-env
 
 if [ -x ~/.local/bin/kubectl ]
