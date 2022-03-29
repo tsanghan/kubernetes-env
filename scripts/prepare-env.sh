@@ -1351,11 +1351,11 @@ else
   pushd $(pwd) || exit
   cd /tmp
   curl -sSLO "$BAT"
-  BAT_BASENAME="$(basename $BAT)"
-  BAT_BASEPATHNAME="$(basename $BAT | sed 's/^\(.*\)\.tar\.gz$/\1/')"
-  tar -C ~/.local/bin -zxvf "$BAT_BASENAME" "$BAT_BASEPATHNAME"/bat
-  tar -C ~/.local/man/man1 "$BAT_BASENAME" "$BAT_BASEPATHNAME"/bat.1
-  rm "$(basename $BAT)"
+  BAT_TGZ="$(basename $BAT)"
+  BAT_PATHNAME="$(basename $BAT | sed 's/^\(.*\)\.tar\.gz$/\1/')"
+  tar -C ~/.local/bin -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat
+  tar -C ~/.local/man/man1 -zxvf "$BAT_TGZ" "$BAT_PATHNAME"/bat.1
+  rm "$BAT_TGZ"
   popd || exit
 fi
 MYEOF
