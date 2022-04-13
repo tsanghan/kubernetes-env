@@ -1689,7 +1689,7 @@ k-apply.sh
 
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
-  echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'"
+  echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.2/deploy/static/provider/cloud/deploy.yaml'"
   exit
 else
   if [ "$i" == "ingress-ngx" ]; then
