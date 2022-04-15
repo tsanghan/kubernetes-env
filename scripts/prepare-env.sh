@@ -552,7 +552,7 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
 EOF
 
 # Install ingress-nic.sh
-cat <<'EOF' > ~/.local/bin/ingress-kic.sh
+cat <<'EOF' > ~/.local/bin/ingress-nic.sh
 #!/usr/bin/env bash
 
 echo
