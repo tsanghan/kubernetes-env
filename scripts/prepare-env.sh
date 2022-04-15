@@ -548,7 +548,7 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
   --create-namespace \
-  --set controller.ingressClassResource.name=kubernetes-ingress-nginx
+  --set controller.ingressClassResource.name=ingress-nginx
 EOF
 
 # Install ingress-nic.sh
