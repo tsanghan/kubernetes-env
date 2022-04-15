@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: minimal-ingress
+  name: ingress-nic
   annotations:
     nginx.org/rewrites: "serviceName=svc-deploy-nginx rewrite=/"
 spec:
