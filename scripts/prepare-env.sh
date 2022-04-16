@@ -478,20 +478,32 @@ vagrant destroy -f
 rm Vagrantfile
 EOF
 
-# Install k-apply.sh
-cat <<'EOF' > ~/.local/bin/k-apply.sh
+# Install metrics-server.sh
+cat <<'EOF' > ~/.local/bin/metrics-server.sh
 #!/usr/bin/env bash
 
 echo
-echo "****************************************************************************************"
-echo "*                                                                                      *"
-echo "* Deploy Metrics Server (abridged version), MetalLB & Local-Path-Provisioner (Rancher) *"
-echo "*                                                                                      *"
-echo "****************************************************************************************"
+echo "********************************************"
+echo "*                                          *"
+echo "* Deploy Metrics Server (abridged version) *"
+echo "*                                          *"
+echo "********************************************"
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
-# kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+EOF
+
+# Install metallb.sh
+cat <<'EOF' > ~/.local/bin/metallb.sh
+#!/usr/bin/env bash
+
+echo
+echo "******************"
+echo "*                *"
+echo "* Deploy MetalLB *"
+echo "*                *"
+echo "******************"
+echo
 
 # Deprecated Chart: Ref: https://github.com/helm/charts/tree/master/stable/metallb
 # helm upgrade --install metallb metallb \
@@ -502,17 +514,33 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install metallb bitnami/metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
-cat <<'EOF' > ~/.local/bin/ingress-nginx.sh
+# Install rancher-local-path-provisioner.sh
+cat <<'EOF' > ~/.local/bin/rancher-local-path-provisioner.sh
 #!/usr/bin/env bash
 
 echo
-echo "********************************************************"
-echo "*                                                      *"
-echo "* Deploy Ingress-NGINX Controller (Kubernetes Ingress) *"
-echo "*                                                      *"
-echo "********************************************************"
+echo "************************************"
+echo "*                                  *"
+echo "* Local-Path-Provisioner (Rancher) *"
+echo "*                                  *"
+echo "************************************"
 echo
-# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+EOF
+
+# Install ingress-kic.sh
+cat <<'EOF' > ~/.local/bin/ingress-kic.sh
+#!/usr/bin/env bash
+
+echo
+echo "**********************************************"
+echo "*                                            *"
+echo "* Deploy Kubernetes Ingress-NGINX Controller *"
+echo "*                                            *"
+echo "**********************************************"
+echo
+# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.2/deploy/static/provider/cloud/deploy.yaml
 # helm upgrade --install ingress-nginx ingress-nginx \
 #   --repo https://kubernetes.github.io/ingress-nginx \
 #   --namespace ingress-nginx --create-namespace
@@ -521,11 +549,25 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
   --create-namespace \
   --set controller.ingressClassResource.name=ingress-nginx
+EOF
+
+# Install ingress-nic.sh
+cat <<'EOF' > ~/.local/bin/ingress-nic.sh
+#!/usr/bin/env bash
+
+echo
+echo "***********************************"
+echo "*                                 *"
+echo "* Deploy NGINX Ingress Controller *"
+echo "*                                 *"
+echo "***********************************"
+echo
+
 # Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
-# helm repo add nginx-stable https://helm.nginx.com/stable
-# helm install main nginx-stable/nginx-ingress \
-#   --set controller.watchIngressWithoutClass=true \
-#   --set controller.service.externalTrafficPolicy=Cluster
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install main nginx-stable/nginx-ingress \
+  --set controller.watchIngressWithoutClass=true \
+  --set controller.service.externalTrafficPolicy=Cluster
 EOF
 
 cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
@@ -735,7 +777,8 @@ EOF
   fi
 else
   # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  # IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@' | tr '.' '-').tsanghan.io
 
   k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
   if [ "$k8s_cloud_init"  == "" ]; then
@@ -1689,7 +1732,7 @@ k-apply.sh
 
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
-  echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/cloud/deploy.yaml'"
+  echo "You might want to deploy Ingress-Nginx. 'kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.2/deploy/static/provider/cloud/deploy.yaml'"
   exit
 else
   if [ "$i" == "ingress-ngx" ]; then

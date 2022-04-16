@@ -1,0 +1,20 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-nic
+  annotations:
+    nginx.org/rewrites: "serviceName=svc-deploy-nginx rewrite=/"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "example.com"
+    http:
+      paths:
+      - path: /hi
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-deploy-nginx
+            port:
+              number: 80

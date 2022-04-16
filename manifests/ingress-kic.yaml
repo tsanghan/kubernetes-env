@@ -1,0 +1,30 @@
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: IngressClass
+# metadata:
+#   labels:
+#     app.kubernetes.io/component: controller
+#   name: nginx
+#   annotations:
+#     ingressclass.kubernetes.io/is-default-class: "true"
+# spec:
+#   controller: k8s.io/ingress-nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-kic
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: ingress-nginx
+  rules:
+  - http:
+      paths:
+      - path: /hi
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-deploy-nginx
+            port:
+              number: 80
