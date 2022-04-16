@@ -778,7 +778,7 @@ EOF
 else
   # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
   # IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  IP=local-registry
+  IP=192-168-1-47.tsanghan.io
 
   k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
   if [ "$k8s_cloud_init"  == "" ]; then
@@ -896,7 +896,6 @@ else
           - kubeadm config images pull
           - ctr oci spec | tee /etc/containerd/cri-base.json
           - rm /etc/cni/net.d/10-containerd-net.conflist
-          - sed -i '/127.0.0.1/s/localhost/localhost\n192.168.1.47\tlocal-registry/' /etc/hosts
         power_state:
           delay: "+1"
           mode: poweroff
