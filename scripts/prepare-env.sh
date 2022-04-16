@@ -777,7 +777,8 @@ EOF
   fi
 else
   # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  # IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  IP=10-1-1-78.tsanghan.io
 
   k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
   if [ "$k8s_cloud_init"  == "" ]; then
