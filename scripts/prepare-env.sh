@@ -1256,18 +1256,21 @@ fi
 if [ -x ~/.local/bin/helm ]
 then
   source <(helm completion bash)
-  complete -F __start_helm helm
 fi
 
 if [ -x ~/.local/bin/kind ]
 then
   source <(kind completion bash)
-  complete -F __start_kind kind
 fi
 
 if [ -x ~/.local/bin/kubecolor ]
 then
   alias kc=kubecolor
+fi
+
+if [ -x ~/.local/bin/k9s ]
+then
+  source <(k9s completion bash)
 fi
 
 alias less=bat
