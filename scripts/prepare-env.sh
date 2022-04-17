@@ -570,62 +570,25 @@ helm install main nginx-stable/nginx-ingress \
   --set controller.service.externalTrafficPolicy=Cluster
 EOF
 
-cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
+# Install cert-manager.sh
+cat <<'EOF' > ~/.local/bin/ingress-nic.sh
 #!/usr/bin/env bash
-iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
-if [ "$iface" == "" ]; then
-  echo "Interface ens* no found!!"
-  exit 127
-fi
-IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
-while getopts "p" o; do
-    case "$o" in
-        p)
-            private="true"
-            ;;
-        *)
-            ;;
-    esac
-done
-shift $((OPTIND-1))
 
 echo
-echo "**************************************"
-echo "*                                    *"
-echo "* Deploy F5 NGINX Ingress Controller *"
-echo "*                                    *"
-echo "**************************************"
+echo "***********************"
+echo "*                     *"
+echo "* Deploy Cert-Manager *"
+echo "*                     *"
+echo "***********************"
 echo
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ns-and-sa.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/ap-rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/default-server-secret.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/nginx-config.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ingress-class.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_virtualservers.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_virtualserverroutes.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_transportservers.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_policies.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_globalconfigurations.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-if [ "$private" == "true" ]; then
-  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: '"$IP"'/nginx-ic-nap/#' |\
-    sed '/enable-app-protect$/s%#-% -%'|\
-    kubectl apply -f -
-else
-  kubectl create secret docker-registry regcred \
-    --docker-server=private-registry.nginx.com \
-    --docker-username="$(/usr/bin/cat ~/.local/share/nginx-repo.jwt)" \
-    --docker-password=none -n nginx-ingress
-  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic-nap/#' |\
-    sed '/enable-app-protect$/s%#-% -%'|\
-    kubectl apply -f -
-fi
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/service/loadbalancer.yaml
+
+# Ref: https://cert-manager.io/docs/installation/helm/#prerequisites
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.8.0 \
+  --set installCRDs=true
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
@@ -1250,7 +1213,6 @@ then
   source <(kubectl completion bash)
   alias k=kubectl
   complete -F __start_kubectl k
-  alias k=kubecolor
 fi
 
 if [ -x ~/.local/bin/helm ]
@@ -1265,7 +1227,7 @@ fi
 
 if [ -x ~/.local/bin/kubecolor ]
 then
-  alias kc=kubecolor
+  alias k=kubecolor
 fi
 
 if [ -x ~/.local/bin/k9s ]
