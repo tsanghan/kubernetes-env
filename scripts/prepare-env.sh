@@ -1827,31 +1827,48 @@ verlt() {
   fi
 }
 
+download_containerd() {
+    echo "Downloading Containerd $CONTAINERD_VER..."
+    echo
+    echo "*********************************"
+    echo "*                               *"
+    echo "* Downloading Containerd $CONTAINERD_VER *"
+    echo "*                               *"
+    echo "*********************************"
+    echo
+    CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep cni | grep -v sha256 | tr -d '"')
+    curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
+    sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
+}
+
 USER=$(whoami)
 pushd "$(pwd)" || exit
 
-if [ -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
-  echo "/home/$USER/Projects/kubernetes-env/.containerd exists!! Not downloading!!"
-  exit
+if [ ! -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
+  mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
+  cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
+
+  CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+  CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+
+  download_containerd
+
+else
+
+  cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
+
+  CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+  CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+  OLD_CONTAINERD_VER=$(ls cri*.gz | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\)-.*/\1/')
+
+  verlt "${OLD_CONTAINERD_VER}" "${CONTAINERD_VER:1}"
+
+  if [ "$?"  = 1 ]; then
+    echo "Containerd - No upgrade required!!"
+  else
+    rm cri*
+    download_containerd
 fi
-
-mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
-cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
-
-CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
-
-echo "Downloading Containerd $CONTAINERD_VER..."
-echo
-echo "*********************************"
-echo "*                               *"
-echo "* Downloading Containerd $CONTAINERD_VER *"
-echo "*                               *"
-echo "*********************************"
-echo
-CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep cni | grep -v sha256 | tr -d '"')
-curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
-sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
 # CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 # CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"')
