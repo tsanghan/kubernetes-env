@@ -778,7 +778,6 @@ else
         packages:
           - apt-transport-https
           - ca-certificates
-          - containerd
           - curl
           - kubeadm=${KUBE_VER:1}-00
           - kubelet=${KUBE_VER:1}-00
