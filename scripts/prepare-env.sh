@@ -1868,6 +1868,7 @@ else
   else
     rm cri*
     download_containerd
+  fi
 fi
 
 # CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
