@@ -1864,7 +1864,7 @@ else
   verlt "${OLD_CONTAINERD_VER}" "${CONTAINERD_VER:1}"
 
   if [ "$?"  = 1 ]; then
-    echo "Containerd - No upgrade required!!"
+    echo "Containerd ${CONTAINERD_VER} - No upgrade required!!"
   else
     rm cri*
     download_containerd
