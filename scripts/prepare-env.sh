@@ -1815,6 +1815,18 @@ popd () {
     command popd > /dev/null || exit
 }
 
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
 USER=$(whoami)
 pushd "$(pwd)" || exit
 
@@ -1828,6 +1840,7 @@ cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
 
 CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
 CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+
 echo "Downloading Containerd $CONTAINERD_VER..."
 echo
 echo "*********************************"
