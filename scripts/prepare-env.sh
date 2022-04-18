@@ -2037,6 +2037,32 @@ helm uninstall main
 stop-nfs-server.sh
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/start-nipio.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+
+pushd "$(pwd)" || exit
+
+if [ ! -d ~/Projects/nip.io ]; then
+  cd ~/Projects
+  git clone https://github.com/exentriquesolutions/nip.io.git
+  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nio.io/nipio/backend.conf
+  sed -i 's/--rm //' ~/Projects/nio.io/build_and_run_docker.sh
+  ~/Projects/nip.io/build_and_run_docker.sh
+else
+  docker run -p 10053:53/udp nipio-local:latest
+fi
+
+popd || exit
+MYEOF
+
 cat <<'EOF' > ~/.local/bin/create-cluster.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
