@@ -571,7 +571,7 @@ helm install main nginx-stable/nginx-ingress \
 EOF
 
 # Install cert-manager.sh
-cat <<'EOF' > ~/.local/bin/ingress-nic.sh
+cat <<'EOF' > ~/.local/bin/cert-manager.sh
 #!/usr/bin/env bash
 
 echo
