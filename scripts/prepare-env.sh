@@ -2054,10 +2054,10 @@ if [ ! -d ~/Projects/nip.io ]; then
   cd ~/Projects
   git clone https://github.com/exentriquesolutions/nip.io.git
   sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nio.io/nipio/backend.conf
-  sed -i 's/--rm //' ~/Projects/nio.io/build_and_run_docker.sh
+  sed -i 's/--rm/-d --restart unless-stopped/' ~/Projects/nio.io/build_and_run_docker.sh
   ~/Projects/nip.io/build_and_run_docker.sh
 else
-  docker run -d -p 10053:53/udp nipio-local:latest
+  docker run -d --restart unless-stopped -p 10053:53/udp nipio-local:latest
 fi
 
 popd || exit
