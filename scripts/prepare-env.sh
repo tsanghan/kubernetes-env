@@ -567,7 +567,33 @@ echo
 helm repo add nginx-stable https://helm.nginx.com/stable
 helm install main nginx-stable/nginx-ingress \
   --set controller.watchIngressWithoutClass=true \
-  --set controller.service.externalTrafficPolicy=Cluster
+  --set controller.service.externalTrafficPolicy=Cluster \
+  --set controller.ingressClass=nginx-pluss
+EOF
+
+# Install ingress-nap.sh
+cat <<'EOF' > ~/.local/bin/ingress-nap.sh
+#!/usr/bin/env bash
+
+echo
+echo "********************************************"
+echo "*                                          *"
+echo "* Deploy NGINX Ingress Controller with NAP *"
+echo "*                                          *"
+echo "********************************************"
+echo
+
+# Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install nap nginx-stable/nginx-ingress \
+  --set controller.kind=daemonset \
+  --set controller.nginxplus=true \
+  --set controller.appprotect.enable=true \
+  --set controller.hostNetwork=false \
+  --set controller.image.repository=C0A8012F.k8s.lab/nginx-ic-nap/nginx-plus-ingress \
+  --set controller.replicaCount=2 \
+  --set controller.enableCertManager=true \
+  --set controller.ingressClass=nginx-nap
 EOF
 
 # Install cert-manager.sh
