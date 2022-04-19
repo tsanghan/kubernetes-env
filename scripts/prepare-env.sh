@@ -568,7 +568,7 @@ helm repo add nginx-stable https://helm.nginx.com/stable
 helm install main nginx-stable/nginx-ingress \
   --set controller.watchIngressWithoutClass=true \
   --set controller.service.externalTrafficPolicy=Cluster \
-  --set controller.ingressClass=nginx-pluss
+  --set controller.ingressClass=nginx-plus
 EOF
 
 # Install ingress-nap.sh
