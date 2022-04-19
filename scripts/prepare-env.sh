@@ -2057,7 +2057,7 @@ if [ ! -d ~/Projects/nip.io ]; then
   sed -i 's/--rm //' ~/Projects/nio.io/build_and_run_docker.sh
   ~/Projects/nip.io/build_and_run_docker.sh
 else
-  docker run -p 10053:53/udp nipio-local:latest
+  docker run -d -p 10053:53/udp nipio-local:latest
 fi
 
 popd || exit
