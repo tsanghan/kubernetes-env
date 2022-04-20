@@ -1715,7 +1715,8 @@ echo
 kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
-k-apply.sh
+metrics-server.sh
+metallb.sh
 
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
