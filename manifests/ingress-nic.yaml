@@ -6,9 +6,9 @@ metadata:
   annotations:
     nginx.org/rewrites: "serviceName=svc-deploy-nginx rewrite=/"
 spec:
-  ingressClassName: nginx
+  ingressClassName: nginx-plus
   rules:
-  - host: "example.com"
+  - host: "www.0afefef0.k8s.lab"
     http:
       paths:
       - path: /hi
