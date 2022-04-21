@@ -540,10 +540,7 @@ echo "* Deploy Kubernetes Ingress-NGINX Controller *"
 echo "*                                            *"
 echo "**********************************************"
 echo
-# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.2/deploy/static/provider/cloud/deploy.yaml
-# helm upgrade --install ingress-nginx ingress-nginx \
-#   --repo https://kubernetes.github.io/ingress-nginx \
-#   --namespace ingress-nginx --create-namespace
+
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
@@ -567,65 +564,54 @@ echo
 helm repo add nginx-stable https://helm.nginx.com/stable
 helm install main nginx-stable/nginx-ingress \
   --set controller.watchIngressWithoutClass=true \
-  --set controller.service.externalTrafficPolicy=Cluster
+  --set controller.service.externalTrafficPolicy=Cluster \
+  --set controller.ingressClass=nginx-plus
 EOF
 
-cat <<'EOF' > ~/.local/bin/nginx-ap-ingress.sh
+# Install ingress-nap.sh
+cat <<'EOF' > ~/.local/bin/ingress-nap.sh
 #!/usr/bin/env bash
-iface=$(ip link | grep ens | awk '{print $2}' | tr -d ':')
-if [ "$iface" == "" ]; then
-  echo "Interface ens* no found!!"
-  exit 127
-fi
-IP=$(ip a s "$iface" | head -3 | tail -1 | awk '{print $2}' | tr -d '/24$')
-while getopts "p" o; do
-    case "$o" in
-        p)
-            private="true"
-            ;;
-        *)
-            ;;
-    esac
-done
-shift $((OPTIND-1))
 
 echo
-echo "**************************************"
-echo "*                                    *"
-echo "* Deploy F5 NGINX Ingress Controller *"
-echo "*                                    *"
-echo "**************************************"
+echo "********************************************"
+echo "*                                          *"
+echo "* Deploy NGINX Ingress Controller with NAP *"
+echo "*                                          *"
+echo "********************************************"
 echo
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ns-and-sa.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/rbac/ap-rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/default-server-secret.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/nginx-config.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/ingress-class.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_virtualservers.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_virtualserverroutes.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_transportservers.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_policies.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/k8s.nginx.org_globalconfigurations.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_appolicies.yaml
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.0.3/deployments/common/crds/appprotect.f5.com_apusersigs.yaml
-if [ "$private" == "true" ]; then
-  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: '"$IP"'/nginx-ic-nap/#' |\
-    sed '/enable-app-protect$/s%#-% -%'|\
-    kubectl apply -f -
-else
-  kubectl create secret docker-registry regcred \
-    --docker-server=private-registry.nginx.com \
-    --docker-username="$(/usr/bin/cat ~/.local/share/nginx-repo.jwt)" \
-    --docker-password=none -n nginx-ingress
-  curl -sSL https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/deployment/nginx-plus-ingress.yaml |\
-    sed '/image\:/s#\: #\: private-registry.nginx.com/nginx-ic-nap/#' |\
-    sed '/enable-app-protect$/s%#-% -%'|\
-    kubectl apply -f -
-fi
-kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/service/loadbalancer.yaml
+
+# Ref: https://github.com/f5devcentral/nginx_microservices_march_labs/blob/main/one/content.md
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm install nap nginx-stable/nginx-ingress \
+  --set controller.kind=daemonset \
+  --set controller.nginxplus=true \
+  --set controller.appprotect.enable=true \
+  --set controller.hostNetwork=false \
+  --set controller.image.repository=C0A8012F.k8s.lab/nginx-ic-nap/nginx-plus-ingress \
+  --set controller.replicaCount=2 \
+  --set controller.enableCertManager=true \
+  --set controller.ingressClass=nginx-nap
+EOF
+
+# Install cert-manager.sh
+cat <<'EOF' > ~/.local/bin/cert-manager.sh
+#!/usr/bin/env bash
+
+echo
+echo "***********************"
+echo "*                     *"
+echo "* Deploy Cert-Manager *"
+echo "*                     *"
+echo "***********************"
+echo
+
+# Ref: https://cert-manager.io/docs/installation/helm/#prerequisites
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.8.0 \
+  --set installCRDs=true
 EOF
 
 cat <<'MYEOF' > ~/.local/bin/prepare-lxd.sh
@@ -777,8 +763,8 @@ EOF
   fi
 else
   # Ref: below PROXY=$(grep Proxy /etc/apt/apt.conf.d/* | awk '{print $2}' | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  # IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
-  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@' | tr '.' '-').tsanghan.io
+  IP=$(echo "$PROXY" | tr -d ';|"' | sed 's@^http://\(.*\):3142/@\1@')
+  IP=$(printf '%02X' $(echo ${IP//./ })).k8s.lab
 
   k8s_cloud_init=$(lxc profile ls | grep k8s-cloud-init)
   if [ "$k8s_cloud_init"  == "" ]; then
@@ -815,7 +801,6 @@ else
         packages:
           - apt-transport-https
           - ca-certificates
-          - containerd
           - curl
           - kubeadm=${KUBE_VER:1}-00
           - kubelet=${KUBE_VER:1}-00
@@ -1250,24 +1235,26 @@ then
   source <(kubectl completion bash)
   alias k=kubectl
   complete -F __start_kubectl k
-  alias k=kubecolor
 fi
 
 if [ -x ~/.local/bin/helm ]
 then
   source <(helm completion bash)
-  complete -F __start_helm helm
 fi
 
 if [ -x ~/.local/bin/kind ]
 then
   source <(kind completion bash)
-  complete -F __start_kind kind
 fi
 
 if [ -x ~/.local/bin/kubecolor ]
 then
-  alias kc=kubecolor
+  alias k=kubecolor
+fi
+
+if [ -x ~/.local/bin/k9s ]
+then
+  source <(k9s completion bash)
 fi
 
 alias less=bat
@@ -1658,7 +1645,7 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(echo "$IPADDR" | sed 's/\./-/g').nip.io | tee kubeadm-init.out
+lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
@@ -1728,7 +1715,8 @@ echo
 kubectl get no -owide | GREP_COLORS="ms=1;92;107" grep --color STATUS
 kubectl get no -owide | GREP_COLORS="ms=1;92" grep --color Ready
 echo
-k-apply.sh
+metrics-server.sh
+metallb.sh
 
 if [ -z "$i" ]; then
   echo "No Ingress-Controller specified!! Doing nothing for Ingress-Controller!!"
@@ -1851,30 +1839,61 @@ popd () {
     command popd > /dev/null || exit
 }
 
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+download_containerd() {
+    echo "Downloading Containerd $CONTAINERD_VER..."
+    echo
+    echo "*********************************"
+    echo "*                               *"
+    echo "* Downloading Containerd $CONTAINERD_VER *"
+    echo "*                               *"
+    echo "*********************************"
+    echo
+    CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep cni | grep -v sha256 | tr -d '"')
+    curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
+    sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
+}
+
 USER=$(whoami)
 pushd "$(pwd)" || exit
 
-if [ -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
-  echo "/home/$USER/Projects/kubernetes-env/.containerd exists!! Not downloading!!"
-  exit
+if [ ! -d "/home/$USER/Projects/kubernetes-env/.containerd" ]; then
+  mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
+  cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
+
+  CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+  CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+
+  download_containerd
+
+else
+
+  cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
+
+  CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
+  CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
+  OLD_CONTAINERD_VER=$(ls cri*.gz | sed 's/.*-\([0-9]\.[0-9]\.[0-9]\)-.*/\1/')
+
+  verlt "${OLD_CONTAINERD_VER}" "${CONTAINERD_VER:1}"
+
+  if [ "$?"  = 1 ]; then
+    echo "Containerd ${CONTAINERD_VER} - No upgrade required!!"
+  else
+    rm cri*
+    download_containerd
+  fi
 fi
-
-mkdir -p /home/"$USER"/Projects/kubernetes-env/.containerd
-cd /home/"$USER"/Projects/kubernetes-env/.containerd || exit
-
-CONTAINERD_LATEST=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest)
-CONTAINERD_VER=$(echo -E "$CONTAINERD_LATEST" | jq -M ".tag_name" | tr -d '"')
-echo "Downloading Containerd $CONTAINERD_VER..."
-echo
-echo "*********************************"
-echo "*                               *"
-echo "* Downloading Containerd $CONTAINERD_VER *"
-echo "*                               *"
-echo "*********************************"
-echo
-CONTAINERD_URL=$(echo -E "$CONTAINERD_LATEST" | jq -M ".assets[].browser_download_url" | grep amd64 | grep linux | grep cri | grep cni | grep -v sha256 | tr -d '"')
-curl -L --remote-name-all "$CONTAINERD_URL"{,.sha256sum}
-sha256sum --check "$(basename "$CONTAINERD_URL")".sha256sum
 
 # CRUN_LATEST=$(curl -s https://api.github.com/repos/containers/crun/releases/latest)
 # CRUN_VER=$(echo -E "$CRUN_LATEST" | jq -M ".tag_name" | tr -d '"')
@@ -2040,6 +2059,32 @@ helm uninstall prometheus
 helm uninstall main
 
 stop-nfs-server.sh
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/start-nipio.sh
+#!/usr/bin/env bash
+
+pushd () {
+    command pushd "$@" > /dev/null || exit
+}
+
+popd () {
+    command popd > /dev/null || exit
+}
+
+pushd "$(pwd)" || exit
+
+if [ ! -d ~/Projects/nip.io ]; then
+  cd ~/Projects
+  git clone https://github.com/exentriquesolutions/nip.io.git
+  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nio.io/nipio/backend.conf
+  sed -i 's/--rm/-d --restart unless-stopped/' ~/Projects/nio.io/build_and_run_docker.sh
+  ~/Projects/nip.io/build_and_run_docker.sh
+else
+  docker run -d --restart unless-stopped -p 10053:53/udp nipio-local:latest
+fi
+
+popd || exit
 MYEOF
 
 cat <<'EOF' > ~/.local/bin/create-cluster.py
