@@ -483,11 +483,11 @@ cat <<'EOF' > ~/.local/bin/metrics-server.sh
 #!/usr/bin/env bash
 
 echo
-echo "********************************************"
-echo "*                                          *"
-echo "* Deploy Metrics Server (abridged version) *"
-echo "*                                          *"
-echo "********************************************"
+echo "*****************************************"
+echo "*                                       *"
+echo "* Deploy Kubernetes-sugs Metrics Server *"
+echo "*                                       *"
+echo "*****************************************"
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
 # kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
