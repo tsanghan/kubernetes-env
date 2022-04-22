@@ -485,7 +485,7 @@ cat <<'EOF' > ~/.local/bin/metrics-server.sh
 echo
 echo "*****************************************"
 echo "*                                       *"
-echo "* Deploy Kubernetes-sugs Metrics Server *"
+echo "* Deploy Kubernetes-sigs Metrics Server *"
 echo "*                                       *"
 echo "*****************************************"
 echo
