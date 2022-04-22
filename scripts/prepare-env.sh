@@ -490,7 +490,14 @@ echo "*                                          *"
 echo "********************************************"
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
-kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
+# kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
+# Ref: https://stackoverflow.com/questions/53846273/helm-passing-array-values-through-set
+#  --set args={--kubelet-insecure-tls=true}
+# Or
+#  --set args[0]=--kubelet-insecure-tls=true
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm install metrics-server metrics-server/metrics-server\
+  --set args={--kubelet-insecure-tls=true}
 EOF
 
 # Install metallb.sh
