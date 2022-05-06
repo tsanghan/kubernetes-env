@@ -632,7 +632,7 @@ KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 if [ -f ~/.config/.disk ]; then
   disk=$(< ~/.config/.disk)
 else
-  disk=$(fdisk -l | grep Linux | awk '{print $1}')
+  disk=$(sudo fdisk -l | grep Linux | awk '{print $1}')
 fi
 
 while getopts "s" o; do
