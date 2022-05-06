@@ -2096,7 +2096,7 @@ pushd "$(pwd)" || exit
 if [ ! -d ~/Projects/nip.io ]; then
   cd ~/Projects
   git clone https://github.com/exentriquesolutions/nip.io.git
-  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nio.io/nipio/backend.conf
+  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nip.io/nipio/backend.conf
   sed -i 's/--rm/-d --restart unless-stopped/' ~/Projects/nip.io/build_and_run_docker.sh
   ~/Projects/nip.io/build_and_run_docker.sh
 else
