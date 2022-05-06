@@ -1,9 +1,19 @@
 #!/bin/bash
 
 echo -e "overlay\nbr_netfilter\nnf_conntrack" >> /etc/modules-load.d/containerd.conf
+echo -e "ip_vs\nip_vs_rr\nip_vs_wrr\nip_vs_sh\nip_tables\nip6_tables\nnetlink_diag\nnf_nat\nnf_conntrack_ipv4" >> /etc/modules-load.d/ipvs.conf
 echo -e "options nf_conntrack hashsize=32768" >> /etc/modprobe.d/containerd.conf
 modprobe overlay
 modprobe br_netfilter
+modprobe ip_vs
+modprobe ip_vs_rr
+modprobe ip_vs_wrr
+modprobe ip_vs_sh
+modprobe nf_conntrack_ipv4
+modprobe ip_tables
+modprobe ip6_tables
+modprobe netlink_diag
+modprobe nf_nat
 # Ref: https://github.com/kinvolk/kube-spawn/issues/14
 modprobe nf_conntrack hashsize=32768
 
@@ -110,7 +120,7 @@ storage_pools:
 - config:
   description: ""
   name: default
-  driver: dir
+  driver: zfs
 profiles:
 - config: {}
   description: ""
