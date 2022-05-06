@@ -904,10 +904,10 @@ else
         path: /sys/module/nf_conntrack/parameters/hashsize
         source: /sys/module/nf_conntrack/parameters/hashsize
         type: disk
-      aadisable2:
-        path: /dev/zfs
-        source: /dev/zfs
-        type: disk
+      # aadisable2:
+      #   path: /dev/zfs
+      #   source: /dev/zfs
+      #   type: disk
       aadisable1:
         path: /sys/module/apparmor/parameters/enabled
         source: /sys/module/apparmor/parameters/enabled
