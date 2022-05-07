@@ -782,9 +782,9 @@ else
       linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,br_netfilter
       raw.lxc: |-
         lxc.apparmor.profile=unconfined
-        lxc.mount.auto=proc:rw sys:rw cgroup:rw
-        lxc.cgroup.devices.allow=a
         lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
+        lxc.mount.auto=proc:rw sys:rw cgroup:rw
         lxc.seccomp.profile=
       security.nesting: "true"
       security.privileged: "true"
