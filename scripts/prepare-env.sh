@@ -483,14 +483,21 @@ cat <<'EOF' > ~/.local/bin/metrics-server.sh
 #!/usr/bin/env bash
 
 echo
-echo "********************************************"
-echo "*                                          *"
-echo "* Deploy Metrics Server (abridged version) *"
-echo "*                                          *"
-echo "********************************************"
+echo "*****************************************"
+echo "*                                       *"
+echo "* Deploy Kubernetes-sigs Metrics Server *"
+echo "*                                       *"
+echo "*****************************************"
 echo
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
-kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
+# kubectl apply -f https://raw.githubusercontent.com/tsanghan/content-cka-resources/master/metrics-server-components.yaml
+# Ref: https://stackoverflow.com/questions/53846273/helm-passing-array-values-through-set
+#  --set args={--kubelet-insecure-tls=true}
+# Or
+#  --set args[0]=--kubelet-insecure-tls=true
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm install metrics-server metrics-server/metrics-server\
+  --set args={--kubelet-insecure-tls=true}
 EOF
 
 # Install metallb.sh
@@ -625,7 +632,7 @@ KUBE_VER=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 if [ -f ~/.config/.disk ]; then
   disk=$(< ~/.config/.disk)
 else
-  disk=$(fdisk -l | grep Linux | awk '{print $1}')
+  disk=$(sudo fdisk -l | grep Linux | awk '{print $1}')
 fi
 
 while getopts "s" o; do
@@ -772,7 +779,7 @@ else
 
     cat <<-EOF | lxc profile edit k8s-cloud-init
     config:
-      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay
+      linux.kernel_modules: ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,br_netfilter
       raw.lxc: |-
         lxc.apparmor.profile=unconfined
         lxc.cap.drop=
@@ -1198,7 +1205,7 @@ EOF
 fi
 
 YY=20
-CODE_NAMES=(focal impish jammy)
+CODE_NAMES=(focal jammy)
 image=$(lxc image ls | grep focal-cloud)
 if [ "$image" == "" ]; then
   if [ "$slim" == "" ]; then
@@ -2077,8 +2084,8 @@ pushd "$(pwd)" || exit
 if [ ! -d ~/Projects/nip.io ]; then
   cd ~/Projects
   git clone https://github.com/exentriquesolutions/nip.io.git
-  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nio.io/nipio/backend.conf
-  sed -i 's/--rm/-d --restart unless-stopped/' ~/Projects/nio.io/build_and_run_docker.sh
+  sed -i 's/nip\.io\.example/k8s.lab/g' ~/Projects/nip.io/nipio/backend.conf
+  sed -i 's/--rm/-d --restart unless-stopped/' ~/Projects/nip.io/build_and_run_docker.sh
   ~/Projects/nip.io/build_and_run_docker.sh
 else
   docker run -d --restart unless-stopped -p 10053:53/udp nipio-local:latest
