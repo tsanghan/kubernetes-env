@@ -1,6 +1,9 @@
 #!/bin/bash
 
 echo -e "overlay\nbr_netfilter\nnf_conntrack" >> /etc/modules-load.d/containerd.conf
+echo -e "options nf_conntrack hashsize=32768" >> /etc/modprobe.d/containerd.conf
+modprobe overlay
+modprobe br_netfilter
 # Ref: https://github.com/kinvolk/kube-spawn/issues/14
 modprobe nf_conntrack hashsize=32768
 
