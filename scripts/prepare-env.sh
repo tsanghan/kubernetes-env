@@ -670,7 +670,7 @@ if [ "$PROXY" == "" ]; then
         lxc.seccomp.profile=
       security.nesting: "true"
       security.privileged: "true"
-      user.user-data: |
+      cloud-init.user-data: |
         #cloud-config
         apt:
           preserve_sources_list: false
@@ -788,7 +788,7 @@ else
         lxc.seccomp.profile=
       security.nesting: "true"
       security.privileged: "true"
-      user.user-data: |
+      cloud-init.user-data: |
         #cloud-config
         apt:
           preserve_sources_list: false
@@ -947,7 +947,7 @@ EOF
         lxc.seccomp.profile=
       security.nesting: "true"
       security.privileged: "true"
-      user.user-data: |
+      cloud-init.user-data: |
         #cloud-config
         apt:
           preserve_sources_list: false
@@ -1048,7 +1048,7 @@ EOF
       raw.apparmor: "mount fstype=rpc_pipefs,\nmount fstype=nfsd,"
       security.nesting: "true"
       security.privileged: "true"
-      user.user-data: |
+      cloud-init.user-data: |
         #cloud-config
         apt:
           preserve_sources_list: false
@@ -1140,7 +1140,7 @@ EOF
         lxc.seccomp.profile=
       security.nesting: "true"
       security.privileged: "true"
-      user.user-data: |
+      cloud-init.user-data: |
         #cloud-config
         apt:
           preserve_sources_list: false
