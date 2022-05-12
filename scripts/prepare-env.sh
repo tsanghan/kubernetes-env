@@ -2487,14 +2487,14 @@ if [ "$pylxd" == "" ]; then
   fi
 fi
 
-lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
-docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
-if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
+# lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+# docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+# if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
   echo -e "\n"
   echo "*************************************************************************************"
   echo "*                                                                                   *"
-  echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
+  echo "*                                   Please reboot.                                  *"
   echo "*                                                                                   *"
   echo "*************************************************************************************"
   echo -e "\n\n"
-fi
+# fi
