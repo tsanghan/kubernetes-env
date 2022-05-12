@@ -916,6 +916,14 @@ else
         path: /dev/kmsg
         source: /dev/kmsg
         type: unix-char
+      aadisable4:
+        path: /sys/fs/bpf
+        source: /sys/fs/bpf
+        type: disk
+      aadisable5:
+        path: /proc/sys/net/netfilter/nf_conntrack_max
+        source: /proc/sys/net/netfilter/nf_conntrack_max
+        type: disk
       eth0:
         name: eth0
         nictype: bridged
