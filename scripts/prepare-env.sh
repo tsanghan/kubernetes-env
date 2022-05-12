@@ -2413,7 +2413,7 @@ fi
 # Install kind
 if [ ! -f ~/.local/bin/kind ]; then
   curl -sSL -o ~/.local/bin/kind \
-    "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | tr -d '"')"
+    "$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sha256sum | tr -d '"')"
 fi
 # Install k9s
 if [ ! -f ~/.local/bin/k9s ]; then
