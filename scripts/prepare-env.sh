@@ -1320,6 +1320,40 @@ else
 fi
 MYEOF
 
+cat <<'MYEOF' > ~/.local/bin/update_kind.sh
+#!/usr/bin/env bash
+
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+if [ ! -x ~/.local/bin/kind ]; then
+  echo "kind not found or not executable!!"
+  exit
+fi
+
+OLD_KIND_VER=$(kind version | awk '{print $2}')
+KIND_LATEST=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest)
+NEW_KIND_VER=$(echo -E "$KIND_LATEST" | jq ".tag_name" | tr -d '"')
+
+verlt "${OLD_KIND_VER:1}" "${NEW_KIND_VER:1}"
+if [ "$?"  = 1 ]; then
+  echo "No upgrade required!!"
+  exit
+else
+  KIND_DOWNLOAD_URL=$(echo -E "$KIND_LATEST" | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sha256sum | tr -d '"')
+  curl -sSL -o ~/.local/bin/kind "$KIND_DOWNLOAD_URL"
+fi
+MYEOF
+
 cat <<'MYEOF' > ~/.local/bin/update_k9s.sh
 #!/usr/bin/env bash
 
