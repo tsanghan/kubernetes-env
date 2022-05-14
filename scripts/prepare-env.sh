@@ -521,6 +521,27 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install metallb bitnami/metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
+# Install purelb.sh
+cat <<'EOF' > ~/.local/bin/purelb.sh
+#!/usr/bin/env bash
+
+echo
+echo "******************"
+echo "*                *"
+echo "* Deploy PureLB *"
+echo "*                *"
+echo "******************"
+echo
+
+# Deprecated Chart: Ref: https://github.com/helm/charts/tree/master/stable/metallb
+# helm upgrade --install metallb metallb \
+#   --repo https://metallb.github.io/metallb \
+#   --namespace metallb --create-namespace \
+#   --values metallb-values.yaml
+helm repo add purelb https://gitlab.com/api/v4/projects/20400619/packages/helm/stable
+helm install --create-namespace --namespace=purelb purelb purelb/purelb --values purelb-values.yaml
+EOF
+
 # Install rancher-local-path-provisioner.sh
 cat <<'EOF' > ~/.local/bin/rancher-local-path-provisioner.sh
 #!/usr/bin/env bash
