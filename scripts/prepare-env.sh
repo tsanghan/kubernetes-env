@@ -533,13 +533,26 @@ echo "*                *"
 echo "******************"
 echo
 
-# Deprecated Chart: Ref: https://github.com/helm/charts/tree/master/stable/metallb
-# helm upgrade --install metallb metallb \
-#   --repo https://metallb.github.io/metallb \
-#   --namespace metallb --create-namespace \
-#   --values metallb-values.yaml
+# Ref: https://purelb.gitlab.io/docs/install/install/
 helm repo add purelb https://gitlab.com/api/v4/projects/20400619/packages/helm/stable
 helm install --create-namespace --namespace=purelb purelb purelb/purelb --values purelb-values.yaml
+EOF
+
+# Install openslb.sh
+cat <<'EOF' > ~/.local/bin/openelb.sh
+#!/usr/bin/env bash
+
+echo
+echo "******************"
+echo "*                *"
+echo "* Deploy OpenELB *"
+echo "*                *"
+echo "******************"
+echo
+
+# Ref: https://openelb.github.io/docs/getting-started/installation/install-openelb-on-kubernetes/
+helm repo add openelb https://charts.kubesphere.io/test
+helm install openelb openelb/openelb
 EOF
 
 # Install rancher-local-path-provisioner.sh
