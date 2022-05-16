@@ -1,0 +1,13 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true # disable kindnet
+  podSubnet: 192.168.0.0/16 # set to Calico's default subnet
+  kubeProxyMode: "none"
+nodes:
+- role: control-plane
+  image: kindest/node:v1.24.0@sha256:8166691f9c2bf655494f43ab42bd34102b9dbf72461562e93d921169c01f1a5e
+- role: worker
+  image: kindest/node:v1.24.0@sha256:8166691f9c2bf655494f43ab42bd34102b9dbf72461562e93d921169c01f1a5e
+- role: worker
+  image: kindest/node:v1.24.0@sha256:8166691f9c2bf655494f43ab42bd34102b9dbf72461562e93d921169c01f1a5e
