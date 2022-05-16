@@ -521,6 +521,40 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install metallb bitnami/metallb --namespace metallb --create-namespace --values metallb-values.yaml
 EOF
 
+# Install purelb.sh
+cat <<'EOF' > ~/.local/bin/purelb.sh
+#!/usr/bin/env bash
+
+echo
+echo "******************"
+echo "*                *"
+echo "* Deploy PureLB *"
+echo "*                *"
+echo "******************"
+echo
+
+# Ref: https://purelb.gitlab.io/docs/install/install/
+helm repo add purelb https://gitlab.com/api/v4/projects/20400619/packages/helm/stable
+helm install --create-namespace --namespace=purelb purelb purelb/purelb --values purelb-values.yaml
+EOF
+
+# Install openslb.sh
+cat <<'EOF' > ~/.local/bin/openelb.sh
+#!/usr/bin/env bash
+
+echo
+echo "******************"
+echo "*                *"
+echo "* Deploy OpenELB *"
+echo "*                *"
+echo "******************"
+echo
+
+# Ref: https://openelb.github.io/docs/getting-started/installation/install-openelb-on-kubernetes/
+helm repo add openelb https://charts.kubesphere.io/test
+helm install openelb openelb/openelb
+EOF
+
 # Install rancher-local-path-provisioner.sh
 cat <<'EOF' > ~/.local/bin/rancher-local-path-provisioner.sh
 #!/usr/bin/env bash
@@ -916,6 +950,14 @@ else
         path: /dev/kmsg
         source: /dev/kmsg
         type: unix-char
+      aadisable4:
+        path: /sys/fs/bpf
+        source: /sys/fs/bpf
+        type: disk
+      aadisable5:
+        path: /proc/sys/net/netfilter/nf_conntrack_max
+        source: /proc/sys/net/netfilter/nf_conntrack_max
+        type: disk
       eth0:
         name: eth0
         nictype: bridged
@@ -1309,6 +1351,40 @@ else
     mv /tmp/kubectl ~/.local/bin/kubectl
     chmod +x ~/.local/bin/kubectl
   fi
+fi
+MYEOF
+
+cat <<'MYEOF' > ~/.local/bin/update_kind.sh
+#!/usr/bin/env bash
+
+verlte() {
+  [  "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+}
+
+verlt() {
+  if [ "$1" = "$2" ]; then
+    return 1
+  else
+    verlte "$1" "$2"
+  fi
+}
+
+if [ ! -x ~/.local/bin/kind ]; then
+  echo "kind not found or not executable!!"
+  exit
+fi
+
+OLD_KIND_VER=$(kind version | awk '{print $2}')
+KIND_LATEST=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest)
+NEW_KIND_VER=$(echo -E "$KIND_LATEST" | jq ".tag_name" | tr -d '"')
+
+verlt "${OLD_KIND_VER:1}" "${NEW_KIND_VER:1}"
+if [ "$?"  = 1 ]; then
+  echo "No upgrade required!!"
+  exit
+else
+  KIND_DOWNLOAD_URL=$(echo -E "$KIND_LATEST" | jq ".assets[].browser_download_url" | grep amd64 | grep linux | grep -v sha256sum | tr -d '"')
+  curl -sSL -o ~/.local/bin/kind "$KIND_DOWNLOAD_URL"
 fi
 MYEOF
 
@@ -2487,14 +2563,14 @@ if [ "$pylxd" == "" ]; then
   fi
 fi
 
-lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
-docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
-if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
+# lxd_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+# docker_grp=$(id | sed 's/^.*\(lxd\).*$/\1/')
+# if [ "$lxd_grp" == "" ] || [ "$docker_grp" == "" ]; then
   echo -e "\n"
   echo "*************************************************************************************"
   echo "*                                                                                   *"
-  echo "*  Please logout and relogin again for docker,lxd group membership to take effect.  *"
+  echo "*                                   Please reboot.                                  *"
   echo "*                                                                                   *"
   echo "*************************************************************************************"
   echo -e "\n\n"
-fi
+# fi
