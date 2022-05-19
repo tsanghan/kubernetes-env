@@ -907,6 +907,15 @@ else
           owner: root:root
           path: /etc/containerd/certs.d/$IP/hosts.toml
           permissions: '0644'
+        - content: |
+            net.ipv6.conf.all.disable_ipv6 = 1
+            net.ipv6.conf.default.disable_ipv6 = 1
+            net.ipv6.conf.lo.disable_ipv6 = 1
+            # https://github.com/cilium/cilium/issues/10645
+            net.ipv4.conf.lxc*.rp_filter = 0
+          owner: root:root
+          path: /etc/sysctl.d/99-sysctl.conf
+          permissions: '0644'
         runcmd:
           - apt-get -y purge nano
           - apt-get -y autoremove
