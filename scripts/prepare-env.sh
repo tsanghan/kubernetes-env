@@ -1500,7 +1500,7 @@ usage() {
   exit 1
 }
 
-while getopts ":rlcmn:i:d:w:" o; do
+while getopts ":rlcmpn:i:d:w:" o; do
     case "$o" in
         c)
             containersonly="true"
@@ -1743,7 +1743,7 @@ fi
 
 #Ref: https://stackoverflow.com/questions/2013547/assigning-default-values-to-shell-variables-with-a-single-command-in-bash
 #: "${no_kube_proxy:=}"
-lxc exec lxd-ctrlp-1 -- kubeadm init "${no_kube_proxy:=}" --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
+lxc exec lxd-ctrlp-1 -- kubeadm init ${no_kube_proxy:=} --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
