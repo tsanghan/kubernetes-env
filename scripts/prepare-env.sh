@@ -1495,6 +1495,7 @@ usage() {
   echo '       -w   "Number of worker nodes <2|3> default=2"'
   echo '       -n   "Install CNI <cilium|calico|weave> no default"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
+  echo '       -p   "No kube-proxy."
   echo
   exit 1
 }
@@ -1535,6 +1536,9 @@ while getopts ":rlcmn:i:d:w:" o; do
               usage
             fi
             number=$w
+            ;;
+        p)
+            no_kube_proxy="--skip-phases=addon/kube-proxy"
             ;;
         *)
             usage
@@ -1737,7 +1741,9 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
+#Ref: https://stackoverflow.com/questions/2013547/assigning-default-values-to-shell-variables-with-a-single-command-in-bash
+: "${no_kube_proxy:=}"
+lxc exec lxd-ctrlp-1 -- kubeadm init "$no_kube_proxy" --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
