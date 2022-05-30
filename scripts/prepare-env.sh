@@ -119,6 +119,31 @@ chmod +x ~/.local/bin/get-helm-3.sh
 ~/.local/bin/get-helm-3.sh
 EOF
 
+# Helm install cilium cni no kube-proxy
+cat <<'EOF' > ~/.local/bin/helm-install-cilium-no-kube-proxy.sh
+#!/usr/bin/env bash
+
+echo
+echo "*****************************************"
+echo "*                                       *"
+echo "* Helm install cilium cni no kube-proxy *"
+echo "*                                       *"
+echo "*****************************************"
+echo
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=jsonpath='{.status.addresses[0].address}')
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=json | jq '.status.addresses[0].address')
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=yaml | yq -e '.status.addresses[0].address')
+CTRLP_IP=$(k get no -owide | grep ctrlp | awk '{print $6}')
+helm install cilium cilium/cilium --version 1.11.5 \
+    --namespace kube-system \
+    --set kubeProxyReplacement=strict \
+    --set k8sServiceHost="$CTRLP_IP" \
+    --set k8sServicePort=6443 \
+    --set ipam.mode=cluster-pool \
+    --set ipam.operator.clusterPoolIPv4PodCIDRList=192.168.0.0/16 \
+    --set ipam.operator.clusterPoolIPv4MaskSize=26
+EOF
+
 # Install VirtualBox
 cat <<'EOF' > ~/.local/bin/get-vb.sh
 #!/usr/bin/env bash
