@@ -141,7 +141,10 @@ helm install cilium cilium/cilium --version 1.11.5 \
     --set k8sServicePort=6443 \
     --set ipam.mode=cluster-pool \
     --set ipam.operator.clusterPoolIPv4PodCIDRList=192.168.0.0/16 \
-    --set ipam.operator.clusterPoolIPv4MaskSize=26
+    --set ipam.operator.clusterPoolIPv4MaskSize=26 \
+    --reuse-values \
+    --set hubble.relay.enabled=true \
+    --set hubble.ui.enabled=true
 EOF
 
 # Install VirtualBox
