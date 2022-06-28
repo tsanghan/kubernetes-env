@@ -119,6 +119,51 @@ chmod +x ~/.local/bin/get-helm-3.sh
 ~/.local/bin/get-helm-3.sh
 EOF
 
+# Helm install cilium cni no kube-proxy
+cat <<'EOF' > ~/.local/bin/helm-install-cilium-no-kube-proxy.sh
+#!/usr/bin/env bash
+
+echo
+echo "*****************************************"
+echo "*                                       *"
+echo "* Helm install cilium cni no kube-proxy *"
+echo "*                                       *"
+echo "*****************************************"
+echo
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=jsonpath='{.status.addresses[0].address}')
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=json | jq '.status.addresses[0].address')
+# CTRLP_IP=$(k get no lxd-ctrlp-1 -o=yaml | yq -e '.status.addresses[0].address')
+CTRLP_IP=$(k get no -owide | grep ctrlp | awk '{print $6}')
+helm install cilium cilium/cilium --version 1.11.5 \
+    --namespace kube-system \
+    --set kubeProxyReplacement=strict \
+    --set k8sServiceHost="$CTRLP_IP" \
+    --set k8sServicePort=6443 \
+    --set ipam.mode=cluster-pool \
+    --set ipam.operator.clusterPoolIPv4PodCIDRList=192.168.0.0/16 \
+    --set ipam.operator.clusterPoolIPv4MaskSize=26
+
+EOF
+
+# Helm install hubble
+cat <<'EOF' > ~/.local/bin/helm-install-hubble.sh
+#!/usr/bin/env bash
+
+echo
+echo "***********************"
+echo "*                     *"
+echo "* Helm install hubble *"
+echo "*                     *"
+echo "***********************"
+echo
+helm upgrade cilium cilium/cilium --version 1.11.5 \
+   --namespace kube-system \
+   --reuse-values \
+   --set hubble.relay.enabled=true \
+   --set hubble.ui.enabled=true
+
+EOF
+
 # Install VirtualBox
 cat <<'EOF' > ~/.local/bin/get-vb.sh
 #!/usr/bin/env bash
@@ -907,6 +952,15 @@ else
           owner: root:root
           path: /etc/containerd/certs.d/$IP/hosts.toml
           permissions: '0644'
+        - content: |
+            net.ipv6.conf.all.disable_ipv6 = 1
+            net.ipv6.conf.default.disable_ipv6 = 1
+            net.ipv6.conf.lo.disable_ipv6 = 1
+            # https://github.com/cilium/cilium/issues/10645
+            net.ipv4.conf.lxc*.rp_filter = 0
+          owner: root:root
+          path: /etc/sysctl.d/99-sysctl.conf
+          permissions: '0644'
         runcmd:
           - apt-get -y purge nano
           - apt-get -y autoremove
@@ -1486,11 +1540,12 @@ usage() {
   echo '       -w   "Number of worker nodes <2|3> default=2"'
   echo '       -n   "Install CNI <cilium|calico|weave> no default"'
   echo '       -i   "Install Ingress. Only 2 options. F5/NGINX Ingress Controller/AP installation not yet enabled."'
+  echo '       -p   "No kube-proxy."'
   echo
   exit 1
 }
 
-while getopts ":rlcmn:i:d:w:" o; do
+while getopts ":rlcmpn:i:d:w:" o; do
     case "$o" in
         c)
             containersonly="true"
@@ -1526,6 +1581,9 @@ while getopts ":rlcmn:i:d:w:" o; do
               usage
             fi
             number=$w
+            ;;
+        p)
+            no_kube_proxy="--skip-phases=addon/kube-proxy"
             ;;
         *)
             usage
@@ -1728,7 +1786,9 @@ if [ "$multimaster" == "true" ]; then
   update_local_etc_hosts "$IPADDR"
 fi
 
-lxc exec lxd-ctrlp-1 -- kubeadm init --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
+#Ref: https://stackoverflow.com/questions/2013547/assigning-default-values-to-shell-variables-with-a-single-command-in-bash
+#: "${no_kube_proxy:=}"
+lxc exec lxd-ctrlp-1 -- kubeadm init ${no_kube_proxy:=} --control-plane-endpoint "$CTRLP":6443 --upload-certs --apiserver-cert-extra-sans apiserver-$(printf '%02X' $(echo "${IPADDR//./ }")).k8s.lab | tee kubeadm-init.out
 echo
 if [ ! -d ~/.kube ]; then
   mkdir ~/.kube
